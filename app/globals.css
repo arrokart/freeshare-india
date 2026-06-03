@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f1f5f9;
+  --foreground: #0f172a;
 }
 
 @theme inline {
@@ -10,17 +10,115 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  /* Light Theme overrides for slate palette to invert colors site-wide */
+  --color-slate-50: #0f172a;
+  --color-slate-100: #0f172a;
+  --color-slate-200: #1e293b;
+  --color-slate-300: #334155;
+  --color-slate-350: #475569;
+  --color-slate-400: #475569;
+  --color-slate-450: #64748b;
+  --color-slate-500: #64748b;
+  --color-slate-600: #94a3b8;
+  --color-slate-650: #cbd5e1;
+  --color-slate-700: #cbd5e1;
+  --color-slate-800: #cbd5e1;
+  --color-slate-850: #cbd5e1;
+  --color-slate-900: #ffffff;
+  --color-slate-950: #f1f5f9;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Touch Targets Optimization & Hide Scrollbars */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Premium Light Theme Component Overrides */
+
+/* Make all card/container borders visible in light mode */
+.border-slate-900,
+.border-slate-850,
+.border-slate-800,
+.border-slate-800\/80,
+.border-slate-900\/80,
+.border-slate-900\/60 {
+  border-color: #e2e8f0 !important;
+}
+
+/* Give cards solid white backgrounds so they pop off the light-gray page background */
+.bg-slate-900\/40,
+.bg-slate-900\/30,
+.bg-slate-950\/20,
+.bg-slate-950\/10,
+.bg-slate-900\/80 {
+  background-color: #ffffff !important;
+}
+
+/* Ensure text-slate-950 and text-slate-900 are dark gray/black for button readability */
+.text-slate-950,
+.text-slate-900 {
+  color: #020617 !important;
+}
+
+/* Fix warning alert card color styling */
+.bg-amber-500\/10 {
+  background-color: #fffbeb !important;
+  border-color: #fde047 !important;
+  color: #a16207 !important;
+}
+.bg-amber-500\/10 p,
+.bg-amber-500\/10 span {
+  color: #713f12 !important;
+}
+
+/* Map listing item states */
+.bg-slate-950\/20 {
+  background-color: #f8fafc !important;
+  border-color: #f1f5f9 !important;
+}
+.bg-slate-950\/20:hover {
+  background-color: #e2e8f0 !important;
+}
+
+/* Card Flip Utility Classes */
+.perspective-1000 {
+  perspective: 1000px;
+}
+.transform-style-3d {
+  transform-style: preserve-3d;
+}
+.backface-hidden {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+.rotate-y-180 {
+  transform: rotateY(180deg);
+}
+
+@keyframes scanner {
+  0%, 100% {
+    top: 10%;
+  }
+  50% {
+    top: 90%;
+  }
+}
+.animate-scanner {
+  animation: scanner 2.5s ease-in-out infinite;
+}
+
+.animate-spin-slow {
+  animation: spin 8s linear infinite;
 }
