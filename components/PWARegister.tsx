@@ -17,10 +17,21 @@ function urlBase64ToUint8Array(base64String: string) {
 
 export default function PWARegister() {
   const [permission, setPermission] = useState<NotificationPermission>("default");
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [showInstallPrompt, setShowInstallPrompt] = useState(true);
 
   useEffect(() => {
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+
+    window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+
     if (typeof window === "undefined" || !("serviceWorker" in navigator) || !("PushManager" in window)) {
-      return;
+      return () => {
+        window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+      };
     }
 
     setPermission(Notification.permission);
@@ -49,6 +60,10 @@ export default function PWARegister() {
     };
 
     registerPWA();
+
+    return () => {
+      window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+    };
   }, []);
 
   const syncPushSubscription = async (registration: ServiceWorkerRegistration, userId: string) => {
@@ -126,6 +141,44 @@ export default function PWARegister() {
             className="px-3 py-1 text-[9px] font-extrabold bg-gradient-to-r from-teal-500 to-emerald-500 text-slate-950 rounded-lg hover:from-teal-400 hover:to-emerald-400 transition-all uppercase cursor-pointer"
           >
             Enable
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    console.log(`[PWA] User choice outcome: ${outcome}`);
+    setDeferredPrompt(null);
+  };
+
+  // Render a floating prompt for app installation if available
+  if (deferredPrompt && showInstallPrompt) {
+    return (
+      <div className="fixed bottom-4 right-4 z-[9999] p-4 bg-slate-900/90 border border-slate-800 backdrop-blur-md rounded-2xl shadow-2xl flex flex-col gap-2.5 max-w-xs animate-in slide-in-from-bottom-5 duration-300">
+        <div className="space-y-0.5">
+          <p className="text-xs font-black text-slate-100 flex items-center gap-1.5">
+            📲 Install FreeShare App
+          </p>
+          <p className="text-[10px] text-slate-400 leading-relaxed">
+            Add FreeShare India to your home screen for instant access and a faster, native app experience.
+          </p>
+        </div>
+        <div className="flex gap-2 justify-end">
+          <button
+            onClick={() => setShowInstallPrompt(false)}
+            className="px-2.5 py-1 text-[9px] font-bold text-slate-500 hover:text-slate-400 transition-all uppercase"
+          >
+            Later
+          </button>
+          <button
+            onClick={handleInstallClick}
+            className="px-3 py-1 text-[9px] font-extrabold bg-gradient-to-r from-teal-500 to-emerald-500 text-slate-950 rounded-lg hover:from-teal-400 hover:to-emerald-400 transition-all uppercase cursor-pointer"
+          >
+            Install
           </button>
         </div>
       </div>
