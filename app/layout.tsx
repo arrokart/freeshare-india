@@ -19,6 +19,8 @@ export const metadata: Metadata = {
 
 import PWARegister from "@/components/PWARegister";
 import MobileNavBar from "@/components/MobileNavBar";
+import AnalyticsManager from "@/components/AnalyticsManager";
+import CookieConsent from "@/components/CookieConsent";
 
 export default function RootLayout({
   children,
@@ -32,6 +34,8 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         <main className="flex-1 pb-20 md:pb-0">{children}</main>
+        <AnalyticsManager />
+        <CookieConsent />
         <PWARegister />
         <MobileNavBar />
       </body>
