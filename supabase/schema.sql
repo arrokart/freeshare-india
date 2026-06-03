@@ -28,6 +28,8 @@ CREATE TABLE IF NOT EXISTS public.users (
     date_of_birth DATE NOT NULL,
     city TEXT NOT NULL,
     area TEXT NOT NULL,
+    pincode TEXT,
+    gender TEXT CHECK (gender IN ('Male', 'Female', 'Other')),
     bio TEXT,
     trust_score DECIMAL(3,2) DEFAULT 5.00 CHECK (trust_score >= 1.00 AND trust_score <= 5.00),
     total_donated INT DEFAULT 0 CHECK (total_donated >= 0),
@@ -411,7 +413,7 @@ WITH CHECK (auth.uid() = reporter_id);
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
-  INSERT INTO public.users (id, email, name, date_of_birth, city, area, pincode)
+  INSERT INTO public.users (id, email, name, date_of_birth, city, area, pincode, gender)
   VALUES (
     NEW.id,
     NEW.email,
@@ -419,11 +421,13 @@ BEGIN
     (NEW.raw_user_meta_data->>'date_of_birth')::date,
     NEW.raw_user_meta_data->>'city',
     NEW.raw_user_meta_data->>'area',
-    NEW.raw_user_meta_data->>'pincode'
+    NEW.raw_user_meta_data->>'pincode',
+    NEW.raw_user_meta_data->>'gender'
   )
   ON CONFLICT (id) DO UPDATE SET
     email = EXCLUDED.email,
-    name = COALESCE(EXCLUDED.name, public.users.name);
+    name = COALESCE(EXCLUDED.name, public.users.name),
+    gender = COALESCE(EXCLUDED.gender, public.users.gender);
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;

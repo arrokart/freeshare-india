@@ -17,6 +17,7 @@ export default function RegisterPage() {
   const [city, setCity] = useState("");
   const [area, setArea] = useState("");
   const [pincode, setPincode] = useState("");
+  const [gender, setGender] = useState("Male");
   const [referralCode, setReferralCode] = useState("");
 
   // States
@@ -76,6 +77,7 @@ export default function RegisterPage() {
             city,
             area,
             pincode,
+            gender,
           },
         },
       });
@@ -92,6 +94,7 @@ export default function RegisterPage() {
           city,
           area,
           pincode,
+          gender,
         });
 
         if (dbError && !dbError.message.includes("already exists")) {
@@ -269,6 +272,23 @@ export default function RegisterPage() {
                     className="w-full bg-slate-950/50 border border-slate-800 rounded-xl py-2.5 pl-9 pr-4 text-xs text-slate-100 focus:outline-none focus:border-teal-500/80 focus:ring-1 focus:ring-teal-500/20 transition-all [color-scheme:dark]"
                   />
                 </div>
+              </div>
+
+              {/* Gender */}
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-slate-300 uppercase tracking-wider block">
+                  Gender
+                </label>
+                <select
+                  required
+                  value={gender}
+                  onChange={(e) => setGender(e.target.value)}
+                  className="w-full bg-slate-950/50 border border-slate-800 rounded-xl py-2.5 px-4 text-xs text-slate-100 focus:outline-none focus:border-teal-500/80 focus:ring-1 focus:ring-teal-500/20 transition-all [color-scheme:dark]"
+                >
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Other">Other</option>
+                </select>
               </div>
 
               {/* Location (City, Area & Pincode) */}
