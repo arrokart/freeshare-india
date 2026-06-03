@@ -459,10 +459,27 @@ export default function HomeFeed() {
             </button>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4">
             <LanguageSelector />
             {user ? (
               <>
+                {/* Donate Link Button */}
+                <Link
+                  href="/donate"
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-400 hover:to-emerald-400 text-[10px] font-black text-slate-950 transition-all shadow-md shadow-teal-500/10 cursor-pointer uppercase tracking-wider shrink-0"
+                >
+                  <Plus size={11} strokeWidth={3} />
+                  <span>Donate</span>
+                </Link>
+
+                {/* Direct Messages Icon Button */}
+                <Link
+                  href="/dashboard?tab=claims"
+                  title="My Inbox & Chats"
+                  className="p-2 hover:bg-slate-900 rounded-full text-slate-400 hover:text-slate-200 transition-colors shrink-0"
+                >
+                  <MessageSquare size={17} />
+                </Link>
                 {/* Supporter Badge */}
                 {user.user_metadata?.is_premium ? (
                   <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-teal-500/10 to-emerald-500/10 border border-teal-500/20 text-xs text-teal-400 font-bold shadow-sm shadow-teal-500/5">
@@ -475,8 +492,8 @@ export default function HomeFeed() {
                     <span className="w-1.5 h-1.5 rounded-full bg-teal-400" />
                     <span>
                       {trialDaysLeft > 0 || getClaimLimitLabel() === "Unlimited"
-                        ? `🎁 ${claimCount} items claimed`
-                        : `🎁 ${claimCount} of ${getClaimLimitLabel()} free items claimed`}
+                        ? `🎁 ${claimCount} items`
+                        : `🎁 ${claimCount} of ${getClaimLimitLabel()} free items`}
                     </span>
                   </div>
                 )}
