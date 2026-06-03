@@ -1,4 +1,4 @@
-export type Language = "en" | "hi" | "es";
+export type Language = "en" | "hi";
 
 export const translations = {
   en: {
@@ -40,26 +40,6 @@ export const translations = {
     distance_within: "भीतर",
     km: "किमी",
     views: "दृश्य",
-  },
-  es: {
-    app_title: "FreeShare India",
-    search_placeholder: "Buscar coordenadas o artículos...",
-    all_categories: "Todas las categorías",
-    all_conditions: "Todas las condiciones",
-    fresh_listings: "Anuncios recientes",
-    trending_items: "Artículos populares",
-    no_items_found: "No se encontraron artículos gratis",
-    no_items_desc: "Intente ajustar sus filtros de palabras clave, ubicación o vuelva a consultar más tarde.",
-    items_donated: "Artículos donados",
-    items_received: "Artículos recibidos",
-    dashboard: "Panel",
-    login: "Iniciar sesión",
-    register: "Registrarse",
-    logout: "Cerrar sesión",
-    radius_filter: "Filtrar por radio",
-    distance_within: "Dentro de",
-    km: "km",
-    views: "vistas",
   }
 };
 

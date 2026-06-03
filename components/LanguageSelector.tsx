@@ -25,8 +25,7 @@ export default function LanguageSelector() {
 
   const languageLabels = {
     en: "English",
-    hi: "हिन्दी",
-    es: "Español"
+    hi: "हिन्दी"
   };
 
   return (
