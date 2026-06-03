@@ -8,7 +8,9 @@ const DEFAULT_SETTINGS = {
   campaign_type: "none", // 'none', 'unlimited', 'custom'
   campaign_limit: 20,
   campaign_name: "",
-  welcome_trial_enabled: true
+  welcome_trial_enabled: true,
+  ga_measurement_id: "",
+  adsense_client_id: ""
 };
 
 // Helper to verify if user is admin
@@ -44,7 +46,9 @@ export async function GET(request: Request) {
         campaign_type: parsed.campaign_type ?? DEFAULT_SETTINGS.campaign_type,
         campaign_limit: parsed.campaign_limit ?? DEFAULT_SETTINGS.campaign_limit,
         campaign_name: parsed.campaign_name ?? DEFAULT_SETTINGS.campaign_name,
-        welcome_trial_enabled: parsed.welcome_trial_enabled ?? DEFAULT_SETTINGS.welcome_trial_enabled
+        welcome_trial_enabled: parsed.welcome_trial_enabled ?? DEFAULT_SETTINGS.welcome_trial_enabled,
+        ga_measurement_id: parsed.ga_measurement_id ?? DEFAULT_SETTINGS.ga_measurement_id,
+        adsense_client_id: parsed.adsense_client_id ?? DEFAULT_SETTINGS.adsense_client_id
       });
     } catch {
       return NextResponse.json(DEFAULT_SETTINGS);
@@ -66,7 +70,9 @@ export async function POST(request: Request) {
       campaign_type,
       campaign_limit,
       campaign_name,
-      welcome_trial_enabled
+      welcome_trial_enabled,
+      ga_measurement_id,
+      adsense_client_id
     } = body;
 
     if (!adminId || !(await verifyAdmin(adminId))) {
@@ -80,7 +86,9 @@ export async function POST(request: Request) {
       campaign_type: campaign_type || DEFAULT_SETTINGS.campaign_type,
       campaign_limit: parseInt(campaign_limit) || DEFAULT_SETTINGS.campaign_limit,
       campaign_name: campaign_name || DEFAULT_SETTINGS.campaign_name,
-      welcome_trial_enabled: welcome_trial_enabled !== undefined ? welcome_trial_enabled : DEFAULT_SETTINGS.welcome_trial_enabled
+      welcome_trial_enabled: welcome_trial_enabled !== undefined ? welcome_trial_enabled : DEFAULT_SETTINGS.welcome_trial_enabled,
+      ga_measurement_id: ga_measurement_id !== undefined ? String(ga_measurement_id).trim() : DEFAULT_SETTINGS.ga_measurement_id,
+      adsense_client_id: adsense_client_id !== undefined ? String(adsense_client_id).trim() : DEFAULT_SETTINGS.adsense_client_id
     };
 
     // Update the bio column of the admin user

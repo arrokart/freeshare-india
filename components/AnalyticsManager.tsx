@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import Script from "next/script";
 
 // Extend window interface to support Google analytics dataLayer
@@ -12,11 +12,36 @@ declare global {
 }
 
 export default function AnalyticsManager() {
-  const gaId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
-  const adsenseId = process.env.NEXT_PUBLIC_ADSENSE_CLIENT_ID;
+  const [gaId, setGaId] = useState<string | null>(null);
+  const [adsenseId, setAdsenseId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    const fetchTrackingConfigs = async () => {
+      try {
+        const res = await fetch("/api/admin/settings");
+        if (res.ok) {
+          const data = await res.json();
+          const dbGa = data.ga_measurement_id;
+          const dbAdsense = data.adsense_client_id;
+          
+          setGaId(dbGa || process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || "");
+          setAdsenseId(dbAdsense || process.env.NEXT_PUBLIC_ADSENSE_CLIENT_ID || "");
+        } else {
+          setGaId(process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || "");
+          setAdsenseId(process.env.NEXT_PUBLIC_ADSENSE_CLIENT_ID || "");
+        }
+      } catch (error) {
+        console.error("Failed to fetch dynamic tracking configs:", error);
+        setGaId(process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || "");
+        setAdsenseId(process.env.NEXT_PUBLIC_ADSENSE_CLIENT_ID || "");
+      }
+    };
+
+    fetchTrackingConfigs();
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !gaId) return;
 
     // 1. Initialize dataLayer and gtag function
     window.dataLayer = window.dataLayer || [];
@@ -36,9 +61,7 @@ export default function AnalyticsManager() {
     });
 
     window.gtag("js", new Date());
-    if (gaId) {
-      window.gtag("config", gaId);
-    }
+    window.gtag("config", gaId);
 
     // 3. Listen for consent updates triggered by the Cookie Consent UI component
     const handleConsentUpdate = () => {

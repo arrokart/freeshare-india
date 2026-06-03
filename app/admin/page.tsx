@@ -70,6 +70,8 @@ export default function AdminPage() {
   const [campaignLimit, setCampaignLimit] = useState("20");
   const [campaignName, setCampaignName] = useState("");
   const [welcomeTrialEnabled, setWelcomeTrialEnabled] = useState(true);
+  const [gaMeasurementId, setGaMeasurementId] = useState("");
+  const [adsenseClientId, setAdsenseClientId] = useState("");
   const [loadingSettings, setLoadingSettings] = useState(false);
   const [savingSettings, setSavingSettings] = useState(false);
 
@@ -228,6 +230,8 @@ export default function AdminPage() {
         setCampaignLimit(String(data.campaign_limit ?? 20));
         setCampaignName(data.campaign_name ?? "");
         setWelcomeTrialEnabled(data.welcome_trial_enabled ?? true);
+        setGaMeasurementId(data.ga_measurement_id ?? "");
+        setAdsenseClientId(data.adsense_client_id ?? "");
       }
     } catch (err: any) {
       console.error("Failed to load settings:", err);
@@ -375,7 +379,9 @@ export default function AdminPage() {
           campaign_type: campaignType,
           campaign_limit: campaignLimit,
           campaign_name: campaignName,
-          welcome_trial_enabled: welcomeTrialEnabled
+          welcome_trial_enabled: welcomeTrialEnabled,
+          ga_measurement_id: gaMeasurementId,
+          adsense_client_id: adsenseClientId
         })
       });
 
@@ -1454,6 +1460,41 @@ export default function AdminPage() {
                       <ToggleLeft size={36} strokeWidth={1.5} className="text-slate-600" />
                     )}
                   </button>
+                </div>
+
+                {/* Analytics & Monetization Header */}
+                <div className="pt-4 border-t border-slate-900">
+                  <h3 className="text-xs font-black text-slate-200 uppercase tracking-wider mb-3">Analytics & Ads Integrations</h3>
+                </div>
+
+                {/* Google Analytics ID */}
+                <div className="space-y-1.5">
+                  <label className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider block">
+                    Google Analytics ID (GTAG)
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. G-XXXXXXXXXX"
+                    value={gaMeasurementId}
+                    onChange={(e) => setGaMeasurementId(e.target.value)}
+                    className="w-full bg-slate-950/60 border border-slate-800 rounded-xl p-3 text-xs text-slate-100 focus:outline-none focus:border-teal-500 font-mono"
+                  />
+                  <p className="text-[10px] text-slate-500">Google Analytics Measurement ID to track site visits and engagement behavior dynamically.</p>
+                </div>
+
+                {/* Google AdSense ID */}
+                <div className="space-y-1.5">
+                  <label className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider block">
+                    Google AdSense Client ID
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. ca-pub-XXXXXXXXXXXXXXXX"
+                    value={adsenseClientId}
+                    onChange={(e) => setAdsenseClientId(e.target.value)}
+                    className="w-full bg-slate-950/60 border border-slate-800 rounded-xl p-3 text-xs text-slate-100 focus:outline-none focus:border-teal-500 font-mono"
+                  />
+                  <p className="text-[10px] text-slate-500">Google AdSense Publisher/Client ID to load third-party display advertisements dynamically.</p>
                 </div>
 
                 {/* Campaign Settings Header */}
