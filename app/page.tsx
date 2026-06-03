@@ -1439,7 +1439,7 @@ function LandingPageView({ listings, trendingListings, lang }: { listings: any[]
             {listings.slice(0, 8).map((item) => (
               <Link
                 key={item.id}
-                href="/register"
+                href={`/listing/${item.id}`}
                 className="group bg-slate-900/40 border border-slate-900 hover:border-slate-800/80 rounded-2xl overflow-hidden flex flex-col shadow-lg transition-all hover:scale-[1.01] hover:-translate-y-0.5"
               >
                 <div className="aspect-square relative overflow-hidden bg-slate-950">
