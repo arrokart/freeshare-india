@@ -258,7 +258,7 @@ $$ LANGUAGE plpgsql;
 -- =====================================================================
 
 -- Enable RLS on users
-ALTER TABLE public.users DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
 
 -- Policy: Allow public profile insertion during sign-up
 CREATE POLICY "Allow public insert on users" 
@@ -309,5 +309,98 @@ CREATE POLICY "Allow individual delete on listings"
 ON public.listings 
 FOR DELETE 
 USING (auth.uid() = donor_id);
+
+
+-- =====================================================================
+-- RLS POLICIES FOR CLAIMS, MESSAGES, REVIEWS, NOTIFICATIONS, REPORTS
+-- =====================================================================
+
+-- 1. Claims security
+ALTER TABLE public.claims ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Allow view relevant claims" 
+ON public.claims 
+FOR SELECT 
+USING (auth.uid() = receiver_id OR EXISTS (
+  SELECT 1 FROM public.listings 
+  WHERE listings.id = claims.listing_id AND listings.donor_id = auth.uid()
+));
+
+CREATE POLICY "Allow authenticated user insert claims" 
+ON public.claims 
+FOR INSERT 
+WITH CHECK (auth.uid() = receiver_id);
+
+CREATE POLICY "Allow update relevant claims" 
+ON public.claims 
+FOR UPDATE 
+USING (auth.uid() = receiver_id OR EXISTS (
+  SELECT 1 FROM public.listings 
+  WHERE listings.id = claims.listing_id AND listings.donor_id = auth.uid()
+));
+
+-- 2. Messages security
+ALTER TABLE public.messages ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Allow members of claim to select messages" 
+ON public.messages 
+FOR SELECT 
+USING (EXISTS (
+  SELECT 1 FROM public.claims 
+  WHERE claims.id = messages.claim_id AND (
+    claims.receiver_id = auth.uid() OR EXISTS (
+      SELECT 1 FROM public.listings 
+      WHERE listings.id = claims.listing_id AND listings.donor_id = auth.uid()
+    )
+  )
+));
+
+CREATE POLICY "Allow members of claim to insert messages" 
+ON public.messages 
+FOR INSERT 
+WITH CHECK (auth.uid() = sender_id AND EXISTS (
+  SELECT 1 FROM public.claims 
+  WHERE claims.id = messages.claim_id AND (
+    claims.receiver_id = auth.uid() OR EXISTS (
+      SELECT 1 FROM public.listings 
+      WHERE listings.id = claims.listing_id AND listings.donor_id = auth.uid()
+    )
+  )
+));
+
+-- 3. Reviews security
+ALTER TABLE public.reviews ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Allow public read on reviews" 
+ON public.reviews 
+FOR SELECT 
+USING (true);
+
+CREATE POLICY "Allow authenticated insert on reviews" 
+ON public.reviews 
+FOR INSERT 
+WITH CHECK (auth.uid() = reviewer_id);
+
+-- 4. Notifications security
+ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Allow users to view their own notifications" 
+ON public.notifications 
+FOR SELECT 
+USING (auth.uid() = user_id);
+
+CREATE POLICY "Allow users to update their own notifications" 
+ON public.notifications 
+FOR UPDATE 
+USING (auth.uid() = user_id);
+
+-- 5. Reports security
+ALTER TABLE public.reports ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Allow authenticated insert on reports" 
+ON public.reports 
+FOR INSERT 
+WITH CHECK (auth.uid() = reporter_id);
+
 
 
