@@ -32,6 +32,7 @@ export default function UserProfilePage() {
   const [editCity, setEditCity] = useState("");
   const [editArea, setEditArea] = useState("");
   const [editPincode, setEditPincode] = useState("");
+  const [editGender, setEditGender] = useState("Male");
   const [editPhone, setEditPhone] = useState("");
   const [editShowPhone, setEditShowPhone] = useState(false);
   const [saveLoading, setSaveLoading] = useState(false);
@@ -132,6 +133,7 @@ export default function UserProfilePage() {
     setEditCity(profile.city || "");
     setEditArea(profile.area || "");
     setEditPincode(profile.pincode || "");
+    setEditGender(profile.gender || "Male");
     setEditPhone(profile.phone || "");
     setEditShowPhone(!!profile.show_phone);
     setIsEditing(true);
@@ -171,6 +173,7 @@ export default function UserProfilePage() {
           city: normalizedCity,
           area: editArea,
           pincode: editPincode,
+          gender: editGender,
           phone: editPhone,
           show_phone: editShowPhone,
           updated_at: new Date().toISOString()
@@ -186,6 +189,7 @@ export default function UserProfilePage() {
           city: normalizedCity,
           area: editArea,
           pincode: editPincode,
+          gender: editGender,
         }
       });
 
@@ -197,6 +201,7 @@ export default function UserProfilePage() {
         city: normalizedCity,
         area: editArea,
         pincode: editPincode,
+        gender: editGender,
         phone: editPhone,
         show_phone: editShowPhone,
       }));
@@ -365,7 +370,7 @@ export default function UserProfilePage() {
                 </div>
 
                 {/* Pincode */}
-                <div className="space-y-1 sm:col-span-2">
+                <div className="space-y-1">
                   <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest block">Pincode</label>
                   <input
                     type="text"
@@ -374,6 +379,21 @@ export default function UserProfilePage() {
                     onChange={(e) => setEditPincode(e.target.value)}
                     className="w-full bg-slate-950/40 border border-slate-800/80 rounded-xl py-2 px-3 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-teal-500/80 focus:ring-1 focus:ring-teal-500/10 transition-all"
                   />
+                </div>
+
+                {/* Gender */}
+                <div className="space-y-1">
+                  <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest block">Gender</label>
+                  <select
+                    required
+                    value={editGender}
+                    onChange={(e) => setEditGender(e.target.value)}
+                    className="w-full bg-slate-950/40 border border-slate-800/80 rounded-xl py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-teal-500/80 focus:ring-1 focus:ring-teal-500/10 transition-all [color-scheme:dark]"
+                  >
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
+                  </select>
                 </div>
 
                 {/* Bio */}
@@ -478,6 +498,14 @@ export default function UserProfilePage() {
                       <span className="flex items-center gap-1">
                         <MapPin size={13} className="text-slate-500" /> {profile.area}, {profile.city} {isOwner && profile.pincode ? `(${profile.pincode})` : ""}
                       </span>
+                      {profile.gender && (
+                        <>
+                          <span className="text-slate-700">•</span>
+                          <span className="flex items-center gap-1">
+                            <span className="text-slate-500 font-medium">Gender:</span> {profile.gender}
+                          </span>
+                        </>
+                      )}
                       <span className="text-slate-700">•</span>
                       <span className="flex items-center gap-1">
                         <Calendar size={13} className="text-slate-500" /> Joined {new Date(profile.created_at).toLocaleDateString([], { month: "short", year: "numeric" })}
