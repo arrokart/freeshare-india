@@ -61,6 +61,7 @@ export default function HomeFeed() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [selectedCondition, setSelectedCondition] = useState("All");
+  const [selectedListingType, setSelectedListingType] = useState<"all" | "item" | "skill">("all");
 
   // Geolocation & Proximity States
   const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null);
@@ -378,6 +379,7 @@ export default function HomeFeed() {
         if (searchTerm) queryParams.set("search", searchTerm);
         if (selectedCategory) queryParams.set("category", selectedCategory);
         if (selectedCondition) queryParams.set("condition", selectedCondition);
+        if (selectedListingType !== "all") queryParams.set("listing_type", selectedListingType);
         
         if (userCoords && selectedRadius !== "All") {
           queryParams.set("latitude", userCoords.lat.toString());
@@ -407,7 +409,7 @@ export default function HomeFeed() {
     }, 300);
 
     return () => clearTimeout(delayDebounceFn);
-  }, [searchTerm, selectedCategory, selectedCondition, userCoords, selectedRadius, selectedLocation]);
+  }, [searchTerm, selectedCategory, selectedCondition, selectedListingType, userCoords, selectedRadius, selectedLocation]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -766,10 +768,10 @@ export default function HomeFeed() {
         <div className="flex flex-col sm:flex-row justify-between items-center gap-6">
           <div className="space-y-2">
             <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight">
-              Find Free Items <span className="bg-gradient-to-r from-teal-400 to-emerald-400 bg-clip-text text-transparent">Nearby</span>
+              Find Free Items &amp; <span className="bg-gradient-to-r from-teal-400 to-emerald-400 bg-clip-text text-transparent">Skills Nearby</span>
             </h1>
             <p className="text-sm text-slate-400 max-w-md">
-              Reduce landfill waste. Declutter your home. Help your neighbors inside India's free sharing hub.
+              Reduce landfill waste. Declutter your home. Share your talent. Help your neighbors inside India's free sharing hub.
             </p>
           </div>
         </div>
@@ -825,7 +827,30 @@ export default function HomeFeed() {
           </div>
         </div>
 
-        {/* Category horizontal scrolling bar */}
+        {/* Listing type pills */}
+        <div className="flex items-center gap-2 overflow-x-auto py-1 no-scrollbar">
+          {(["all", "item", "skill"] as const).map((type) => (
+            <button
+              key={type}
+              onClick={() => {
+                setSelectedListingType(type);
+                setSelectedCategory("All");
+              }}
+              className={`px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all border ${
+                selectedListingType === type
+                  ? type === "skill"
+                    ? "bg-violet-500/10 border-violet-500/40 text-violet-400"
+                    : "bg-teal-500/10 border-teal-500/40 text-teal-400"
+                  : "bg-slate-900/60 border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700"
+              }`}
+            >
+              {type === "all" ? "🌐 All" : type === "item" ? "📦 Items" : "🎯 Skills"}
+            </button>
+          ))}
+        </div>
+
+        {/* Category horizontal scrolling bar — hidden when Skills only selected */}
+        {selectedListingType !== "skill" && (
         <div className="flex items-center gap-2 overflow-x-auto py-2 no-scrollbar scroll-smooth">
           {CATEGORIES.map((cat) => (
             <button
@@ -841,6 +866,7 @@ export default function HomeFeed() {
             </button>
           ))}
         </div>
+        )}
       </div>
       {/* Proximity Map Section */}
       {selectedRadius !== "All" && userCoords && (
@@ -875,25 +901,47 @@ export default function HomeFeed() {
                   <span className="text-[10px] text-slate-500 font-semibold">Most viewed nearby</span>
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
-                  {trendingListings.map((item) => (
+                  {trendingListings.map((item) => {
+                    const isSkill = item.listing_type === "skill";
+                    return (
                     <Link
                       key={`trending-${item.id}`}
                       href={`/listing/${item.id}`}
-                      className="group bg-slate-900/40 border border-slate-900 hover:border-slate-800/80 rounded-2xl overflow-hidden flex flex-col shadow-lg transition-all hover:scale-[1.01] hover:-translate-y-0.5"
+                      className={`group border rounded-2xl overflow-hidden flex flex-col shadow-lg transition-all hover:scale-[1.01] hover:-translate-y-0.5 ${
+                        isSkill
+                          ? "bg-violet-950/20 border-violet-900/40 hover:border-violet-700/50"
+                          : "bg-slate-900/40 border-slate-900 hover:border-slate-800/80"
+                      }`}
                     >
                       <div className="aspect-square relative overflow-hidden bg-slate-950">
-                        <img
-                          src={item.images?.[0]}
-                          alt={item.title}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                        />
-                        <span className="absolute top-1.5 left-1.5 sm:top-2.5 sm:left-2.5 text-[8px] sm:text-[9px] font-extrabold uppercase px-1.5 py-0.5 sm:px-2 sm:py-1 rounded bg-black/60 backdrop-blur-md text-teal-400 tracking-wider">
-                          {item.condition}
+                        {isSkill ? (
+                          <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-violet-950/60 to-slate-950">
+                            <div className="w-14 h-14 sm:w-20 sm:h-20 rounded-full overflow-hidden border-2 border-violet-500/30 mb-2">
+                              {item.donor?.avatar_url
+                                ? <img src={item.donor.avatar_url} alt={item.donor?.name} className="w-full h-full object-cover" />
+                                : <div className="w-full h-full bg-violet-900/50 flex items-center justify-center text-2xl">🎯</div>
+                              }
+                            </div>
+                            <span className="text-[10px] text-violet-400 font-bold">{item.donor?.name?.split(" ")[0]}</span>
+                          </div>
+                        ) : (
+                          <img
+                            src={item.images?.[0]}
+                            alt={item.title}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          />
+                        )}
+                        <span className={`absolute top-1.5 left-1.5 sm:top-2.5 sm:left-2.5 text-[8px] sm:text-[9px] font-extrabold uppercase px-1.5 py-0.5 sm:px-2 sm:py-1 rounded bg-black/60 backdrop-blur-md tracking-wider ${
+                          isSkill ? "text-violet-400" : "text-teal-400"
+                        }`}>
+                          {isSkill ? (item.skill_duration || "Free") : item.condition}
                         </span>
                       </div>
                       <div className="p-2.5 sm:p-4 flex-1 flex flex-col justify-between">
                         <div className="space-y-1 sm:space-y-1.5">
-                          <h3 className="font-bold text-[11px] sm:text-sm text-slate-100 group-hover:text-teal-400 transition-colors line-clamp-1">
+                          <h3 className={`font-bold text-[11px] sm:text-sm text-slate-100 transition-colors line-clamp-1 ${
+                            isSkill ? "group-hover:text-violet-400" : "group-hover:text-teal-400"
+                          }`}>
                             {item.title}
                           </h3>
                           <p className="text-xs text-slate-400 line-clamp-2 hidden sm:block">
@@ -910,11 +958,15 @@ export default function HomeFeed() {
                               </span>
                             )}
                           </div>
-                          <span className="shrink-0">🔥 {item.view_count || 0} <span className="hidden xs:inline">views</span></span>
+                          {isSkill
+                            ? <span className="shrink-0 text-violet-400 font-bold">🎯 Free Skill</span>
+                            : <span className="shrink-0">🔥 {item.view_count || 0} <span className="hidden xs:inline">views</span></span>
+                          }
                         </div>
                       </div>
                     </Link>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -932,25 +984,47 @@ export default function HomeFeed() {
                 )}
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
-                {listings.map((item) => (
+                {listings.map((item) => {
+                    const isSkill = item.listing_type === "skill";
+                    return (
                   <Link
                     key={item.id}
                     href={`/listing/${item.id}`}
-                    className="group bg-slate-900/40 border border-slate-900 hover:border-slate-800/80 rounded-2xl overflow-hidden flex flex-col shadow-lg transition-all hover:scale-[1.01] hover:-translate-y-0.5"
+                    className={`group border rounded-2xl overflow-hidden flex flex-col shadow-lg transition-all hover:scale-[1.01] hover:-translate-y-0.5 ${
+                      isSkill
+                        ? "bg-violet-950/20 border-violet-900/40 hover:border-violet-700/50"
+                        : "bg-slate-900/40 border-slate-900 hover:border-slate-800/80"
+                    }`}
                   >
                     <div className="aspect-square relative overflow-hidden bg-slate-950">
-                      <img
-                        src={item.images?.[0]}
-                        alt={item.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                      />
-                      <span className="absolute top-1.5 left-1.5 sm:top-2.5 sm:left-2.5 text-[8px] sm:text-[9px] font-extrabold uppercase px-1.5 py-0.5 sm:px-2 sm:py-1 rounded bg-black/60 backdrop-blur-md text-teal-400 tracking-wider">
-                        {item.condition}
+                      {isSkill ? (
+                        <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-violet-950/60 to-slate-950">
+                          <div className="w-14 h-14 sm:w-20 sm:h-20 rounded-full overflow-hidden border-2 border-violet-500/30 mb-2">
+                            {item.donor?.avatar_url
+                              ? <img src={item.donor.avatar_url} alt={item.donor?.name} className="w-full h-full object-cover" />
+                              : <div className="w-full h-full bg-violet-900/50 flex items-center justify-center text-2xl">🎯</div>
+                            }
+                          </div>
+                          <span className="text-[10px] text-violet-400 font-bold">{item.donor?.name?.split(" ")[0]}</span>
+                        </div>
+                      ) : (
+                        <img
+                          src={item.images?.[0]}
+                          alt={item.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        />
+                      )}
+                      <span className={`absolute top-1.5 left-1.5 sm:top-2.5 sm:left-2.5 text-[8px] sm:text-[9px] font-extrabold uppercase px-1.5 py-0.5 sm:px-2 sm:py-1 rounded bg-black/60 backdrop-blur-md tracking-wider ${
+                        isSkill ? "text-violet-400" : "text-teal-400"
+                      }`}>
+                        {isSkill ? (item.skill_duration || "Free") : item.condition}
                       </span>
                     </div>
                     <div className="p-2.5 sm:p-4 flex-1 flex flex-col justify-between">
                       <div className="space-y-1 sm:space-y-1.5">
-                        <h3 className="font-bold text-[11px] sm:text-sm text-slate-100 group-hover:text-teal-400 transition-colors line-clamp-1">
+                        <h3 className={`font-bold text-[11px] sm:text-sm text-slate-100 transition-colors line-clamp-1 ${
+                          isSkill ? "group-hover:text-violet-400" : "group-hover:text-teal-400"
+                        }`}>
                           {item.title}
                         </h3>
                         <p className="text-xs text-slate-400 line-clamp-2 hidden sm:block">
@@ -967,11 +1041,15 @@ export default function HomeFeed() {
                             </span>
                           )}
                         </div>
-                        <span className="shrink-0">{new Date(item.created_at).toLocaleDateString(undefined, {month: "short", day: "numeric"})}</span>
+                        {isSkill
+                          ? <span className="shrink-0 text-violet-400 font-bold">🎯 Free Skill</span>
+                          : <span className="shrink-0">{new Date(item.created_at).toLocaleDateString(undefined, {month: "short", day: "numeric"})}</span>
+                        }
                       </div>
                     </div>
                   </Link>
-                ))}
+                    );
+                  })}
               </div>
             </div>
           </>

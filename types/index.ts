@@ -16,6 +16,20 @@ export type ListingCategory =
 
 export type ItemCondition = 'Like New' | 'Good' | 'Fair' | 'Needs Repair';
 
+export type ListingType = 'item' | 'skill';
+
+export type SkillCategory =
+  | 'Teaching'
+  | 'Repair'
+  | 'Creative'
+  | 'Fitness'
+  | 'Tech Help'
+  | 'Cooking'
+  | 'Language'
+  | 'Other';
+
+export type SkillDuration = '15 min' | '30 min' | '1 hour' | 'Flexible';
+
 export type ListingStatus = 'available' | 'reserved' | 'completed' | 'removed';
 
 export type ClaimStatus =
@@ -55,16 +69,19 @@ export interface Listing {
   donor_id: string;
   title: string;
   description: string;
-  category: ListingCategory;
-  condition: ItemCondition;
+  category: ListingCategory | SkillCategory;
+  condition?: ItemCondition;
   images: string[];
   city: string;
   area: string;
   landmark?: string;
+  pincode?: string;
   status: ListingStatus;
   receiver_preference: 'all' | 'ngo_only' | 'high_trust';
   active_claim_id?: string;
   view_count: number;
+  listing_type?: ListingType;
+  skill_duration?: SkillDuration;
   created_at: string;
   completed_at?: string;
 }

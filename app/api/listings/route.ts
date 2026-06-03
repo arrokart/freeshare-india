@@ -29,6 +29,7 @@ export async function GET(request: Request) {
     const sortBy = searchParams.get("sort_by");
     const city = searchParams.get("city");
     const pincode = searchParams.get("pincode");
+    const listingType = searchParams.get("listing_type"); // 'item' | 'skill' | null (all)
 
     let query = supabase
       .from("listings")
@@ -43,6 +44,11 @@ export async function GET(request: Request) {
       query = query.order("view_count", { ascending: false });
     } else {
       query = query.order("created_at", { ascending: false });
+    }
+
+    // Listing type filter (items vs skills)
+    if (listingType && listingType !== "all") {
+      query = query.eq("listing_type", listingType);
     }
 
     // Category filter
@@ -150,12 +156,22 @@ export async function POST(request: Request) {
       receiver_preference,
       latitude,
       longitude,
+      listing_type,
+      skill_duration,
     } = body;
 
-    // Validate parameters
-    if (!donor_id || !title || !description || !category || !condition || !images || !images.length) {
+    const isSkill = listing_type === "skill";
+
+    // Validate parameters — images optional for skills
+    if (!donor_id || !title || !description || !category) {
       return NextResponse.json(
         { error: "Missing required listing parameters" },
+        { status: 400 }
+      );
+    }
+    if (!isSkill && (!condition || !images || !images.length)) {
+      return NextResponse.json(
+        { error: "Item listings require condition and at least one image" },
         { status: 400 }
       );
     }
@@ -173,8 +189,8 @@ export async function POST(request: Request) {
         title,
         description,
         category,
-        condition,
-        images,
+        condition: isSkill ? null : condition,
+        images: images || [],
         city,
         area,
         landmark,
@@ -182,6 +198,8 @@ export async function POST(request: Request) {
         location: locationData,
         receiver_preference: receiver_preference || "all",
         status: "available",
+        listing_type: listing_type || "item",
+        skill_duration: isSkill ? (skill_duration || null) : null,
       })
       .select();
 
@@ -216,12 +234,22 @@ export async function PUT(request: Request) {
       receiver_preference,
       latitude,
       longitude,
+      listing_type,
+      skill_duration,
     } = body;
 
+    const isSkill = listing_type === "skill";
+
     // Validate parameters
-    if (!id || !donor_id || !title || !description || !category || !condition || !images || !images.length) {
+    if (!id || !donor_id || !title || !description || !category) {
       return NextResponse.json(
         { error: "Missing required listing parameters" },
+        { status: 400 }
+      );
+    }
+    if (!isSkill && (!condition || !images || !images.length)) {
+      return NextResponse.json(
+        { error: "Item listings require condition and at least one image" },
         { status: 400 }
       );
     }
@@ -259,14 +287,16 @@ export async function PUT(request: Request) {
         title,
         description,
         category,
-        condition,
-        images,
+        condition: isSkill ? null : condition,
+        images: images || [],
         city,
         area,
         landmark,
         pincode,
         location: locationData,
         receiver_preference: receiver_preference || "all",
+        listing_type: listing_type || "item",
+        skill_duration: isSkill ? (skill_duration || null) : null,
         is_flagged: false,
         updated_at: new Date().toISOString()
       })

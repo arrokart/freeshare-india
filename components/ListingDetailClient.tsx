@@ -865,13 +865,27 @@ export default function ListingDetailClient({ initialListing }: { initialListing
             <div className="space-y-3">
               {/* Badges row */}
               <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-extrabold uppercase tracking-widest px-2.5 py-1 rounded-md bg-teal-500/10 text-teal-400 border border-teal-500/20">
-                    {listing.category}
-                  </span>
-                  <span className="text-[10px] font-extrabold uppercase tracking-widest px-2.5 py-1 rounded-md bg-slate-800 text-slate-300">
-                    {listing.condition}
-                  </span>
+              <div className="flex items-center gap-2">
+                  {listing.listing_type === "skill" ? (
+                    <span className="text-[10px] font-extrabold uppercase tracking-widest px-2.5 py-1 rounded-md bg-violet-500/10 text-violet-400 border border-violet-500/20">
+                      🎯 {listing.category}
+                    </span>
+                  ) : (
+                    <span className="text-[10px] font-extrabold uppercase tracking-widest px-2.5 py-1 rounded-md bg-teal-500/10 text-teal-400 border border-teal-500/20">
+                      {listing.category}
+                    </span>
+                  )}
+                  {listing.listing_type === "skill" ? (
+                    listing.skill_duration && (
+                      <span className="text-[10px] font-extrabold uppercase tracking-widest px-2.5 py-1 rounded-md bg-violet-900/40 text-violet-300 border border-violet-800/40">
+                        ⏱ {listing.skill_duration}
+                      </span>
+                    )
+                  ) : (
+                    <span className="text-[10px] font-extrabold uppercase tracking-widest px-2.5 py-1 rounded-md bg-slate-800 text-slate-300">
+                      {listing.condition}
+                    </span>
+                  )}
                 </div>
                 {userId && listing.donor_id !== userId && (
                   <button
@@ -947,7 +961,7 @@ export default function ListingDetailClient({ initialListing }: { initialListing
                   href={`/login?next=/listing/${listing.id}`}
                   className="w-full bg-slate-900 border border-slate-800 text-slate-200 font-bold py-3.5 px-4 rounded-xl flex items-center justify-center gap-2 hover:bg-slate-800 transition-colors"
                 >
-                  Sign in to Claim Item
+                  Sign in to {listing.listing_type === "skill" ? "Request Session" : "Claim Item"}
                 </Link>
               ) : userClaimed ? (
                 <div className="p-4 rounded-xl bg-teal-500/10 border border-teal-500/20 text-teal-400 text-xs text-center font-semibold">
@@ -1041,14 +1055,14 @@ export default function ListingDetailClient({ initialListing }: { initialListing
                     <button
                       type="submit"
                       disabled={claiming}
-                      className="w-full bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-400 hover:to-emerald-400 text-slate-950 font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all active:scale-[0.99] disabled:opacity-50 text-sm"
+                      className={`w-full bg-gradient-to-r ${listing.listing_type === "skill" ? "from-violet-500 to-purple-500 hover:from-violet-400 hover:to-purple-400" : "from-teal-500 to-emerald-500 hover:from-teal-400 hover:to-emerald-400"} text-slate-950 font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all active:scale-[0.99] disabled:opacity-50 text-sm`}
                     >
                       {claiming ? (
                         <Loader2 className="animate-spin text-slate-950" size={16} />
                       ) : (
                         <>
                           <Send size={14} />
-                          Claim Item
+                          {listing.listing_type === "skill" ? "Request Session" : "Claim Item"}
                         </>
                       )}
                     </button>

@@ -5,26 +5,47 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
 import { getR2PublicUrl } from "@/lib/r2";
-import { Upload, X, Loader2, ArrowLeft, Image as ImageIcon, MapPin } from "lucide-react";
+import { Upload, X, Loader2, ArrowLeft, MapPin, Zap, Package } from "lucide-react";
 import CityAutocomplete from "@/components/CityAutocomplete";
 import { normalizeCityName } from "@/lib/cities";
 
-const CATEGORIES = [
-  "Furniture", "Electronics", "Books", "Clothing", "Toys", 
+const ITEM_CATEGORIES = [
+  "Furniture", "Electronics", "Books", "Clothing", "Toys",
   "Kitchen", "Appliances", "Sports", "Office", "Miscellaneous"
 ];
 
+const SKILL_CATEGORIES = [
+  "Teaching", "Repair", "Creative", "Fitness", "Tech Help", "Cooking", "Language", "Other"
+];
+
 const CONDITIONS = ["Like New", "Good", "Fair", "Needs Repair"];
+const SKILL_DURATIONS = ["15 min", "30 min", "1 hour", "Flexible"];
+
+// Skill category display config
+const SKILL_CATEGORY_META: Record<string, { emoji: string; color: string }> = {
+  Teaching:   { emoji: "📚", color: "violet" },
+  Repair:     { emoji: "🔧", color: "orange" },
+  Creative:   { emoji: "🎨", color: "pink" },
+  Fitness:    { emoji: "💪", color: "green" },
+  "Tech Help":{ emoji: "💻", color: "blue" },
+  Cooking:    { emoji: "🍳", color: "yellow" },
+  Language:   { emoji: "🗣️", color: "teal" },
+  Other:      { emoji: "✨", color: "slate" },
+};
 
 export default function DonatePage() {
   const router = useRouter();
   const [userId, setUserId] = useState<string | null>(null);
+
+  // Listing type toggle
+  const [listingType, setListingType] = useState<"item" | "skill">("item");
 
   // Form Fields
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("");
   const [condition, setCondition] = useState("");
+  const [skillDuration, setSkillDuration] = useState("");
   const [city, setCity] = useState("");
   const [area, setArea] = useState("");
   const [landmark, setLandmark] = useState("");
@@ -42,14 +63,12 @@ export default function DonatePage() {
   const [successMsg, setSuccessMsg] = useState("");
 
   useEffect(() => {
-    // Fetch authenticated user info
     const checkUser = async () => {
       const { data } = await supabase.auth.getUser();
       if (!data?.user) {
         router.push("/login?next=/donate");
       } else {
         setUserId(data.user.id);
-        // Pre-fill location if available
         setCity(data.user.user_metadata?.city || "");
         setArea(data.user.user_metadata?.area || "");
         setPincode(data.user.user_metadata?.pincode || "");
@@ -58,7 +77,15 @@ export default function DonatePage() {
     checkUser();
   }, [router]);
 
-  // Reverse-geocode coordinates to auto-fill city, area, pincode
+  // Reset category/condition when switching listing type
+  useEffect(() => {
+    setCategory("");
+    setCondition("");
+    setSkillDuration("");
+    setImages([]);
+    setPreviews([]);
+  }, [listingType]);
+
   const reverseGeocode = async (lat: number, lng: number) => {
     try {
       const res = await fetch(
@@ -73,11 +100,10 @@ export default function DonatePage() {
       if (detectedArea) setArea(detectedArea);
       if (detectedPincode) setPincode(detectedPincode);
     } catch {
-      // Reverse geocode failed silently — user can still type manually
+      // Reverse geocode failed silently
     }
   };
 
-  // Geolocate user coordinates helper
   const handleAutoDetectLocation = () => {
     setDetectingLocation(true);
     setErrorMsg("");
@@ -89,7 +115,6 @@ export default function DonatePage() {
         if (data.latitude && data.longitude) {
           setLatitude(data.latitude);
           setLongitude(data.longitude);
-          // Auto-fill city/pincode from IP data directly
           if (data.city) setCity(normalizeCityName(data.city));
           if (data.postal) setPincode(data.postal);
           if (data.region) setArea(data.region);
@@ -112,7 +137,6 @@ export default function DonatePage() {
           const { latitude, longitude } = position.coords;
           setLatitude(latitude);
           setLongitude(longitude);
-          // Reverse-geocode to auto-fill city/area/pincode
           reverseGeocode(latitude, longitude);
           setDetectingLocation(false);
         },
@@ -127,7 +151,6 @@ export default function DonatePage() {
     }
   };
 
-  // Client-side canvas compression logic
   const compressImage = (file: File): Promise<Blob> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -142,17 +165,10 @@ export default function DonatePage() {
           let width = img.width;
           let height = img.height;
 
-          // Scale proportion calculation
           if (width > height) {
-            if (width > MAX_WIDTH) {
-              height *= MAX_WIDTH / width;
-              width = MAX_WIDTH;
-            }
+            if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
           } else {
-            if (height > MAX_HEIGHT) {
-              width *= MAX_HEIGHT / height;
-              height = MAX_HEIGHT;
-            }
+            if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; }
           }
 
           canvas.width = width;
@@ -160,17 +176,13 @@ export default function DonatePage() {
           const ctx = canvas.getContext("2d");
           ctx?.drawImage(img, 0, 0, width, height);
 
-          // Compress to WebP under 400KB
           canvas.toBlob(
             (blob) => {
-              if (blob) {
-                resolve(blob);
-              } else {
-                reject(new Error("Image compression failed"));
-              }
+              if (blob) resolve(blob);
+              else reject(new Error("Image compression failed"));
             },
             "image/webp",
-            0.8 // 80% compression quality
+            0.8
           );
         };
       };
@@ -216,8 +228,20 @@ export default function DonatePage() {
     e.preventDefault();
     if (!userId) return;
 
-    if (images.length === 0) {
+    const isSkill = listingType === "skill";
+
+    if (!isSkill && images.length === 0) {
       setErrorMsg("Please upload at least 1 image of the item.");
+      return;
+    }
+
+    if (!category) {
+      setErrorMsg("Please select a category.");
+      return;
+    }
+
+    if (!isSkill && !condition) {
+      setErrorMsg("Please select the item condition.");
       return;
     }
 
@@ -228,40 +252,29 @@ export default function DonatePage() {
     try {
       const uploadedUrls: string[] = [];
 
-      // Step 1: Upload compressed files to Cloudflare R2 using pre-signed URLs
+      // Upload images (only if any provided)
       for (const file of images) {
         const presignRes = await fetch("/api/listings/presign", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            filename: file.name,
-            fileType: file.type,
-          }),
+          body: JSON.stringify({ filename: file.name, fileType: file.type }),
         });
 
         const { uploadUrl, fileKey } = await presignRes.json();
+        if (!uploadUrl) throw new Error("Failed to fetch pre-signed upload URL");
 
-        if (!uploadUrl) {
-          throw new Error("Failed to fetch pre-signed upload URL");
-        }
-
-        // Put request directly to R2 bucket
         const uploadRes = await fetch(uploadUrl, {
           method: "PUT",
           headers: { "Content-Type": file.type },
           body: file,
         });
 
-        if (!uploadRes.ok) {
-          throw new Error("Failed to upload image directly to storage");
-        }
+        if (!uploadRes.ok) throw new Error("Failed to upload image directly to storage");
 
-        // Build CDN URL
         const publicUrl = getR2PublicUrl(fileKey) || `https://pub-placeholder-domain.r2.dev/${fileKey}`;
         uploadedUrls.push(publicUrl);
       }
 
-      // Step 2: Save metadata to listings DB table
       const listingRes = await fetch("/api/listings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -270,7 +283,7 @@ export default function DonatePage() {
           title,
           description,
           category,
-          condition,
+          condition: isSkill ? null : condition,
           images: uploadedUrls,
           city: normalizeCityName(city),
           area,
@@ -279,14 +292,13 @@ export default function DonatePage() {
           receiver_preference: receiverPreference,
           latitude,
           longitude,
+          listing_type: listingType,
+          skill_duration: isSkill ? skillDuration : null,
         }),
       });
 
       const listingData = await listingRes.json();
-
-      if (!listingRes.ok) {
-        throw new Error(listingData.error || "Failed to create listing record");
-      }
+      if (!listingRes.ok) throw new Error(listingData.error || "Failed to create listing record");
 
       const searchParams = new URLSearchParams(window.location.search);
       const assignNgoId = searchParams.get("assignNgoId");
@@ -303,18 +315,14 @@ export default function DonatePage() {
         });
         const directData = await directDonateRes.json();
         if (directDonateRes.ok && directData.claimId) {
-          setSuccessMsg("Donation listing created and assigned directly to the NGO! Redirecting to chat...");
-          setTimeout(() => {
-            router.push(`/chat/${directData.claimId}`);
-          }, 1500);
+          setSuccessMsg("Listing created and assigned to NGO! Redirecting to chat...");
+          setTimeout(() => router.push(`/chat/${directData.claimId}`), 1500);
           return;
         }
       }
 
-      setSuccessMsg("Listing created successfully! Going to Home Feed...");
-      setTimeout(() => {
-        router.push("/");
-      }, 1500);
+      setSuccessMsg(isSkill ? "Skill offer published! Going to Home Feed..." : "Listing created! Going to Home Feed...");
+      setTimeout(() => router.push("/"), 1500);
     } catch (err: any) {
       setErrorMsg(err.message || "An unexpected error occurred during submission.");
     } finally {
@@ -322,8 +330,12 @@ export default function DonatePage() {
     }
   };
 
+  const isSkill = listingType === "skill";
+  const accentClass = isSkill ? "violet" : "teal";
+  const categories = isSkill ? SKILL_CATEGORIES : ITEM_CATEGORIES;
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-slate-100 font-sans pb-12 selection:bg-teal-500 selection:text-black">
+    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-slate-100 font-sans pb-12 selection:bg-violet-500 selection:text-black">
       {/* Navigation Header */}
       <div className="max-w-4xl mx-auto px-4 pt-6 pb-2">
         <Link href="/" className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-teal-400 transition-all group">
@@ -333,12 +345,58 @@ export default function DonatePage() {
       </div>
 
       <div className="max-w-3xl mx-auto bg-slate-900/40 backdrop-blur-xl border border-slate-800 rounded-3xl p-8 shadow-2xl mt-4">
+
+        {/* ─── What are you sharing toggle ─── */}
         <div className="mb-8">
-          <h1 className="text-3xl font-extrabold bg-gradient-to-r from-teal-400 to-emerald-400 bg-clip-text text-transparent">
-            Donate an Item
+          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">What are you sharing today?</p>
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={() => setListingType("item")}
+              className={`flex items-center gap-3 p-4 rounded-2xl border-2 transition-all duration-200 ${
+                !isSkill
+                  ? "border-teal-500/60 bg-teal-500/10 text-teal-400"
+                  : "border-slate-800 bg-slate-950/30 text-slate-400 hover:border-slate-700"
+              }`}
+            >
+              <span className={`flex items-center justify-center w-9 h-9 rounded-xl ${!isSkill ? "bg-teal-500/20" : "bg-slate-800"}`}>
+                <Package size={18} className={!isSkill ? "text-teal-400" : "text-slate-500"} />
+              </span>
+              <div className="text-left">
+                <p className="font-bold text-sm">An Item</p>
+                <p className="text-[10px] text-slate-500 mt-0.5">Physical goods, furniture, clothes…</p>
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setListingType("skill")}
+              className={`flex items-center gap-3 p-4 rounded-2xl border-2 transition-all duration-200 ${
+                isSkill
+                  ? "border-violet-500/60 bg-violet-500/10 text-violet-400"
+                  : "border-slate-800 bg-slate-950/30 text-slate-400 hover:border-slate-700"
+              }`}
+            >
+              <span className={`flex items-center justify-center w-9 h-9 rounded-xl ${isSkill ? "bg-violet-500/20" : "bg-slate-800"}`}>
+                <Zap size={18} className={isSkill ? "text-violet-400" : "text-slate-500"} />
+              </span>
+              <div className="text-left">
+                <p className="font-bold text-sm">A Skill</p>
+                <p className="text-[10px] text-slate-500 mt-0.5">Tutoring, repair help, creative…</p>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        {/* ─── Page Title ─── */}
+        <div className="mb-8 pb-6 border-b border-slate-800/80">
+          <h1 className={`text-3xl font-extrabold bg-gradient-to-r ${isSkill ? "from-violet-400 to-purple-400" : "from-teal-400 to-emerald-400"} bg-clip-text text-transparent`}>
+            {isSkill ? "Share a Skill" : "Donate an Item"}
           </h1>
           <p className="text-sm text-slate-400 mt-1">
-            Give items a second life. List details accurately below.
+            {isSkill
+              ? "Offer your time and talent to neighbors for free."
+              : "Give items a second life. List details accurately below."}
           </p>
         </div>
 
@@ -354,12 +412,12 @@ export default function DonatePage() {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Images Section */}
+
+          {/* ─── Photo Upload ─── */}
           <div className="space-y-3">
             <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider block">
-              Photos (Max 5, Min 1)
+              {isSkill ? "Photo (Optional)" : "Photos (Max 5, Min 1)"}
             </label>
-            
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
               {previews.map((preview, index) => (
                 <div key={index} className="relative aspect-square rounded-xl overflow-hidden bg-slate-950 border border-slate-800 group">
@@ -373,81 +431,121 @@ export default function DonatePage() {
                   </button>
                 </div>
               ))}
-
               {images.length < 5 && (
-                <label className="relative aspect-square rounded-xl border border-dashed border-slate-800 hover:border-teal-500/50 hover:bg-slate-950/40 flex flex-col items-center justify-center cursor-pointer transition-all group">
-                  <Upload size={24} className="text-slate-500 group-hover:text-teal-400 transition-colors" />
-                  <span className="text-[10px] text-slate-500 group-hover:text-slate-400 mt-2 font-medium">Add Photo</span>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    onChange={handleImageChange}
-                    className="hidden"
-                  />
+                <label className={`relative aspect-square rounded-xl border border-dashed ${isSkill ? "border-violet-800/50 hover:border-violet-500/50 hover:bg-violet-950/20" : "border-slate-800 hover:border-teal-500/50 hover:bg-slate-950/40"} flex flex-col items-center justify-center cursor-pointer transition-all group`}>
+                  <Upload size={24} className={`${isSkill ? "text-violet-600 group-hover:text-violet-400" : "text-slate-500 group-hover:text-teal-400"} transition-colors`} />
+                  <span className="text-[10px] text-slate-500 group-hover:text-slate-400 mt-2 font-medium">
+                    {isSkill ? "Add Photo" : "Add Photo"}
+                  </span>
+                  <input type="file" accept="image/*" multiple onChange={handleImageChange} className="hidden" />
                 </label>
               )}
             </div>
             <p className="text-[10px] text-slate-500">
-              * Client-side canvas webp compression automatically processes files.
+              {isSkill
+                ? "* Add a photo of you working or a sample of your skill (optional)."
+                : "* Client-side canvas webp compression automatically processes files."}
             </p>
           </div>
 
-          {/* Title */}
+          {/* ─── Title ─── */}
           <div className="space-y-2">
             <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider block">
-              Title
+              {isSkill ? "Skill Name" : "Title"}
             </label>
             <input
               type="text"
               required
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="e.g., Wooden Study Table for Students"
+              placeholder={isSkill ? "e.g., Free Basic English Tutoring Sessions" : "e.g., Wooden Study Table for Students"}
               minLength={5}
               maxLength={80}
-              className="w-full bg-slate-950/50 border border-slate-800 rounded-xl py-3 px-4 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-teal-500/80 focus:ring-1 focus:ring-teal-500/20 transition-all"
+              className={`w-full bg-slate-950/50 border border-slate-800 rounded-xl py-3 px-4 text-sm text-slate-100 placeholder-slate-600 focus:outline-none ${isSkill ? "focus:border-violet-500/80 focus:ring-1 focus:ring-violet-500/20" : "focus:border-teal-500/80 focus:ring-1 focus:ring-teal-500/20"} transition-all`}
             />
           </div>
 
-          {/* Details Row */}
+          {/* ─── Category + Condition/Duration ─── */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider block">
-                Category
+                {isSkill ? "Skill Category" : "Category"}
               </label>
-              <select
-                required
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                className="w-full bg-slate-950/50 border border-slate-800 rounded-xl py-3 px-4 text-sm text-slate-100 focus:outline-none focus:border-teal-500/80 [color-scheme:dark]"
-              >
-                <option value="">Select Category</option>
-                {CATEGORIES.map((cat) => (
-                  <option key={cat} value={cat}>{cat}</option>
-                ))}
-              </select>
+              {isSkill ? (
+                <div className="grid grid-cols-2 gap-2">
+                  {SKILL_CATEGORIES.map((cat) => {
+                    const meta = SKILL_CATEGORY_META[cat];
+                    const selected = category === cat;
+                    return (
+                      <button
+                        key={cat}
+                        type="button"
+                        onClick={() => setCategory(cat)}
+                        className={`flex items-center gap-2 p-2.5 rounded-xl border text-xs font-semibold transition-all ${
+                          selected
+                            ? "border-violet-500/60 bg-violet-500/10 text-violet-300"
+                            : "border-slate-800 bg-slate-950/30 text-slate-400 hover:border-slate-700 hover:text-slate-300"
+                        }`}
+                      >
+                        <span>{meta.emoji}</span>
+                        <span>{cat}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : (
+                <select
+                  required
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                  className="w-full bg-slate-950/50 border border-slate-800 rounded-xl py-3 px-4 text-sm text-slate-100 focus:outline-none focus:border-teal-500/80 [color-scheme:dark]"
+                >
+                  <option value="">Select Category</option>
+                  {ITEM_CATEGORIES.map((cat) => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                </select>
+              )}
             </div>
 
             <div className="space-y-2">
               <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider block">
-                Condition
+                {isSkill ? "Session Duration" : "Condition"}
               </label>
-              <select
-                required
-                value={condition}
-                onChange={(e) => setCondition(e.target.value)}
-                className="w-full bg-slate-950/50 border border-slate-800 rounded-xl py-3 px-4 text-sm text-slate-100 focus:outline-none focus:border-teal-500/80 [color-scheme:dark]"
-              >
-                <option value="">Select Condition</option>
-                {CONDITIONS.map((cond) => (
-                  <option key={cond} value={cond}>{cond}</option>
-                ))}
-              </select>
+              {isSkill ? (
+                <div className="grid grid-cols-2 gap-2">
+                  {SKILL_DURATIONS.map((dur) => (
+                    <button
+                      key={dur}
+                      type="button"
+                      onClick={() => setSkillDuration(dur)}
+                      className={`p-2.5 rounded-xl border text-xs font-bold transition-all ${
+                        skillDuration === dur
+                          ? "border-violet-500/60 bg-violet-500/10 text-violet-300"
+                          : "border-slate-800 bg-slate-950/30 text-slate-400 hover:border-slate-700"
+                      }`}
+                    >
+                      ⏱ {dur}
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <select
+                  required
+                  value={condition}
+                  onChange={(e) => setCondition(e.target.value)}
+                  className="w-full bg-slate-950/50 border border-slate-800 rounded-xl py-3 px-4 text-sm text-slate-100 focus:outline-none focus:border-teal-500/80 [color-scheme:dark]"
+                >
+                  <option value="">Select Condition</option>
+                  {CONDITIONS.map((cond) => (
+                    <option key={cond} value={cond}>{cond}</option>
+                  ))}
+                </select>
+              )}
             </div>
           </div>
 
-          {/* Description */}
+          {/* ─── Description ─── */}
           <div className="space-y-2">
             <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider block">
               Description
@@ -457,30 +555,25 @@ export default function DonatePage() {
               rows={4}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Provide item details, measurements, and condition details. Helping receivers choose wisely."
+              placeholder={isSkill
+                ? "Describe what you'll help with, your experience level, and what the receiver can expect from the session."
+                : "Provide item details, measurements, and condition details. Helping receivers choose wisely."}
               minLength={20}
               maxLength={500}
-              className="w-full bg-slate-950/50 border border-slate-800 rounded-xl py-3 px-4 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-teal-500/80 focus:ring-1 focus:ring-teal-500/20 transition-all resize-none"
+              className={`w-full bg-slate-950/50 border border-slate-800 rounded-xl py-3 px-4 text-sm text-slate-100 placeholder-slate-600 focus:outline-none ${isSkill ? "focus:border-violet-500/80 focus:ring-1 focus:ring-violet-500/20" : "focus:border-teal-500/80 focus:ring-1 focus:ring-teal-500/20"} transition-all resize-none`}
             />
           </div>
 
-          {/* Location Fields */}
+          {/* ─── Location ─── */}
           <div className="space-y-3">
             <h3 className="text-xs font-semibold text-slate-300 uppercase tracking-wider border-b border-slate-800 pb-2">
-              Meetup & Pickup Location
+              {isSkill ? "Your Location" : "Meetup & Pickup Location"}
             </h3>
-            
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <label className="text-xs text-slate-400 block">City</label>
-                <CityAutocomplete
-                  required
-                  value={city}
-                  onChange={(val) => setCity(val)}
-                  placeholder="e.g. Mumbai"
-                />
+                <CityAutocomplete required value={city} onChange={(val) => setCity(val)} placeholder="e.g. Mumbai" />
               </div>
-
               <div className="space-y-2">
                 <label className="text-xs text-slate-400 block">Area / Neighbourhood</label>
                 <input
@@ -492,7 +585,6 @@ export default function DonatePage() {
                   className="w-full bg-slate-950/50 border border-slate-800 rounded-xl py-3 px-4 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-teal-500/80"
                 />
               </div>
-
               <div className="space-y-2">
                 <label className="text-xs text-slate-400 block">Pincode</label>
                 <input
@@ -502,26 +594,28 @@ export default function DonatePage() {
                   onChange={(e) => setPincode(e.target.value)}
                   placeholder="e.g. 400053"
                   maxLength={10}
-                  className="w-full bg-slate-950/50 border border-slate-800 rounded-xl py-3 px-4 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-teal-500/80 focus:ring-1 focus:ring-teal-500/20"
+                  className="w-full bg-slate-950/50 border border-slate-800 rounded-xl py-3 px-4 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-teal-500/80"
                 />
               </div>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-xs text-slate-400 block">Public Meetup Landmark (Exact address remains hidden initially)</label>
-              <div className="relative group">
-                <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-500 group-focus-within:text-teal-400">
-                  <MapPin size={18} />
-                </span>
-                <input
-                  type="text"
-                  value={landmark}
-                  onChange={(e) => setLandmark(e.target.value)}
-                  placeholder="e.g. Opposite National Park Main Gate"
-                  className="w-full bg-slate-950/50 border border-slate-800 rounded-xl py-3 pl-10 pr-4 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-teal-500/80"
-                />
+            {!isSkill && (
+              <div className="space-y-2">
+                <label className="text-xs text-slate-400 block">Public Meetup Landmark (Exact address remains hidden initially)</label>
+                <div className="relative group">
+                  <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-500 group-focus-within:text-teal-400">
+                    <MapPin size={18} />
+                  </span>
+                  <input
+                    type="text"
+                    value={landmark}
+                    onChange={(e) => setLandmark(e.target.value)}
+                    placeholder="e.g. Opposite National Park Main Gate"
+                    className="w-full bg-slate-950/50 border border-slate-800 rounded-xl py-3 pl-10 pr-4 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-teal-500/80"
+                  />
+                </div>
               </div>
-            </div>
+            )}
 
             <div className="pt-2 flex flex-wrap items-center gap-3">
               <button
@@ -541,64 +635,49 @@ export default function DonatePage() {
             </div>
           </div>
 
-          {/* Preferences */}
+          {/* ─── Receiver Preferences ─── */}
           <div className="space-y-3">
             <h3 className="text-xs font-semibold text-slate-300 uppercase tracking-wider border-b border-slate-800 pb-2">
-              Receiver Preferences
+              {isSkill ? "Who Can Request?" : "Receiver Preferences"}
             </h3>
-            
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <label className="flex items-center gap-3 p-3 bg-slate-950/40 border border-slate-800 hover:border-teal-500/40 rounded-xl cursor-pointer select-none transition-all">
-                <input
-                  type="radio"
-                  name="preference"
-                  value="all"
-                  checked={receiverPreference === "all"}
-                  onChange={() => setReceiverPreference("all")}
-                  className="accent-teal-500"
-                />
-                <span className="text-xs font-medium">Open to All</span>
-              </label>
-
-              <label className="flex items-center gap-3 p-3 bg-slate-950/40 border border-slate-800 hover:border-teal-500/40 rounded-xl cursor-pointer select-none transition-all">
-                <input
-                  type="radio"
-                  name="preference"
-                  value="ngo_only"
-                  checked={receiverPreference === "ngo_only"}
-                  onChange={() => setReceiverPreference("ngo_only")}
-                  className="accent-teal-500"
-                />
-                <span className="text-xs font-medium">Verified NGOs First</span>
-              </label>
-
-              <label className="flex items-center gap-3 p-3 bg-slate-950/40 border border-slate-800 hover:border-teal-500/40 rounded-xl cursor-pointer select-none transition-all">
-                <input
-                  type="radio"
-                  name="preference"
-                  value="high_trust"
-                  checked={receiverPreference === "high_trust"}
-                  onChange={() => setReceiverPreference("high_trust")}
-                  className="accent-teal-500"
-                />
-                <span className="text-xs font-medium">Trust Score 4.0+</span>
-              </label>
+              {[
+                { value: "all", label: "Open to All" },
+                { value: "ngo_only", label: "Verified NGOs First" },
+                { value: "high_trust", label: "Trust Score 4.0+" },
+              ].map(({ value, label }) => (
+                <label key={value} className="flex items-center gap-3 p-3 bg-slate-950/40 border border-slate-800 hover:border-teal-500/40 rounded-xl cursor-pointer select-none transition-all">
+                  <input
+                    type="radio"
+                    name="preference"
+                    value={value}
+                    checked={receiverPreference === value}
+                    onChange={() => setReceiverPreference(value)}
+                    className={isSkill ? "accent-violet-500" : "accent-teal-500"}
+                  />
+                  <span className="text-xs font-medium">{label}</span>
+                </label>
+              ))}
             </div>
           </div>
 
-          {/* Submit */}
+          {/* ─── Submit Button ─── */}
           <button
             type="submit"
             disabled={uploading}
-            className="w-full relative overflow-hidden group bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-400 hover:to-emerald-400 text-slate-950 font-extrabold py-4 px-4 rounded-xl shadow-lg shadow-teal-500/10 flex items-center justify-center gap-2 transition-all active:scale-[0.99] disabled:opacity-50"
+            className={`w-full relative overflow-hidden group bg-gradient-to-r ${
+              isSkill
+                ? "from-violet-500 to-purple-500 hover:from-violet-400 hover:to-purple-400 shadow-violet-500/10"
+                : "from-teal-500 to-emerald-500 hover:from-teal-400 hover:to-emerald-400 shadow-teal-500/10"
+            } text-slate-950 font-extrabold py-4 px-4 rounded-xl shadow-lg flex items-center justify-center gap-2 transition-all active:scale-[0.99] disabled:opacity-50`}
           >
             {uploading ? (
               <>
                 <Loader2 className="animate-spin text-slate-950" size={18} />
-                Uploading compressed assets...
+                {isSkill ? "Publishing skill offer..." : "Uploading compressed assets..."}
               </>
             ) : (
-              "Publish Listing"
+              isSkill ? "🎯 Publish Skill Offer" : "📦 Publish Listing"
             )}
           </button>
         </form>
