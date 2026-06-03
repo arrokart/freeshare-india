@@ -120,7 +120,7 @@ export default function PWARegister() {
   // Render a subtle floating prompt for users who haven't enabled notifications yet
   if (permission === "default") {
     return (
-      <div className="fixed bottom-4 right-4 z-[9999] p-4 bg-slate-900/90 border border-slate-800 backdrop-blur-md rounded-2xl shadow-2xl flex flex-col gap-2.5 max-w-xs animate-in slide-in-from-bottom-5 duration-300">
+      <div className="fixed bottom-4 left-4 right-4 md:right-auto md:left-4 z-[9999] p-4 bg-slate-900/90 border border-slate-800 backdrop-blur-md rounded-2xl shadow-2xl flex flex-col gap-2.5 max-w-xs animate-in slide-in-from-bottom-5 duration-300">
         <div className="space-y-0.5">
           <p className="text-xs font-black text-slate-100 flex items-center gap-1.5">
             🔔 Enable Notifications
@@ -158,7 +158,7 @@ export default function PWARegister() {
   // Render a floating prompt for app installation if available
   if (deferredPrompt && showInstallPrompt) {
     return (
-      <div className="fixed bottom-4 right-4 z-[9999] p-4 bg-slate-900/90 border border-slate-800 backdrop-blur-md rounded-2xl shadow-2xl flex flex-col gap-2.5 max-w-xs animate-in slide-in-from-bottom-5 duration-300">
+      <div className="fixed bottom-4 left-4 right-4 md:right-auto md:left-4 z-[9999] p-4 bg-slate-900/90 border border-slate-800 backdrop-blur-md rounded-2xl shadow-2xl flex flex-col gap-2.5 max-w-xs animate-in slide-in-from-bottom-5 duration-300">
         <div className="space-y-0.5">
           <p className="text-xs font-black text-slate-100 flex items-center gap-1.5">
             📲 Install FreeShare App
