@@ -126,6 +126,23 @@ export default function RegisterPage() {
     }
   };
 
+  const handleGoogleLogin = async () => {
+    setLoading(true);
+    setErrorMsg("");
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/`,
+        },
+      });
+      if (error) throw error;
+    } catch (err: any) {
+      setErrorMsg(err.message || "Failed to initialize Google login.");
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-radial from-slate-900 to-slate-950 p-4 font-sans text-slate-100 selection:bg-teal-500 selection:text-black">
       {/* Background decoration elements */}
@@ -338,6 +355,29 @@ export default function RegisterPage() {
                 ) : (
                   "Create Account"
                 )}
+              </button>
+
+              {/* Divider */}
+              <div className="flex items-center gap-3 py-1">
+                <div className="flex-1 h-px bg-slate-800" />
+                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">or</span>
+                <div className="flex-1 h-px bg-slate-800" />
+              </div>
+
+              {/* Google Login button */}
+              <button
+                type="button"
+                onClick={handleGoogleLogin}
+                disabled={loading}
+                className="w-full relative overflow-hidden group bg-slate-900 border border-slate-800 hover:bg-slate-850 text-slate-100 font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2.5 transition-all active:scale-[0.99] disabled:opacity-50 cursor-pointer"
+              >
+                <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
+                  <path fill="#EA4335" d="M12 5.04c1.66 0 3.2.57 4.38 1.69l3.27-3.27C17.67 1.54 14.98 1 12 1 7.35 1 3.37 3.67 1.39 7.56l3.87 3C6.18 7.39 8.87 5.04 12 5.04z"/>
+                  <path fill="#4285F4" d="M23.49 12.27c0-.81-.07-1.59-.2-2.27H12v4.51h6.47c-.29 1.48-1.14 2.73-2.4 3.58l3.7 2.87c2.16-1.99 3.42-4.92 3.42-8.69z"/>
+                  <path fill="#FBBC05" d="M5.26 14.44a7.12 7.12 0 0 1 0-4.88l-3.87-3A11.94 11.94 0 0 0 1 12c0 1.92.45 3.74 1.26 5.37l4-2.93z"/>
+                  <path fill="#34A853" d="M12 23c3.24 0 5.97-1.07 7.96-2.92l-3.7-2.87c-1.03.69-2.35 1.1-4.26 1.1-3.13 0-5.82-2.35-6.77-5.52l-4 2.93C3.37 20.33 7.35 23 12 23z"/>
+                </svg>
+                <span>Continue with Google</span>
               </button>
             </form>
 
