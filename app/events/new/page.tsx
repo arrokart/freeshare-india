@@ -4,7 +4,8 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
-import { ArrowLeft, Loader2, Calendar, MapPin, AlignLeft, Users, Send } from "lucide-react";
+import { getR2PublicUrl } from "@/lib/r2";
+import { ArrowLeft, Loader2, Calendar, MapPin, AlignLeft, Users, Send, Upload, X } from "lucide-react";
 import CityAutocomplete from "@/components/CityAutocomplete";
 import { normalizeCityName } from "@/lib/cities";
 
@@ -16,12 +17,18 @@ export default function CreateEventPage() {
   // Form Fields
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [eventDate, setEventDate] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
   const [locationName, setLocationName] = useState("");
   const [city, setCity] = useState("");
   const [area, setArea] = useState("");
   const [pincode, setPincode] = useState("");
   const [maxParticipants, setMaxParticipants] = useState("");
+  
+  // Image Uploading States
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>("");
+  const [uploadingImage, setUploadingImage] = useState(false);
   
   // Submit States
   const [submitting, setSubmitting] = useState(false);
@@ -46,6 +53,19 @@ export default function CreateEventPage() {
     checkUser();
   }, [router]);
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setImageFile(file);
+      setImagePreview(URL.createObjectURL(file));
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setImageFile(null);
+    setImagePreview("");
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
@@ -54,16 +74,50 @@ export default function CreateEventPage() {
     setErrorMsg("");
     setSuccessMsg("");
 
-    // Validate date is in the future
-    const scheduledDate = new Date(eventDate);
+    // Validate dates
+    const start = new Date(startDate);
+    const end = new Date(endDate);
     const now = new Date();
-    if (scheduledDate.getTime() <= now.getTime() + 30 * 60 * 1000) {
-      setErrorMsg("Event date must be scheduled at least 30 minutes in the future.");
+
+    if (start.getTime() <= now.getTime() + 30 * 60 * 1000) {
+      setErrorMsg("Event start time must be scheduled at least 30 minutes in the future.");
+      setSubmitting(false);
+      return;
+    }
+
+    if (end.getTime() <= start.getTime()) {
+      setErrorMsg("Event end time must be scheduled after the start time.");
       setSubmitting(false);
       return;
     }
 
     try {
+      let finalImageUrl = null;
+
+      // Upload promotional image if selected
+      if (imageFile) {
+        setUploadingImage(true);
+        const presignRes = await fetch("/api/listings/presign", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ filename: imageFile.name, fileType: imageFile.type }),
+        });
+
+        const { uploadUrl, fileKey } = await presignRes.json();
+        if (!uploadUrl) throw new Error("Failed to fetch pre-signed upload URL");
+
+        const uploadRes = await fetch(uploadUrl, {
+          method: "PUT",
+          headers: { "Content-Type": imageFile.type },
+          body: imageFile,
+        });
+
+        if (!uploadRes.ok) throw new Error("Failed to upload promotional image");
+
+        finalImageUrl = getR2PublicUrl(fileKey) || `https://pub-placeholder-domain.r2.dev/${fileKey}`;
+        setUploadingImage(false);
+      }
+
       const res = await fetch("/api/events", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -71,11 +125,13 @@ export default function CreateEventPage() {
           organizer_id: user.id,
           title,
           description,
-          event_date: eventDate,
+          start_date: startDate,
+          end_date: endDate,
           location_name: locationName,
           city: normalizeCityName(city),
           area,
           pincode,
+          image_url: finalImageUrl,
           max_participants: maxParticipants ? parseInt(maxParticipants) : null
         })
       });
@@ -93,6 +149,7 @@ export default function CreateEventPage() {
     } catch (err: any) {
       setErrorMsg(err.message || "An unexpected error occurred.");
       setSubmitting(false);
+      setUploadingImage(false);
     }
   };
 
@@ -137,6 +194,38 @@ export default function CreateEventPage() {
 
         <form onSubmit={handleSubmit} className="space-y-6 bg-slate-900/20 backdrop-blur-xl border border-slate-900 rounded-3xl p-6 shadow-2xl shadow-black/45">
           
+          {/* Promo Image Picker */}
+          <div className="space-y-2">
+            <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest block">
+              Promotional Event Image (Optional)
+            </label>
+            
+            {imagePreview ? (
+              <div className="relative w-full h-44 rounded-2xl overflow-hidden border border-slate-800 bg-slate-950/40">
+                <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
+                <button
+                  type="button"
+                  onClick={handleRemoveImage}
+                  className="absolute top-2 right-2 p-1.5 rounded-full bg-slate-900/80 hover:bg-red-500 text-slate-300 hover:text-white transition-all border border-slate-800"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            ) : (
+              <label className="flex flex-col items-center justify-center w-full h-32 rounded-2xl border border-dashed border-slate-800 hover:border-amber-500/50 bg-slate-950/20 hover:bg-slate-950/40 transition-all cursor-pointer group">
+                <Upload className="text-slate-600 group-hover:text-amber-500 transition-colors mb-2" size={24} />
+                <span className="text-[11px] font-bold text-slate-500 group-hover:text-slate-400">Click to upload photo</span>
+                <span className="text-[9px] text-slate-600 mt-1">JPEG, PNG up to 5MB</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="hidden"
+                />
+              </label>
+            )}
+          </div>
+
           {/* Title */}
           <div className="space-y-2">
             <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest block">
@@ -172,22 +261,42 @@ export default function CreateEventPage() {
             </div>
           </div>
 
-          {/* Date & Time */}
-          <div className="space-y-2">
-            <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest block">
-              Date and Time
-            </label>
-            <div className="relative group">
-              <span className="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-600 group-focus-within:text-amber-500 transition-colors">
-                <Calendar size={16} />
-              </span>
-              <input
-                type="datetime-local"
-                required
-                value={eventDate}
-                onChange={(e) => setEventDate(e.target.value)}
-                className="w-full bg-slate-950/40 border border-slate-800 rounded-xl py-3 pl-11 pr-4 text-xs text-slate-100 focus:outline-none focus:border-amber-500/80 transition-all [color-scheme:dark]"
-              />
+          {/* Date & Time Range */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest block">
+                Start Date and Time
+              </label>
+              <div className="relative group">
+                <span className="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-600 group-focus-within:text-amber-500 transition-colors">
+                  <Calendar size={16} />
+                </span>
+                <input
+                  type="datetime-local"
+                  required
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="w-full bg-slate-950/40 border border-slate-800 rounded-xl py-3 pl-11 pr-4 text-xs text-slate-100 focus:outline-none focus:border-amber-500/80 transition-all [color-scheme:dark]"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest block">
+                End Date and Time
+              </label>
+              <div className="relative group">
+                <span className="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-600 group-focus-within:text-amber-500 transition-colors">
+                  <Calendar size={16} />
+                </span>
+                <input
+                  type="datetime-local"
+                  required
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="w-full bg-slate-950/40 border border-slate-800 rounded-xl py-3 pl-11 pr-4 text-xs text-slate-100 focus:outline-none focus:border-amber-500/80 transition-all [color-scheme:dark]"
+                />
+              </div>
             </div>
           </div>
 
@@ -278,11 +387,16 @@ export default function CreateEventPage() {
           {/* Submit Button */}
           <button
             type="submit"
-            disabled={submitting}
+            disabled={submitting || uploadingImage}
             className="w-full mt-4 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-450 hover:to-orange-450 text-slate-950 font-black py-3.5 px-4 rounded-xl shadow-lg shadow-amber-500/10 flex items-center justify-center gap-2 transition-all active:scale-[0.99] disabled:opacity-50 uppercase tracking-wider text-xs"
           >
             {submitting ? (
               <Loader2 className="animate-spin text-slate-950" size={18} />
+            ) : uploadingImage ? (
+              <>
+                <Loader2 className="animate-spin text-slate-950" size={18} />
+                <span>Uploading Image...</span>
+              </>
             ) : (
               <>
                 <Send size={14} />

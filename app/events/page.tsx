@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
-import { Calendar, MapPin, Users, Plus, Loader2, ArrowLeft, Search, HelpCircle, AlertCircle } from "lucide-react";
+import { Calendar, MapPin, Users, Plus, Loader2, ArrowLeft, Search } from "lucide-react";
 import CityAutocomplete from "@/components/CityAutocomplete";
 import { normalizeCityName } from "@/lib/cities";
 
@@ -95,16 +95,20 @@ export default function EventsFeedPage() {
     }
   };
 
-  const formatDate = (dateString: string) => {
-    const d = new Date(dateString);
-    return d.toLocaleDateString("en-IN", {
+  const formatTimeRange = (startDateStr: string, endDateStr: string) => {
+    const start = new Date(startDateStr);
+    const end = new Date(endDateStr);
+    
+    const dateStr = start.toLocaleDateString("en-IN", {
       weekday: "short",
       day: "numeric",
       month: "short",
-      hour: "numeric",
-      minute: "2-digit",
-      hour12: true,
     });
+    
+    const startTime = start.toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit", hour12: true });
+    const endTime = end.toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit", hour12: true });
+    
+    return `${dateStr}, ${startTime} - ${endTime}`;
   };
 
   const getCalendarDateParts = (dateString: string) => {
@@ -229,7 +233,7 @@ export default function EventsFeedPage() {
         ) : (
           <div className="space-y-4">
             {filteredEvents.map((event) => {
-              const { day, month } = getCalendarDateParts(event.event_date);
+              const { day, month } = getCalendarDateParts(event.start_date);
               const isGoing = user && event.rsvps?.some((r: any) => r.user_id === user.id);
               const rsvpCount = event.rsvps?.length || 0;
               const isFull = event.max_participants && rsvpCount >= event.max_participants;
@@ -237,82 +241,95 @@ export default function EventsFeedPage() {
               return (
                 <div
                   key={event.id}
-                  className="group bg-slate-900/30 border border-slate-900 rounded-3xl p-5 hover:border-slate-800/80 transition-all flex flex-col sm:flex-row gap-5 shadow-lg relative overflow-hidden"
+                  className="group bg-slate-900/30 border border-slate-900 rounded-3xl p-5 hover:border-slate-800/80 transition-all flex flex-col gap-5 shadow-lg relative overflow-hidden"
                 >
-                  {/* Calender icon badge */}
-                  <div className="flex sm:flex-col items-center justify-center bg-slate-950 border border-slate-850 rounded-2xl p-3 sm:w-16 sm:h-16 shrink-0 h-fit gap-2 sm:gap-0">
-                    <span className="text-[10px] uppercase font-black text-amber-500 tracking-widest">{month}</span>
-                    <span className="text-2xl font-black text-slate-100">{day}</span>
-                  </div>
+                  {/* Event Promo Header Image if Present */}
+                  {event.image_url && (
+                    <div className="w-full h-40 rounded-2xl overflow-hidden border border-slate-850 relative">
+                      <img
+                        src={event.image_url}
+                        alt={event.title}
+                        className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-500"
+                      />
+                    </div>
+                  )}
 
-                  {/* Event Details Content */}
-                  <div className="flex-1 space-y-2.5">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Link href={`/events/${event.id}`} className="text-base font-extrabold text-slate-200 hover:text-amber-400 transition-colors">
-                        {event.title}
-                      </Link>
-
-                      {/* Organizer badge */}
-                      {event.organizer?.is_ngo ? (
-                        <span className="px-2 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[8px] uppercase tracking-wider font-extrabold">
-                          🤝 Verified NGO
-                        </span>
-                      ) : (
-                        <span className="px-2 py-0.5 rounded-md bg-slate-800 border border-slate-700 text-slate-400 text-[8px] uppercase tracking-wider font-extrabold">
-                          👤 Member Host
-                        </span>
-                      )}
+                  <div className="flex flex-col sm:flex-row gap-5">
+                    {/* Calender icon badge */}
+                    <div className="flex sm:flex-col items-center justify-center bg-slate-950 border border-slate-850 rounded-2xl p-3 sm:w-16 sm:h-16 shrink-0 h-fit gap-2 sm:gap-0">
+                      <span className="text-[10px] uppercase font-black text-amber-500 tracking-widest">{month}</span>
+                      <span className="text-2xl font-black text-slate-100">{day}</span>
                     </div>
 
-                    <p className="text-xs text-slate-400 line-clamp-2">
-                      {event.description}
-                    </p>
+                    {/* Event Details Content */}
+                    <div className="flex-1 space-y-2.5">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Link href={`/events/${event.id}`} className="text-base font-extrabold text-slate-200 hover:text-amber-400 transition-colors">
+                          {event.title}
+                        </Link>
 
-                    <div className="flex flex-wrap items-center gap-y-1.5 gap-x-4 text-[10px] text-slate-500 font-bold">
-                      <span className="flex items-center gap-1">
-                        <Calendar size={12} className="text-amber-500" />
-                        {formatDate(event.event_date)}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <MapPin size={12} className="text-amber-500" />
-                        {event.location_name}, {event.area}, {event.city}
-                      </span>
-                      {event.max_participants && (
-                        <span className="text-slate-600 font-normal">
-                          Max size: {event.max_participants}
+                        {/* Organizer badge */}
+                        {event.organizer?.is_ngo ? (
+                          <span className="px-2 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[8px] uppercase tracking-wider font-extrabold">
+                            🤝 Verified NGO
+                          </span>
+                        ) : (
+                          <span className="px-2 py-0.5 rounded-md bg-slate-800 border border-slate-700 text-slate-400 text-[8px] uppercase tracking-wider font-extrabold">
+                            👤 Member Host
+                          </span>
+                        )}
+                      </div>
+
+                      <p className="text-xs text-slate-400 line-clamp-2">
+                        {event.description}
+                      </p>
+
+                      <div className="flex flex-wrap items-center gap-y-1.5 gap-x-4 text-[10px] text-slate-500 font-bold">
+                        <span className="flex items-center gap-1">
+                          <Calendar size={12} className="text-amber-500" />
+                          {formatTimeRange(event.start_date, event.end_date)}
                         </span>
-                      )}
+                        <span className="flex items-center gap-1">
+                          <MapPin size={12} className="text-amber-500" />
+                          {event.location_name}, {event.area}, {event.city}
+                        </span>
+                        {event.max_participants && (
+                          <span className="text-slate-600 font-normal">
+                            Max size: {event.max_participants}
+                          </span>
+                        )}
+                      </div>
                     </div>
-                  </div>
 
-                  {/* Actions / RSVP Area */}
-                  <div className="flex sm:flex-col items-start sm:items-end justify-between sm:justify-center gap-3 border-t sm:border-t-0 sm:border-l border-slate-900/60 pt-4 sm:pt-0 sm:pl-5 shrink-0">
-                    <div className="flex items-center gap-1.5 text-xs font-bold text-slate-400">
-                      <Users size={14} className="text-amber-500" />
-                      <span>{rsvpCount} going</span>
+                    {/* Actions / RSVP Area */}
+                    <div className="flex sm:flex-col items-start sm:items-end justify-between sm:justify-center gap-3 border-t sm:border-t-0 sm:border-l border-slate-900/60 pt-4 sm:pt-0 sm:pl-5 shrink-0">
+                      <div className="flex items-center gap-1.5 text-xs font-bold text-slate-400">
+                        <Users size={14} className="text-amber-500" />
+                        <span>{rsvpCount} going</span>
+                      </div>
+
+                      <button
+                        onClick={() => handleRsvpToggle(event.id)}
+                        disabled={rsvpLoadingId === event.id || (!isGoing && isFull)}
+                        className={`w-full px-4 py-2 text-xs font-black rounded-xl transition-all cursor-pointer select-none text-center ${
+                          isGoing
+                            ? "bg-slate-850 hover:bg-red-500/10 border border-slate-850 hover:border-red-500/20 text-slate-400 hover:text-red-400"
+                            : isFull
+                            ? "bg-slate-950 border border-slate-900 text-slate-700 cursor-not-allowed"
+                            : "bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 hover:border-amber-500/35 text-amber-400"
+                        }`}
+                      >
+                        {rsvpLoadingId === event.id ? (
+                          <Loader2 className="animate-spin inline-block mr-1" size={12} />
+                        ) : isGoing ? (
+                          "Going"
+                        ) : isFull ? (
+                          "Full"
+                        ) : (
+                          "Attend"
+                        )}
+                      </button>
                     </div>
-
-                    <button
-                      onClick={() => handleRsvpToggle(event.id)}
-                      disabled={rsvpLoadingId === event.id || (!isGoing && isFull)}
-                      className={`w-full px-4 py-2 text-xs font-black rounded-xl transition-all cursor-pointer select-none text-center ${
-                        isGoing
-                          ? "bg-slate-850 hover:bg-red-500/10 border border-slate-850 hover:border-red-500/20 text-slate-400 hover:text-red-400"
-                          : isFull
-                          ? "bg-slate-950 border border-slate-900 text-slate-700 cursor-not-allowed"
-                          : "bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 hover:border-amber-500/35 text-amber-400"
-                      }`}
-                    >
-                      {rsvpLoadingId === event.id ? (
-                        <Loader2 className="animate-spin inline-block mr-1" size={12} />
-                      ) : isGoing ? (
-                        "Going"
-                      ) : isFull ? (
-                        "Full"
-                      ) : (
-                        "Attend"
-                      )}
-                    </button>
                   </div>
 
                 </div>

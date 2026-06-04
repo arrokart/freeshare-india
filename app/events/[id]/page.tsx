@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
-import { Calendar, MapPin, Users, Loader2, ArrowLeft, AlertTriangle, ShieldCheck, Heart, Flag } from "lucide-react";
+import { Calendar, MapPin, Users, Loader2, ArrowLeft, Flag } from "lucide-react";
 import ReportModal from "@/components/ReportModal";
 
 export default function EventDetailPage() {
@@ -81,17 +81,21 @@ export default function EventDetailPage() {
     }
   };
 
-  const formatDate = (dateString: string) => {
-    const d = new Date(dateString);
-    return d.toLocaleDateString("en-IN", {
+  const formatTimeRange = (startDateStr: string, endDateStr: string) => {
+    const start = new Date(startDateStr);
+    const end = new Date(endDateStr);
+    
+    const dateStr = start.toLocaleDateString("en-IN", {
       weekday: "long",
       day: "numeric",
       month: "long",
-      year: "numeric",
-      hour: "numeric",
-      minute: "2-digit",
-      hour12: true,
+      year: "numeric"
     });
+    
+    const startTime = start.toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit", hour12: true });
+    const endTime = end.toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit", hour12: true });
+    
+    return `${dateStr}, ${startTime} - ${endTime}`;
   };
 
   if (loading) {
@@ -137,7 +141,18 @@ export default function EventDetailPage() {
       {/* Main Details Body */}
       <main className="max-w-3xl mx-auto px-4 pt-6 space-y-6">
         
-        {/* Banner Card */}
+        {/* Event Banner Image if Present */}
+        {event.image_url && (
+          <div className="w-full h-64 sm:h-80 rounded-3xl overflow-hidden border border-slate-900 relative shadow-xl">
+            <img
+              src={event.image_url}
+              alt={event.title}
+              className="w-full h-full object-cover"
+            />
+          </div>
+        )}
+
+        {/* Details Card */}
         <div className="bg-slate-900/15 border border-slate-900 rounded-3xl p-6 md:p-8 flex flex-col md:flex-row gap-6 items-start md:items-center relative overflow-hidden">
           
           <div className="flex-1 space-y-4">
@@ -163,7 +178,7 @@ export default function EventDetailPage() {
             <div className="space-y-2.5 text-xs text-slate-400">
               <div className="flex items-center gap-2">
                 <Calendar size={15} className="text-amber-500 shrink-0" />
-                <span>{formatDate(event.event_date)}</span>
+                <span>{formatTimeRange(event.start_date, event.end_date)}</span>
               </div>
               <div className="flex items-center gap-2">
                 <MapPin size={15} className="text-amber-500 shrink-0" />

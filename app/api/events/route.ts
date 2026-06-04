@@ -16,7 +16,7 @@ export async function GET(request: Request) {
         organizer:organizer_id(id, name, email, is_ngo, avatar_url),
         rsvps:event_rsvps(user_id)
       `)
-      .order("event_date", { ascending: true });
+      .order("start_date", { ascending: true });
 
     // Filter by city if provided
     if (city) {
@@ -38,10 +38,10 @@ export async function GET(request: Request) {
     if (error) throw error;
 
     // Filter out past events (keep events scheduled today or in the future)
-    // Note: We can show all upcoming events
+    // Note: We can show all upcoming events using start_date
     const now = new Date();
     const upcomingEvents = (data || []).filter((event: any) => {
-      return new Date(event.event_date) >= now;
+      return new Date(event.start_date) >= now;
     });
 
     return NextResponse.json(upcomingEvents);
@@ -62,7 +62,8 @@ export async function POST(request: Request) {
       organizer_id,
       title,
       description,
-      event_date,
+      start_date,
+      end_date,
       location_name,
       city,
       area,
@@ -72,7 +73,7 @@ export async function POST(request: Request) {
     } = body;
 
     // Basic Validation
-    if (!organizer_id || !title || !description || !event_date || !location_name || !city || !area) {
+    if (!organizer_id || !title || !description || !start_date || !end_date || !location_name || !city || !area) {
       return NextResponse.json(
         { error: "Missing required event fields" },
         { status: 400 }
@@ -93,12 +94,22 @@ export async function POST(request: Request) {
       );
     }
 
-    const scheduledDate = new Date(event_date);
+    const start = new Date(start_date);
+    const end = new Date(end_date);
     const now = new Date();
-    // Validate event is at least 30 minutes in the future (relaxing the 1 hour slightly for flexibility)
-    if (scheduledDate.getTime() <= now.getTime() + 30 * 60 * 1000) {
+
+    // Validate start date is at least 30 minutes in the future
+    if (start.getTime() <= now.getTime() + 30 * 60 * 1000) {
       return NextResponse.json(
-        { error: "Event must be scheduled at least 30 minutes in the future" },
+        { error: "Event must be scheduled to start at least 30 minutes in the future" },
+        { status: 400 }
+      );
+    }
+
+    // Validate end date is after start date
+    if (end.getTime() <= start.getTime()) {
+      return NextResponse.json(
+        { error: "Event end date/time must be after the start date/time" },
         { status: 400 }
       );
     }
@@ -109,7 +120,8 @@ export async function POST(request: Request) {
         organizer_id,
         title,
         description,
-        event_date,
+        start_date,
+        end_date,
         location_name,
         city,
         area,

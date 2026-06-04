@@ -50,8 +50,10 @@ async function testScenario() {
   // 2. Insert test event
   console.log("\n2. Inserting a test event...");
   const eventTitle = "Test Cleanup Event " + Date.now();
-  const futureDate = new Date();
-  futureDate.setHours(futureDate.getHours() + 2); // 2 hours in the future
+  const start = new Date();
+  start.setHours(start.getHours() + 2); // 2 hours in the future
+  const end = new Date();
+  end.setHours(end.getHours() + 4); // 4 hours in the future
 
   const { data: eventData, error: eventError } = await supabase
     .from("events")
@@ -59,7 +61,8 @@ async function testScenario() {
       organizer_id: host.id,
       title: eventTitle,
       description: "Clean up the central park area next to the metro station.",
-      event_date: futureDate.toISOString(),
+      start_date: start.toISOString(),
+      end_date: end.toISOString(),
       location_name: "Central Park Metro Gate 1",
       city: "Delhi",
       area: "Karol Bagh",
