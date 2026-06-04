@@ -8,10 +8,10 @@ import {
   Loader2, ArrowLeft, ShieldAlert, Flag, UserMinus, FileMinus, 
   CheckCircle2, ShieldCheck, Search, SlidersHorizontal, Users, 
   Settings, Check, X, ShieldX, ToggleLeft, ToggleRight, RotateCcw,
-  Edit2, Heart, FileText, BarChart3
+  Edit2, Heart, FileText, BarChart3, Send
 } from "lucide-react";
 
-type TabState = "queue" | "users" | "listings" | "settings" | "ngos" | "analytics";
+type TabState = "queue" | "users" | "listings" | "settings" | "ngos" | "analytics" | "broadcast";
 
 export default function AdminPage() {
   const router = useRouter();
@@ -74,6 +74,14 @@ export default function AdminPage() {
   const [adsenseClientId, setAdsenseClientId] = useState("");
   const [loadingSettings, setLoadingSettings] = useState(false);
   const [savingSettings, setSavingSettings] = useState(false);
+
+  // Broadcast Panel States
+  const [broadcastTitle, setBroadcastTitle] = useState("");
+  const [broadcastBody, setBroadcastBody] = useState("");
+  const [broadcastLink, setBroadcastLink] = useState("");
+  const [broadcastTargetType, setBroadcastTargetType] = useState<"all" | "city">("all");
+  const [broadcastCity, setBroadcastCity] = useState("");
+  const [broadcasting, setBroadcasting] = useState(false);
 
   // User Limit Override States
   const [editingLimitUserId, setEditingLimitUserId] = useState<string | null>(null);
@@ -359,6 +367,42 @@ export default function AdminPage() {
     }
   };
 
+  const handleBroadcast = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!userId) return;
+    setBroadcasting(true);
+    setErrorMsg("");
+    setSuccessMsg("");
+
+    try {
+      const res = await fetch("/api/admin/broadcast", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          adminId: userId,
+          targetType: broadcastTargetType,
+          city: broadcastTargetType === "city" ? broadcastCity : null,
+          title: broadcastTitle,
+          notifBody: broadcastBody,
+          link: broadcastLink,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Broadcast request failed");
+
+      setSuccessMsg(data.message || `Broadcast completed successfully! Sent to ${data.count} users.`);
+      setBroadcastTitle("");
+      setBroadcastBody("");
+      setBroadcastLink("");
+      setBroadcastCity("");
+    } catch (err: any) {
+      setErrorMsg(err.message || "Failed to send broadcast.");
+    } finally {
+      setBroadcasting(false);
+    }
+  };
+
   // Save Config Settings
   const handleSaveSettings = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -575,6 +619,17 @@ export default function AdminPage() {
           >
             <Settings size={14} />
             System Configs
+          </button>
+          <button
+            onClick={() => setActiveTab("broadcast")}
+            className={`flex items-center gap-2 px-5 py-3 text-xs font-bold border-b-2 transition-all whitespace-nowrap ${
+              activeTab === "broadcast"
+                ? "border-teal-500 text-teal-400"
+                : "border-transparent text-slate-400 hover:text-slate-200"
+            }`}
+          >
+            <Send size={14} />
+            Alert Broadcast
           </button>
         </div>
 
@@ -1860,6 +1915,120 @@ export default function AdminPage() {
                 </div>
               </div>
             )}
+          </div>
+        )}
+        {/* =====================================================================
+            TAB 7: GLOBAL ALERT BROADCAST PANEL
+            ===================================================================== */}
+        {activeTab === "broadcast" && (
+          <div className="space-y-6 animate-in fade-in duration-200">
+            <div>
+              <h2 className="text-xl font-black text-slate-100">Global Alert Broadcast</h2>
+              <p className="text-xs text-slate-500 mt-1">Send immediate push notifications and in-app alerts to your users.</p>
+            </div>
+
+            <form onSubmit={handleBroadcast} className="bg-slate-900/30 border border-slate-900 rounded-3xl p-6 space-y-5 max-w-2xl">
+              {/* Target Type Selector */}
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block">Target Audience</label>
+                <div className="flex gap-4">
+                  <label className="flex items-center gap-2 text-xs font-semibold text-slate-350 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="targetType"
+                      value="all"
+                      checked={broadcastTargetType === "all"}
+                      onChange={() => setBroadcastTargetType("all")}
+                      className="accent-teal-500"
+                    />
+                    All Registered Users
+                  </label>
+                  <label className="flex items-center gap-2 text-xs font-semibold text-slate-350 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="targetType"
+                      value="city"
+                      checked={broadcastTargetType === "city"}
+                      onChange={() => setBroadcastTargetType("city")}
+                      className="accent-teal-500"
+                    />
+                    Specific City
+                  </label>
+                </div>
+              </div>
+
+              {/* City Input (If targeting specific city) */}
+              {broadcastTargetType === "city" && (
+                <div className="space-y-1.5 animate-in slide-in-from-top-2 duration-200">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block">Target City</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Patna, Delhi, Mumbai"
+                    value={broadcastCity}
+                    onChange={(e) => setBroadcastCity(e.target.value)}
+                    className="w-full bg-slate-950/60 border border-slate-800 rounded-2xl py-2.5 px-4 text-xs text-slate-100 placeholder-slate-650 focus:outline-none focus:border-teal-500"
+                  />
+                </div>
+              )}
+
+              {/* Title */}
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block">Notification Title</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. FreeShare Bihar Campaign"
+                  value={broadcastTitle}
+                  onChange={(e) => setBroadcastTitle(e.target.value)}
+                  className="w-full bg-slate-950/60 border border-slate-800 rounded-2xl py-2.5 px-4 text-xs text-slate-100 placeholder-slate-650 focus:outline-none focus:border-teal-500"
+                />
+              </div>
+
+              {/* Notification Body */}
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block">Alert Content (Body)</label>
+                <textarea
+                  required
+                  rows={4}
+                  placeholder="Enter the alert details to send to user devices..."
+                  value={broadcastBody}
+                  onChange={(e) => setBroadcastBody(e.target.value)}
+                  className="w-full bg-slate-950/60 border border-slate-800 rounded-2xl py-2.5 px-4 text-xs text-slate-100 placeholder-slate-650 focus:outline-none focus:border-teal-500 resize-none"
+                />
+              </div>
+
+              {/* Redirection Link */}
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block">Redirection Path (Optional)</label>
+                <input
+                  type="text"
+                  placeholder="e.g. /events or /dashboard (defaults to /)"
+                  value={broadcastLink}
+                  onChange={(e) => setBroadcastLink(e.target.value)}
+                  className="w-full bg-slate-950/60 border border-slate-800 rounded-2xl py-2.5 px-4 text-xs text-slate-100 placeholder-slate-650 focus:outline-none focus:border-teal-500"
+                />
+              </div>
+
+              {/* Submit Broadcast */}
+              <button
+                type="submit"
+                disabled={broadcasting}
+                className="w-full sm:w-auto inline-flex items-center justify-center bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-400 hover:to-emerald-400 text-slate-950 font-black text-xs uppercase tracking-wider px-6 py-3 rounded-xl transition-all shadow-md cursor-pointer disabled:opacity-50"
+              >
+                {broadcasting ? (
+                  <>
+                    <Loader2 className="animate-spin mr-2" size={14} />
+                    Broadcasting Alerts...
+                  </>
+                ) : (
+                  <>
+                    <Send className="mr-2" size={14} />
+                    Send Broadcast Alert
+                  </>
+                )}
+              </button>
+            </form>
           </div>
         )}
       </div>
