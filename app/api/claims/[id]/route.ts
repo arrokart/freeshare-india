@@ -181,6 +181,33 @@ export async function PATCH(
         if (listingErr) throw listingErr;
       }
 
+      // 3. Notify the donor that the receiver cancelled
+      try {
+        const { data: receiverProfile } = await supabase
+          .from("users")
+          .select("name")
+          .eq("id", claim.receiver_id)
+          .single();
+        const receiverName = receiverProfile?.name || "Someone";
+
+        await supabase.from("notifications").insert({
+          user_id: claim.donor_id,
+          type: "listing_removed",
+          title: "Request Cancelled",
+          body: `${receiverName} has cancelled their request for "${claim.listing.title}".`,
+          link: "/",
+        });
+
+        await sendPushNotification(
+          claim.donor_id,
+          "Request Cancelled",
+          `${receiverName} has cancelled their request for "${claim.listing.title}".`,
+          "/"
+        );
+      } catch (notifErr) {
+        console.error("Failed to notify donor on cancellation:", notifErr);
+      }
+
       return NextResponse.json({ message: "Request cancelled." });
     }
 
