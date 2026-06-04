@@ -6,13 +6,17 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
 import { Loader2, Gift, ClipboardList, Check, X, MessageSquare, AlertCircle, Calendar, ArrowLeft, Star, Bell, CheckCircle, Sparkles, Clock, ArrowUpDown, ChevronDown, ChevronUp, Image as ImageIcon } from "lucide-react";
 
-type TabState = "donations" | "claims";
+type TabState = "donations" | "claims" | "event_chats";
 
 export default function DashboardPage() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<TabState>("donations");
   const [userId, setUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  
+  // Event Chats States
+  const [eventInquiries, setEventInquiries] = useState<any[]>([]);
+  const [loadingEventInquiries, setLoadingEventInquiries] = useState(false);
 
   // Notifications State
   const [notifications, setNotifications] = useState<any[]>([]);
@@ -76,6 +80,12 @@ export default function DashboardPage() {
         return <CheckCircle className="w-4 h-4 text-emerald-400" />;
       case "new_message":
         return <MessageSquare className="w-4 h-4 text-blue-400" />;
+      case "new_event_comment":
+        return <MessageSquare className="w-4 h-4 text-amber-400" />;
+      case "new_event_message":
+        return <MessageSquare className="w-4 h-4 text-orange-400" />;
+      case "event_rsvp":
+        return <Calendar className="w-4 h-4 text-amber-400" />;
       case "account_warning":
       case "listing_removed":
         return <AlertCircle className="w-4 h-4 text-red-400" />;
@@ -83,6 +93,7 @@ export default function DashboardPage() {
         return <Bell className="w-4 h-4 text-slate-400" />;
     }
   };
+
 
   const fetchNotifications = async (uid: string) => {
     try {
@@ -277,6 +288,20 @@ export default function DashboardPage() {
         .order("created_at", { ascending: false });
 
       setMyClaims(claimsMade || []);
+
+      // Fetch event inquiries
+      setLoadingEventInquiries(true);
+      try {
+        const inqRes = await fetch(`/api/events/inquiry?userId=${uid}`);
+        if (inqRes.ok) {
+          const inqData = await inqRes.json();
+          setEventInquiries(Array.isArray(inqData) ? inqData : []);
+        }
+      } catch (inqErr) {
+        console.error("Error loading event inquiries:", inqErr);
+      } finally {
+        setLoadingEventInquiries(false);
+      }
     } catch (err) {
       console.error("Dashboard load error:", err);
       setErrorMsg("Failed to load dashboard statistics.");
@@ -535,10 +560,98 @@ export default function DashboardPage() {
             <ClipboardList size={16} />
             My Claims ({myClaims.length})
           </button>
+          <button
+            onClick={() => setActiveTab("event_chats")}
+            className={`flex items-center gap-2 px-5 py-3 text-sm font-bold border-b-2 transition-all ${
+              activeTab === "event_chats"
+                ? "border-amber-500 text-amber-400"
+                : "border-transparent text-slate-400 hover:text-slate-200"
+            }`}
+          >
+            <MessageSquare size={16} />
+            Event Chats ({eventInquiries.length})
+          </button>
         </div>
 
         {/* Tab contents */}
-        {activeTab === "donations" ? (
+        {activeTab === "event_chats" ? (
+          <div className="bg-slate-900/10 border border-slate-900 rounded-3xl p-6 space-y-4">
+            <h3 className="text-sm font-black text-slate-100 flex items-center gap-2">
+              📢 Private Event Inquiries ({eventInquiries.length})
+            </h3>
+            {loadingEventInquiries ? (
+              <div className="flex items-center justify-center py-16 text-slate-500 text-xs">
+                <Loader2 className="animate-spin text-amber-500 mr-2" size={16} />
+                Loading inquiries...
+              </div>
+            ) : eventInquiries.length === 0 ? (
+              <div className="text-center py-16 border border-dashed border-slate-900 rounded-3xl">
+                <MessageSquare className="mx-auto text-slate-700 mb-3" size={32} />
+                <p className="text-sm text-slate-500">No event inquiry chats found.</p>
+                <p className="text-[10px] text-slate-650 mt-1">If you organize events or ask hosts questions, those private chats will appear here.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {eventInquiries.map((inq) => {
+                  const isHost = userId === inq.event.organizer_id;
+                  const partner = isHost ? inq.user : inq.host;
+                  const lastMsg = inq.lastMessage;
+                  
+                  return (
+                    <Link
+                      key={inq.id}
+                      href={`/events/chat/${inq.id}`}
+                      className="flex items-center justify-between p-4 rounded-2xl border border-slate-900 bg-slate-950/20 hover:bg-slate-900/30 hover:border-amber-500/30 transition-all group cursor-pointer"
+                    >
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                        {/* Avatar */}
+                        <div className="w-10 h-10 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center text-xs font-black text-amber-500 uppercase overflow-hidden shrink-0">
+                          {partner?.avatar_url ? (
+                            <img src={partner.avatar_url} alt={partner.name} className="w-full h-full object-cover" />
+                          ) : (
+                            partner?.name?.charAt(0) || "U"
+                          )}
+                        </div>
+                        {/* Details */}
+                        <div className="min-w-0 flex-1 space-y-1">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-black text-slate-200 group-hover:text-amber-400 transition-colors truncate">
+                              {partner?.name || "Community Member"}
+                            </span>
+                            <span className="text-[8px] uppercase tracking-wider font-extrabold text-slate-500 bg-slate-850 px-1 py-0.5 rounded shrink-0">
+                              {isHost ? "Inquirer" : "Host"}
+                            </span>
+                          </div>
+                          <span className="text-[9px] font-bold text-amber-500 truncate block">
+                            Event: {inq.event.title}
+                          </span>
+                          <p className="text-[11px] text-slate-400 truncate">
+                            {lastMsg ? (
+                              <>
+                                <strong className="text-slate-500 font-semibold">
+                                  {lastMsg.sender_id === userId ? "You: " : `${partner?.name?.split(" ")[0] || "User"}: `}
+                                </strong>
+                                {lastMsg.content}
+                              </>
+                            ) : (
+                              <span className="italic text-slate-650">No messages yet. Click to start chatting!</span>
+                            )}
+                          </p>
+                        </div>
+                      </div>
+                      
+                      <div className="text-right shrink-0 ml-3 pl-2 border-l border-slate-900/60">
+                        <span className="text-[8px] text-slate-600 font-bold block">
+                          {lastMsg ? new Date(lastMsg.created_at).toLocaleDateString() : new Date(inq.created_at).toLocaleDateString()}
+                        </span>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        ) : activeTab === "donations" ? (
           /* Donations Splitscreen Workspace */
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
             {myListings.length === 0 ? (

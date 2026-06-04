@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabaseClient";
+import { supabaseAdmin as supabase } from "@/lib/supabaseAdmin";
 import { sendPushNotification } from "@/lib/push";
 
 export async function PATCH(
@@ -30,6 +30,7 @@ export async function PATCH(
     }
 
     const now = new Date();
+    const isSkill = claim.listing?.listing_type === "skill";
 
     if (status === "accepted") {
       // 1. Calculate 48-hour pickup deadline
@@ -48,45 +49,51 @@ export async function PATCH(
 
       if (claimUpdateErr) throw claimUpdateErr;
 
-      // 3. Set listing status to reserved and point to active claim ID
-      const { error: listingUpdateErr } = await supabase
-        .from("listings")
-        .update({
-          status: "reserved",
-          active_claim_id: id,
-        })
-        .eq("id", claim.listing_id);
+      if (!isSkill) {
+        // 3. Set listing status to reserved and point to active claim ID
+        const { error: listingUpdateErr } = await supabase
+          .from("listings")
+          .update({
+            status: "reserved",
+            active_claim_id: id,
+          })
+          .eq("id", claim.listing_id);
 
-      if (listingUpdateErr) throw listingUpdateErr;
+        if (listingUpdateErr) throw listingUpdateErr;
 
-      // 4. Decline other pending claims on this listing automatically
-      const { error: bulkDeclineErr } = await supabase
-        .from("claims")
-        .update({ status: "declined" })
-        .eq("listing_id", claim.listing_id)
-        .eq("status", "pending")
-        .neq("id", id);
+        // 4. Decline other pending claims on this listing automatically
+        const { error: bulkDeclineErr } = await supabase
+          .from("claims")
+          .update({ status: "declined" })
+          .eq("listing_id", claim.listing_id)
+          .eq("status", "pending")
+          .neq("id", id);
 
-      if (bulkDeclineErr) throw bulkDeclineErr;
+        if (bulkDeclineErr) throw bulkDeclineErr;
+      }
 
       // 5. Notify the receiver that their claim was accepted
       await supabase.from("notifications").insert({
         user_id: claim.receiver_id,
         type: "claim_accepted",
-        title: "Claim Request Accepted!",
-        body: `Your request for "${claim.listing.title}" has been accepted! Open chat to coordinate pickup.`,
+        title: isSkill ? "Session Request Accepted!" : "Claim Request Accepted!",
+        body: isSkill
+          ? `Your session request for "${claim.listing.title}" has been accepted! Open chat to coordinate.`
+          : `Your request for "${claim.listing.title}" has been accepted! Open chat to coordinate pickup.`,
         link: `/chat/${id}`,
       });
 
       // Broadcast active mobile push notification
       await sendPushNotification(
         claim.receiver_id,
-        "Claim Request Accepted!",
-        `Your request for "${claim.listing.title}" has been accepted! Open chat to coordinate pickup.`,
+        isSkill ? "Session Request Accepted!" : "Claim Request Accepted!",
+        isSkill
+          ? `Your session request for "${claim.listing.title}" has been accepted! Open chat to coordinate.`
+          : `Your request for "${claim.listing.title}" has been accepted! Open chat to coordinate pickup.`,
         `/chat/${id}`
       );
 
-      return NextResponse.json({ message: "Claim accepted and listing reserved successfully." });
+      return NextResponse.json({ message: isSkill ? "Session request accepted." : "Claim accepted and listing reserved successfully." });
     }
 
     if (status === "declined") {
@@ -101,20 +108,24 @@ export async function PATCH(
       await supabase.from("notifications").insert({
         user_id: claim.receiver_id,
         type: "listing_removed",
-        title: "Claim Request Update",
-        body: `Your claim request for "${claim.listing.title}" was not accepted. Keep browsing!`,
+        title: isSkill ? "Session Request Update" : "Claim Request Update",
+        body: isSkill
+          ? `Your session request for "${claim.listing.title}" was not accepted.`
+          : `Your claim request for "${claim.listing.title}" was not accepted. Keep browsing!`,
         link: "/",
       });
 
       // Broadcast active mobile push notification
       await sendPushNotification(
         claim.receiver_id,
-        "Claim Request Update",
-        `Your claim request for "${claim.listing.title}" was not accepted. Keep browsing!`,
+        isSkill ? "Session Request Update" : "Claim Request Update",
+        isSkill
+          ? `Your session request for "${claim.listing.title}" was not accepted.`
+          : `Your claim request for "${claim.listing.title}" was not accepted. Keep browsing!`,
         "/"
       );
 
-      return NextResponse.json({ message: "Claim declined." });
+      return NextResponse.json({ message: "Request declined." });
     }
 
     if (status === "completed") {
@@ -126,16 +137,18 @@ export async function PATCH(
 
       if (claimErr) throw claimErr;
 
-      // 2. Set listing status to completed
-      const { error: listingErr } = await supabase
-        .from("listings")
-        .update({
-          status: "completed",
-          completed_at: now.toISOString(),
-        })
-        .eq("id", claim.listing_id);
+      if (!isSkill) {
+        // 2. Set listing status to completed
+        const { error: listingErr } = await supabase
+          .from("listings")
+          .update({
+            status: "completed",
+            completed_at: now.toISOString(),
+          })
+          .eq("id", claim.listing_id);
 
-      if (listingErr) throw listingErr;
+        if (listingErr) throw listingErr;
+      }
 
       // 3. Increment counters on users profiles (donor total_donated, receiver total_received)
       await supabase.rpc("increment_donation_counters", {
@@ -155,18 +168,20 @@ export async function PATCH(
 
       if (claimErr) throw claimErr;
 
-      // 2. Set listing status back to available and clear active claim id
-      const { error: listingErr } = await supabase
-        .from("listings")
-        .update({
-          status: "available",
-          active_claim_id: null,
-        })
-        .eq("id", claim.listing_id);
+      if (!isSkill) {
+        // 2. Set listing status back to available and clear active claim id
+        const { error: listingErr } = await supabase
+          .from("listings")
+          .update({
+            status: "available",
+            active_claim_id: null,
+          })
+          .eq("id", claim.listing_id);
 
-      if (listingErr) throw listingErr;
+        if (listingErr) throw listingErr;
+      }
 
-      return NextResponse.json({ message: "Claim cancelled. Listing is now available again." });
+      return NextResponse.json({ message: "Request cancelled." });
     }
 
     return NextResponse.json({ error: "Invalid status value" }, { status: 400 });

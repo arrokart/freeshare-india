@@ -47,6 +47,8 @@ export default function DonatePage() {
   const [condition, setCondition] = useState("");
   const [skillDuration, setSkillDuration] = useState("");
   const [skillTags, setSkillTags] = useState<string[]>([]);
+  const [maxBookingsPerUser, setMaxBookingsPerUser] = useState<number>(2);
+
   const [tagInput, setTagInput] = useState("");
   const [city, setCity] = useState("");
   const [area, setArea] = useState("");
@@ -299,6 +301,7 @@ export default function DonatePage() {
           listing_type: listingType,
           skill_duration: isSkill ? skillDuration : null,
           skill_tags: isSkill ? skillTags : [],
+          max_bookings_per_user: isSkill ? maxBookingsPerUser : null,
         }),
       });
 
@@ -628,6 +631,29 @@ export default function DonatePage() {
                   </button>
                 </div>
                 <p className="text-[10px] text-slate-600 mt-1.5">{skillTags.length}/10 tags · Press Enter or comma to add</p>
+              </div>
+
+              {/* Max Bookings Per User */}
+              <div className="space-y-2 pt-2">
+                <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider block mb-1">
+                  Max Active Bookings Per User
+                  <span className="ml-2 text-[10px] font-normal text-slate-500 normal-case">
+                    Limit active requests a single user can have at any time (default is 2)
+                  </span>
+                </label>
+                <div className="flex items-center gap-3">
+                  <select
+                    value={maxBookingsPerUser}
+                    onChange={(e) => setMaxBookingsPerUser(parseInt(e.target.value))}
+                    className="bg-slate-950/50 border border-slate-800 rounded-xl py-2.5 px-4 text-sm text-slate-100 focus:outline-none focus:border-violet-500/80 focus:ring-1 focus:ring-violet-500/20 transition-all w-36 [color-scheme:dark]"
+                  >
+                    {[1, 2, 3, 4, 5, 10].map((num) => (
+                      <option key={num} value={num}>
+                        {num} {num === 1 ? "Active Slot" : "Active Slots"}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
             </div>
           )}

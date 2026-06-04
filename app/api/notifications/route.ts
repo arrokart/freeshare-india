@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabaseClient";
+import { supabaseAdmin as supabase } from "@/lib/supabaseAdmin";
+import { sendPushNotification } from "@/lib/push";
+
 
 // GET user notifications
 export async function GET(request: Request) {
@@ -28,6 +30,44 @@ export async function GET(request: Request) {
     console.error("Fetch notifications error:", error);
     return NextResponse.json(
       { error: error.message || "Failed to fetch notifications" },
+      { status: 500 }
+    );
+  }
+}
+
+// POST create a new notification (server-side, bypasses RLS)
+export async function POST(request: Request) {
+  try {
+    const body = await request.json();
+    const { user_id, type, title, body: notifBody, link } = body;
+
+    if (!user_id || !type || !title) {
+      return NextResponse.json(
+        { error: "Missing required notification parameters" },
+        { status: 400 }
+      );
+    }
+
+    const { data, error } = await supabase
+      .from("notifications")
+      .insert({ user_id, type, title, body: notifBody, link })
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    // Send Web Push notification asynchronously
+    try {
+      await sendPushNotification(user_id, title, notifBody || "", link || "/");
+    } catch (pushErr) {
+      console.error("Failed to send Web Push:", pushErr);
+    }
+
+    return NextResponse.json(data, { status: 201 });
+  } catch (error: any) {
+    console.error("Create notification error:", error);
+    return NextResponse.json(
+      { error: error.message || "Failed to create notification" },
       { status: 500 }
     );
   }

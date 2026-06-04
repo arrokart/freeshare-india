@@ -37,7 +37,7 @@ export async function POST(request: Request) {
       // Check if event has participant cap limits
       const { data: event, error: eventError } = await supabaseAdmin
         .from("events")
-        .select("max_participants")
+        .select("max_participants, organizer_id, title")
         .eq("id", eventId)
         .single();
 
@@ -69,6 +69,29 @@ export async function POST(request: Request) {
 
       if (insertError) throw insertError;
 
+      // Notify the event organizer (only if the RSVP is from someone else)
+      if (event && event.organizer_id && event.organizer_id !== userId) {
+        try {
+          const { data: userProfile } = await supabaseAdmin
+            .from("users")
+            .select("name")
+            .eq("id", userId)
+            .single();
+
+          const userName = userProfile?.name || "Someone";
+
+          await supabaseAdmin.from("notifications").insert({
+            user_id: event.organizer_id,
+            type: "event_rsvp",
+            title: "New RSVP for your event",
+            body: `${userName} just RSVP'd for "${event.title}"`,
+            link: `/events/${eventId}`,
+          });
+        } catch (notifErr) {
+          console.error("Failed to send RSVP notification:", notifErr);
+        }
+      }
+
       return NextResponse.json({ status: "joined", message: "Successfully RSVP'd for event" });
     }
   } catch (error: any) {
@@ -79,3 +102,4 @@ export async function POST(request: Request) {
     );
   }
 }
+

@@ -36,11 +36,9 @@ export default function EventsFeedPage() {
         
         setUser(profile || data.user);
         
-        // Auto-fill location defaults from user profile
+        // Auto-fill location defaults from user profile (only City to avoid over-filtering)
         if (profile) {
           setCity(profile.city || "");
-          setArea(profile.area || "");
-          setPincode(profile.pincode || "");
         }
       }
     };
@@ -237,12 +235,15 @@ export default function EventsFeedPage() {
               const isGoing = user && event.rsvps?.some((r: any) => r.user_id === user.id);
               const rsvpCount = event.rsvps?.length || 0;
               const isFull = event.max_participants && rsvpCount >= event.max_participants;
+              const isEnded = new Date(event.end_date) < new Date();
 
               return (
                 <Link
                   key={event.id}
                   href={`/events/${event.id}`}
-                  className="group bg-slate-900/30 border border-slate-900 rounded-3xl p-5 hover:border-slate-800/80 transition-all flex flex-col gap-5 shadow-lg relative overflow-hidden block"
+                  className={`group bg-slate-900/30 border border-slate-900 rounded-3xl p-5 hover:border-slate-800/80 transition-all flex flex-col gap-5 shadow-lg relative overflow-hidden block ${
+                    isEnded ? "opacity-60" : ""
+                  }`}
                 >
                   {/* Event Promo Header Image if Present */}
                   {event.image_url && (
@@ -252,6 +253,13 @@ export default function EventsFeedPage() {
                         alt={event.title}
                         className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-500"
                       />
+                      {isEnded && (
+                        <div className="absolute inset-0 bg-slate-950/40 backdrop-blur-[0.5px] flex items-center justify-center">
+                          <span className="bg-red-500/20 text-red-400 border border-red-500/30 text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-xl">
+                            Ended
+                          </span>
+                        </div>
+                      )}
                     </div>
                   )}
 
@@ -271,14 +279,25 @@ export default function EventsFeedPage() {
 
                         {/* Organizer badge */}
                         {event.organizer?.is_ngo ? (
-                          <span className="px-2 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[8px] uppercase tracking-wider font-extrabold">
+                          <span className="px-2 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[8px] uppercase tracking-wider font-extrabold animate-fade-in">
                             🤝 Verified NGO
                           </span>
                         ) : (
-                          <span className="px-2 py-0.5 rounded-md bg-slate-800 border border-slate-700 text-slate-400 text-[8px] uppercase tracking-wider font-extrabold">
+                          <span className="px-2 py-0.5 rounded-md bg-slate-800 border border-slate-700 text-slate-400 text-[8px] uppercase tracking-wider font-extrabold animate-fade-in">
                             👤 Member Host
                           </span>
                         )}
+
+                        {/* Status badge */}
+                        {isEnded ? (
+                          <span className="px-2 py-0.5 rounded-md bg-red-500/10 border border-red-500/20 text-red-400 text-[8px] uppercase tracking-wider font-extrabold">
+                            🚨 Ended
+                          </span>
+                        ) : isFull ? (
+                          <span className="px-2 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/20 text-amber-400 text-[8px] uppercase tracking-wider font-extrabold">
+                            🔒 Full
+                          </span>
+                        ) : null}
                       </div>
 
                       <p className="text-xs text-slate-400 line-clamp-2">

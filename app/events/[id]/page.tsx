@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
-import { Calendar, MapPin, Users, Loader2, ArrowLeft, Flag, Trash, Share2 } from "lucide-react";
+import { Calendar, MapPin, Users, Loader2, ArrowLeft, Flag, Trash, Share2, Send } from "lucide-react";
 import ReportModal from "@/components/ReportModal";
 
 export default function EventDetailPage() {
@@ -27,6 +27,7 @@ export default function EventDetailPage() {
   const [commentsLoading, setCommentsLoading] = useState(true);
   const [newCommentText, setNewCommentText] = useState("");
   const [commentSubmitting, setCommentSubmitting] = useState(false);
+  const [chatInitiating, setChatInitiating] = useState(false);
 
   const fetchEventDetails = async () => {
     try {
@@ -155,6 +156,31 @@ export default function EventDetailPage() {
     }
   };
 
+  const handleStartChatWithHost = async () => {
+    if (!user) {
+      router.push(`/login?next=/events/${id}`);
+      return;
+    }
+
+    setChatInitiating(true);
+    try {
+      const res = await fetch("/api/events/inquiry", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ eventId: id, userId: user.id }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to start chat");
+
+      router.push(`/events/chat/${data.id}`);
+    } catch (err: any) {
+      alert(err.message || "Failed to start chat.");
+    } finally {
+      setChatInitiating(false);
+    }
+  };
+
   const handleDeleteEvent = async () => {
     if (!window.confirm("Are you sure you want to permanently delete this event? This action cannot be undone.")) {
       return;
@@ -162,12 +188,12 @@ export default function EventDetailPage() {
     
     setDeleteLoading(true);
     try {
-      const { error } = await supabase
-        .from("events")
-        .delete()
-        .eq("id", id);
-        
-      if (error) throw error;
+      const res = await fetch(`/api/events?eventId=${id}&userId=${user?.id}`, {
+        method: "DELETE",
+      });
+      
+      const resData = await res.json();
+      if (!res.ok) throw new Error(resData.error || "Failed to delete event");
       
       alert("Event deleted successfully.");
       router.push("/events");
@@ -177,6 +203,7 @@ export default function EventDetailPage() {
       setDeleteLoading(false);
     }
   };
+
 
   const handleRsvpToggle = async () => {
     if (!user) {
@@ -485,12 +512,29 @@ export default function EventDetailPage() {
             </div>
           </div>
 
-          <a
-            href={`mailto:${event.organizer?.email}`}
-            className="px-4 py-2 rounded-xl bg-slate-950 border border-slate-900 hover:border-slate-850 text-xs font-bold text-slate-400 hover:text-slate-200 transition-all cursor-pointer"
-          >
-            Contact Host
-          </a>
+          <div className="flex items-center gap-2 shrink-0">
+            {user && user.id !== event.organizer_id && (
+              <button
+                onClick={handleStartChatWithHost}
+                disabled={chatInitiating}
+                className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black transition-all active:scale-[0.98] disabled:opacity-50 cursor-pointer uppercase tracking-wider flex items-center gap-1.5"
+              >
+                {chatInitiating ? (
+                  <Loader2 className="animate-spin text-slate-950" size={12} />
+                ) : (
+                  <Send size={12} />
+                )}
+                Chat with Host
+              </button>
+            )}
+
+            <a
+              href={`mailto:${event.organizer?.email}`}
+              className="px-4 py-2 rounded-xl bg-slate-950 border border-slate-900 hover:border-slate-850 text-xs font-bold text-slate-400 hover:text-slate-200 transition-all cursor-pointer"
+            >
+              Email Host
+            </a>
+          </div>
         </div>
 
       </main>

@@ -37,7 +37,7 @@ export async function GET(request: Request) {
         *,
         donor:donor_id(id, name, trust_score, avatar_url)
       `)
-      .eq("status", "available");
+      .in("status", ["available", "reserved", "completed"]);
 
     // Sorting logic
     if (sortBy === "trending") {
@@ -159,6 +159,7 @@ export async function POST(request: Request) {
       listing_type,
       skill_duration,
       skill_tags,
+      max_bookings_per_user,
     } = body;
 
     const isSkill = listing_type === "skill";
@@ -202,6 +203,7 @@ export async function POST(request: Request) {
         listing_type: listing_type || "item",
         skill_duration: isSkill ? (skill_duration || null) : null,
         skill_tags: isSkill ? (skill_tags || []) : [],
+        max_bookings_per_user: isSkill ? (max_bookings_per_user ?? 2) : null,
       })
       .select();
 
@@ -239,6 +241,7 @@ export async function PUT(request: Request) {
       listing_type,
       skill_duration,
       skill_tags,
+      max_bookings_per_user,
     } = body;
 
     const isSkill = listing_type === "skill";
@@ -301,6 +304,7 @@ export async function PUT(request: Request) {
         listing_type: listing_type || "item",
         skill_duration: isSkill ? (skill_duration || null) : null,
         skill_tags: isSkill ? (skill_tags || []) : [],
+        max_bookings_per_user: isSkill ? (max_bookings_per_user ?? 2) : null,
         is_flagged: false,
         updated_at: new Date().toISOString()
       })

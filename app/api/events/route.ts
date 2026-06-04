@@ -38,14 +38,7 @@ export async function GET(request: Request) {
 
     if (error) throw error;
 
-    // Filter out past events (keep events scheduled today or in the future)
-    // Note: We can show all upcoming events using start_date
-    const now = new Date();
-    const upcomingEvents = (data || []).filter((event: any) => {
-      return new Date(event.end_date) >= now;
-    });
-
-    return NextResponse.json(upcomingEvents);
+    return NextResponse.json(data || []);
   } catch (error: any) {
     console.error("GET events error:", error);
     return NextResponse.json(
@@ -139,6 +132,60 @@ export async function POST(request: Request) {
     console.error("Create event error:", error);
     return NextResponse.json(
       { error: error.message || "Failed to create event" },
+      { status: 500 }
+    );
+  }
+}
+
+// DELETE an event (only allowed for the organizer or admin)
+export async function DELETE(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const eventId = searchParams.get("eventId");
+    const userId = searchParams.get("userId");
+
+    if (!eventId || !userId) {
+      return NextResponse.json(
+        { error: "Missing eventId or userId" },
+        { status: 400 }
+      );
+    }
+
+    // Verify the caller is the organizer or an admin
+    const { data: event, error: fetchErr } = await supabaseAdmin
+      .from("events")
+      .select("organizer_id")
+      .eq("id", eventId)
+      .single();
+
+    if (fetchErr || !event) {
+      return NextResponse.json({ error: "Event not found" }, { status: 404 });
+    }
+
+    const { data: userProfile } = await supabaseAdmin
+      .from("users")
+      .select("is_admin")
+      .eq("id", userId)
+      .maybeSingle();
+
+    const isAdmin = userProfile?.is_admin === true;
+
+    if (event.organizer_id !== userId && !isAdmin) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+    }
+
+    const { error: deleteError } = await supabaseAdmin
+      .from("events")
+      .delete()
+      .eq("id", eventId);
+
+    if (deleteError) throw deleteError;
+
+    return NextResponse.json({ success: true, message: "Event deleted successfully" });
+  } catch (error: any) {
+    console.error("Delete event error:", error);
+    return NextResponse.json(
+      { error: error.message || "Failed to delete event" },
       { status: 500 }
     );
   }

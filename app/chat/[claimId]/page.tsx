@@ -29,6 +29,63 @@ export default function ChatRoomPage() {
   const [sending, setSending] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
+  // Booking Control States
+  const [statusChanging, setStatusChanging] = useState(false);
+  const [nudging, setNudging] = useState(false);
+
+  const handleUpdateStatus = async (newStatus: string) => {
+    if (!claimId) return;
+    setStatusChanging(true);
+    try {
+      const res = await fetch(`/api/claims/${claimId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to update status");
+      
+      setClaim((prev: any) => ({ ...prev, status: newStatus }));
+    } catch (err: any) {
+      alert(err.message || "Failed to update booking status.");
+    } finally {
+      setStatusChanging(false);
+    }
+  };
+
+  const handleNudgeHost = async () => {
+    if (!claimId || !claim) return;
+    setNudging(true);
+    try {
+      await fetch("/api/notifications", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          user_id: claim.donor_id,
+          type: "claim_nudge",
+          title: "Session Request Reminder ⏱",
+          body: `${claim.receiver?.name || "A neighbor"} is waiting for your response regarding your skill: "${claim.listing?.title}"`,
+          link: `/chat/${claimId}`,
+        }),
+      });
+
+      const nowStr = new Date().toISOString();
+      const { error } = await supabase
+        .from("claims")
+        .update({ last_nudged_at: nowStr })
+        .eq("id", claimId);
+
+      if (error) throw error;
+
+      setClaim((prev: any) => ({ ...prev, last_nudged_at: nowStr }));
+      alert("Host has been nudged!");
+    } catch (err: any) {
+      alert(err.message || "Failed to nudge host.");
+    } finally {
+      setNudging(false);
+    }
+  };
+
   const chatEndRef = useRef<HTMLDivElement>(null);
   const typingTimerRef = useRef<NodeJS.Timeout | null>(null);
   const presenceChannelRef = useRef<any>(null);
@@ -57,7 +114,7 @@ export default function ChatRoomPage() {
           .from("claims")
           .select(`
             *,
-            listing:listing_id(id, title, images),
+            listing:listing_id(id, title, images, listing_type, max_bookings_per_user),
             donor:donor_id(id, name, is_ngo, is_verified),
             receiver:receiver_id(id, name, is_ngo, is_verified)
           `)
@@ -367,6 +424,121 @@ export default function ChatRoomPage() {
           )}
         </div>
       </header>
+
+      {claim?.listing?.listing_type === "skill" && (
+        <div className="bg-slate-900/60 border-b border-slate-900 px-4 py-3 backdrop-blur-md">
+          <div className="max-w-4xl mx-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-semibold text-slate-400">Booking Status:</span>
+              {claim.status === "pending" && (
+                <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                  Pending Request
+                </span>
+              )}
+              {claim.status === "accepted" && (
+                <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-violet-500/10 text-violet-400 border border-violet-500/20">
+                  Booking Confirmed
+                </span>
+              )}
+              {claim.status === "completed" && (
+                <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                  Completed
+                </span>
+              )}
+              {claim.status === "declined" && (
+                <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-red-500/10 text-red-400 border border-red-500/20">
+                  Declined
+                </span>
+              )}
+              {claim.status === "cancelled" && (
+                <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-slate-800 text-slate-400 border border-slate-700">
+                  Cancelled
+                </span>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2 flex-wrap">
+              {/* Host actions */}
+              {claim.donor_id === userId && (
+                <>
+                  {claim.status === "pending" && (
+                    <>
+                      <button
+                        onClick={() => handleUpdateStatus("accepted")}
+                        disabled={statusChanging}
+                        className="px-3 py-1.5 rounded-lg text-xs font-bold bg-violet-500 hover:bg-violet-400 text-slate-950 transition-all disabled:opacity-50 active:scale-[0.98] cursor-pointer"
+                      >
+                        Accept Booking
+                      </button>
+                      <button
+                        onClick={() => handleUpdateStatus("declined")}
+                        disabled={statusChanging}
+                        className="px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-800 hover:bg-slate-750 text-red-400 border border-slate-750 transition-all disabled:opacity-50 active:scale-[0.98] cursor-pointer"
+                      >
+                        Decline
+                      </button>
+                    </>
+                  )}
+                  {claim.status === "accepted" && (
+                    <>
+                      <button
+                        onClick={() => handleUpdateStatus("completed")}
+                        disabled={statusChanging}
+                        className="px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition-all disabled:opacity-50 active:scale-[0.98] cursor-pointer"
+                      >
+                        Mark Completed
+                      </button>
+                      <button
+                        onClick={() => handleUpdateStatus("cancelled")}
+                        disabled={statusChanging}
+                        className="px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-800 hover:bg-slate-750 text-slate-400 border border-slate-750 transition-all disabled:opacity-50 active:scale-[0.98] cursor-pointer"
+                      >
+                        Cancel Booking
+                      </button>
+                    </>
+                  )}
+                </>
+              )}
+
+              {/* Requester actions */}
+              {claim.receiver_id === userId && (
+                <>
+                  {(claim.status === "pending" || claim.status === "accepted") && (
+                    <button
+                      onClick={() => handleUpdateStatus("cancelled")}
+                      disabled={statusChanging}
+                      className="px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-800 hover:bg-slate-750 text-red-400 border border-slate-750 transition-all disabled:opacity-50 active:scale-[0.98] cursor-pointer"
+                    >
+                      Cancel Request
+                    </button>
+                  )}
+
+                  {claim.status === "pending" && (
+                    <button
+                      onClick={handleNudgeHost}
+                      disabled={
+                        nudging ||
+                        (claim.last_nudged_at &&
+                          Date.now() - new Date(claim.last_nudged_at).getTime() < 3600000)
+                      }
+                      className="px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 hover:border-amber-500/40 transition-all disabled:opacity-50 cursor-pointer"
+                      title={
+                        claim.last_nudged_at &&
+                        Date.now() - new Date(claim.last_nudged_at).getTime() < 3600000
+                          ? "You can nudge again in 1 hour"
+                          : "Send a reminder push notification to the host"
+                      }
+                    >
+                      {nudging ? "Nudging..." : "⏱ Nudge Host"}
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
 
       {/* Messages Scroll Area */}
       <main className="flex-1 overflow-y-auto px-4 py-6 space-y-4 max-w-4xl mx-auto w-full">

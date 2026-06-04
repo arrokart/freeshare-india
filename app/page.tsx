@@ -43,6 +43,12 @@ const getNotificationIcon = (type: string) => {
       return <CheckCircle className="w-4 h-4 text-emerald-400" />;
     case "new_message":
       return <MessageSquare className="w-4 h-4 text-blue-400" />;
+    case "new_event_comment":
+      return <MessageSquare className="w-4 h-4 text-amber-400" />;
+    case "new_event_message":
+      return <MessageSquare className="w-4 h-4 text-orange-400" />;
+    case "event_rsvp":
+      return <Bell className="w-4 h-4 text-amber-400" />;
     case "account_warning":
     case "listing_removed":
       return <AlertCircle className="w-4 h-4 text-red-400" />;
@@ -50,6 +56,7 @@ const getNotificationIcon = (type: string) => {
       return <Bell className="w-4 h-4 text-slate-400" />;
   }
 };
+
 
 export default function HomeFeed() {
   const [user, setUser] = useState<any>(null);
@@ -122,10 +129,10 @@ export default function HomeFeed() {
       // Set cookie helper for SSR / Next.js proxy token checks
       document.cookie = `sb-access-token=${session.access_token}; path=/; max-age=${session.expires_in || 3600}; SameSite=Lax; Secure`;
 
-      // Query profile to get latest bio (custom claim limit overrides) and claim count
+      // Query profile to get latest bio (custom claim limit overrides), location details, and claim count
       const { data: profile } = await supabase
         .from("users")
-        .select("id, email, name, is_admin, is_premium, is_ngo, bio, monthly_claim_count, created_at")
+        .select("id, email, name, is_admin, is_premium, is_ngo, bio, monthly_claim_count, created_at, city, area, pincode")
         .eq("id", user.id)
         .single();
 
@@ -347,9 +354,9 @@ export default function HomeFeed() {
   // Pre-fill location from logged-in user profile if no manual selection is stored
   useEffect(() => {
     if (!user || selectedLocation) return;
-    const userCity = user.user_metadata?.city;
-    const userArea = user.user_metadata?.area;
-    const userPincode = user.user_metadata?.pincode;
+    const userCity = user.city || user.user_metadata?.city;
+    const userArea = user.area || user.user_metadata?.area;
+    const userPincode = user.pincode || user.user_metadata?.pincode;
 
     if (userCity || userPincode) {
       const defaultLoc = {
@@ -943,7 +950,18 @@ export default function HomeFeed() {
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                           />
                         )}
-                        <span className={`absolute top-1.5 left-1.5 sm:top-2.5 sm:left-2.5 text-[8px] sm:text-[9px] font-extrabold uppercase px-1.5 py-0.5 sm:px-2 sm:py-1 rounded bg-black/60 backdrop-blur-md tracking-wider ${
+                        {item.status && item.status !== "available" && (
+                          <div className="absolute inset-0 bg-slate-950/65 backdrop-blur-[1px] flex items-center justify-center z-10">
+                            <span className={`text-[9px] sm:text-xs font-black uppercase tracking-wider px-2.5 py-1 rounded-xl border ${
+                              item.status === "reserved"
+                                ? "bg-amber-500/20 text-amber-400 border-amber-500/30"
+                                : "bg-emerald-500/20 text-emerald-450 border-emerald-500/30"
+                            }`}>
+                              {item.status === "reserved" ? "Reserved" : "Completed"}
+                            </span>
+                          </div>
+                        )}
+                        <span className={`absolute top-1.5 left-1.5 sm:top-2.5 sm:left-2.5 text-[8px] sm:text-[9px] font-extrabold uppercase px-1.5 py-0.5 sm:px-2 sm:py-1 rounded bg-black/60 backdrop-blur-md tracking-wider z-20 ${
                           isSkill ? "text-violet-400" : "text-teal-400"
                         }`}>
                           {isSkill ? (item.skill_duration || "Free") : item.condition}
@@ -1035,7 +1053,18 @@ export default function HomeFeed() {
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                         />
                       )}
-                      <span className={`absolute top-1.5 left-1.5 sm:top-2.5 sm:left-2.5 text-[8px] sm:text-[9px] font-extrabold uppercase px-1.5 py-0.5 sm:px-2 sm:py-1 rounded bg-black/60 backdrop-blur-md tracking-wider ${
+                      {item.status && item.status !== "available" && (
+                        <div className="absolute inset-0 bg-slate-950/65 backdrop-blur-[1px] flex items-center justify-center z-10">
+                          <span className={`text-[9px] sm:text-xs font-black uppercase tracking-wider px-2.5 py-1 rounded-xl border ${
+                            item.status === "reserved"
+                              ? "bg-amber-500/20 text-amber-400 border-amber-500/30"
+                              : "bg-emerald-500/20 text-emerald-450 border-emerald-500/30"
+                          }`}>
+                            {item.status === "reserved" ? "Reserved" : "Completed"}
+                          </span>
+                        </div>
+                      )}
+                      <span className={`absolute top-1.5 left-1.5 sm:top-2.5 sm:left-2.5 text-[8px] sm:text-[9px] font-extrabold uppercase px-1.5 py-0.5 sm:px-2 sm:py-1 rounded bg-black/60 backdrop-blur-md tracking-wider z-20 ${
                         isSkill ? "text-violet-400" : "text-teal-400"
                       }`}>
                         {isSkill ? (item.skill_duration || "Free") : item.condition}
@@ -1552,11 +1581,15 @@ function LandingPageView({ listings, trendingListings, lang }: { listings: any[]
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
-            {listings.slice(0, 8).map((item) => (
+            {listings.slice(0, 8).map((item) => {
+              const isSkill = item.listing_type === "skill";
+              return (
               <Link
                 key={item.id}
                 href={`/listing/${item.id}`}
-                className="group bg-slate-900/40 border border-slate-900 hover:border-slate-800/80 rounded-2xl overflow-hidden flex flex-col shadow-lg transition-all hover:scale-[1.01] hover:-translate-y-0.5"
+                className={`group border hover:border-slate-800/80 rounded-2xl overflow-hidden flex flex-col shadow-lg transition-all hover:scale-[1.01] hover:-translate-y-0.5 ${
+                  isSkill ? "bg-violet-950/20 border-violet-900/40" : "bg-slate-900/40 border-slate-900"
+                }`}
               >
                 <div className="aspect-square relative overflow-hidden bg-slate-950">
                   <img
@@ -1564,13 +1597,17 @@ function LandingPageView({ listings, trendingListings, lang }: { listings: any[]
                     alt={item.title}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
-                  <span className="absolute top-1.5 left-1.5 sm:top-2.5 sm:left-2.5 text-[8px] sm:text-[9px] font-extrabold uppercase px-1.5 py-0.5 sm:px-2 sm:py-1 rounded bg-black/60 backdrop-blur-md text-teal-400 tracking-wider">
-                    {item.condition}
+                  <span className={`absolute top-1.5 left-1.5 sm:top-2.5 sm:left-2.5 text-[8px] sm:text-[9px] font-extrabold uppercase px-1.5 py-0.5 sm:px-2 sm:py-1 rounded bg-black/60 backdrop-blur-md tracking-wider ${
+                    isSkill ? "text-violet-405" : "text-teal-400"
+                  }`}>
+                    {isSkill ? (item.skill_duration || "Free") : item.condition}
                   </span>
                 </div>
                 <div className="p-2.5 sm:p-4 flex-1 flex flex-col justify-between">
                   <div className="space-y-1 sm:space-y-1.5">
-                    <h3 className="font-bold text-[11px] sm:text-sm text-slate-100 group-hover:text-teal-400 transition-colors line-clamp-1">
+                    <h3 className={`font-bold text-[11px] sm:text-sm transition-colors line-clamp-1 ${
+                      isSkill ? "text-violet-300 group-hover:text-violet-400" : "text-slate-100 group-hover:text-teal-400"
+                    }`}>
                       {item.title}
                     </h3>
                     <p className="text-xs text-slate-400 line-clamp-2 hidden sm:block">
@@ -1582,11 +1619,14 @@ function LandingPageView({ listings, trendingListings, lang }: { listings: any[]
                       <MapPin size={10} className="shrink-0 text-slate-500" />
                       <span className="truncate max-w-[50px] sm:max-w-[80px]">{item.area}</span>
                     </div>
-                    <span className="font-bold text-teal-450 group-hover:underline">Claim Details</span>
+                    <span className={`font-bold ${isSkill ? "text-violet-400" : "text-teal-450"} group-hover:underline`}>
+                      {isSkill ? "Session Details" : "View Details"}
+                    </span>
                   </div>
                 </div>
               </Link>
-            ))}
+              );
+            })}
           </div>
         )}
       </section>

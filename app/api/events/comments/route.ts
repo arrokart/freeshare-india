@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabaseClient";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { sendPushNotification } from "@/lib/push";
 
 // GET retrieve all comments for a specific event
 export async function GET(request: Request) {
@@ -101,6 +102,14 @@ export async function POST(request: Request) {
           body: `${senderName}: "${commentPreview}"`,
           link: `/events/${event_id}`,
         });
+
+        // Broadcast active mobile push notification
+        await sendPushNotification(
+          event.organizer_id,
+          "New comment on your event",
+          `${senderName}: "${commentPreview}"`,
+          `/events/${event_id}`
+        );
       }
     } catch (notifErr) {
       console.error("Failed to generate event comment notification:", notifErr);

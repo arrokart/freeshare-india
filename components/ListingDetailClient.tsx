@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
-import { ArrowLeft, MapPin, User, Star, Loader2, Send, ShieldAlert, Award, Upload, X, Image as ImageIcon, Save, Edit, Sparkles, Flag, Trash } from "lucide-react";
+import { ArrowLeft, MapPin, User, Star, Loader2, Send, ShieldAlert, Award, Upload, X, Image as ImageIcon, Save, Edit, Sparkles, Flag, Trash, Share2 } from "lucide-react";
 import { getR2PublicUrl } from "@/lib/r2";
 import CityAutocomplete from "@/components/CityAutocomplete";
 import { normalizeCityName } from "@/lib/cities";
@@ -59,10 +59,14 @@ export default function ListingDetailClient({ initialListing }: { initialListing
   const [editPreviews, setEditPreviews] = useState<string[]>([]);
   const [detectingLocation, setDetectingLocation] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [shareText, setShareText] = useState("Share");
   const [saveLoading, setSaveLoading] = useState(false);
   const [saveError, setSaveError] = useState("");
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
+  const [activeBookingsCount, setActiveBookingsCount] = useState(0);
+  const [editMaxBookings, setEditMaxBookings] = useState<number>(2);
+
 
   const reverseGeocode = async (lat: number, lng: number) => {
     try {
@@ -210,6 +214,35 @@ export default function ListingDetailClient({ initialListing }: { initialListing
     setEditPreviews((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const handleShare = async () => {
+    const shareData = {
+      title: listing.title,
+      text: listing.description || `Check out this listing on FreeShare India`,
+      url: window.location.href,
+    };
+    
+    if (typeof navigator !== "undefined" && navigator.share) {
+      try {
+        await navigator.share(shareData);
+      } catch (err) {
+        console.log("Web share failed, falling back to copy:", err);
+        copyToClipboard();
+      }
+    } else {
+      copyToClipboard();
+    }
+  };
+
+  const copyToClipboard = () => {
+    if (typeof navigator !== "undefined" && navigator.clipboard) {
+      navigator.clipboard.writeText(window.location.href);
+      setShareText("Copied!");
+      setTimeout(() => {
+        setShareText("Share");
+      }, 2000);
+    }
+  };
+
   const handleDeleteListing = async () => {
     if (!window.confirm("Are you sure you want to permanently delete this listing? This action cannot be undone.")) {
       return;
@@ -243,6 +276,7 @@ export default function ListingDetailClient({ initialListing }: { initialListing
     setEditLandmark(listing.landmark || "");
     setEditPincode(listing.pincode || "");
     setEditReceiverPreference(listing.receiver_preference || "all");
+    setEditMaxBookings(listing.max_bookings_per_user || 2);
     
     let lat: number | null = null;
     let lng: number | null = null;
@@ -333,6 +367,10 @@ export default function ListingDetailClient({ initialListing }: { initialListing
           receiver_preference: editReceiverPreference,
           latitude: editLatitude,
           longitude: editLongitude,
+          listing_type: listing.listing_type,
+          skill_duration: listing.skill_duration,
+          skill_tags: listing.skill_tags,
+          max_bookings_per_user: editMaxBookings,
         }),
       });
 
@@ -494,17 +532,34 @@ export default function ListingDetailClient({ initialListing }: { initialListing
           })
           .catch((err) => console.error("Error updating view count:", err));
 
-        // Check if current user has already claimed this item
+        // Check if current user has already claimed this item or reached active bookings cap for skills
         if (userId && data) {
-          const { data: claimData } = await supabase
-            .from("claims")
-            .select("id")
-            .eq("listing_id", id)
-            .eq("receiver_id", userId)
-            .maybeSingle();
+          if (data.listing_type === "skill") {
+            const { count, error: countErr } = await supabase
+              .from("claims")
+              .select("id", { count: "exact", head: true })
+              .eq("listing_id", id)
+              .eq("receiver_id", userId)
+              .in("status", ["pending", "accepted"]);
 
-          if (claimData) {
-            setUserClaimed(true);
+            if (!countErr && count !== null) {
+              setActiveBookingsCount(count);
+              const maxCap = data.max_bookings_per_user ?? 2;
+              if (count >= maxCap) {
+                setUserClaimed(true);
+              }
+            }
+          } else {
+            const { data: claimData } = await supabase
+              .from("claims")
+              .select("id")
+              .eq("listing_id", id)
+              .eq("receiver_id", userId)
+              .maybeSingle();
+
+            if (claimData) {
+              setUserClaimed(true);
+            }
           }
         }
       } catch (err) {
@@ -546,13 +601,17 @@ export default function ListingDetailClient({ initialListing }: { initialListing
 
     try {
       // 1. Submit claim to DB claims table
-      const { error: claimError } = await supabase.from("claims").insert({
-        listing_id: listing.id,
-        receiver_id: userId,
-        donor_id: listing.donor_id,
-        message: claimMessage,
-        status: "pending",
-      });
+      const { data: newClaim, error: claimError } = await supabase
+        .from("claims")
+        .insert({
+          listing_id: listing.id,
+          receiver_id: userId,
+          donor_id: listing.donor_id,
+          message: claimMessage,
+          status: "pending",
+        })
+        .select()
+        .single();
 
       if (claimError) {
         if (claimError.message.includes("Claim limit reached")) {
@@ -561,7 +620,7 @@ export default function ListingDetailClient({ initialListing }: { initialListing
         throw claimError;
       }
 
-      // 1.5 Fetch receiver name and notify the donor
+      // 1.5 Fetch receiver name and notify the donor via server-side API (bypasses RLS)
       const { data: receiverProfile } = await supabase
         .from("users")
         .select("name")
@@ -569,32 +628,49 @@ export default function ListingDetailClient({ initialListing }: { initialListing
         .single();
       const receiverName = receiverProfile?.name || "A neighbor";
 
-      await supabase.from("notifications").insert({
-        user_id: listing.donor_id,
-        type: "new_claim",
-        title: "New Claim Request",
-        body: `${receiverName} requested to claim your item: "${listing.title}"`,
-        link: "/dashboard",
+      const isSkill = listing.listing_type === "skill";
+
+      await fetch("/api/notifications", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          user_id: listing.donor_id,
+          type: "new_claim",
+          title: isSkill ? "New Session Request" : "New Claim Request",
+          body: isSkill
+            ? `${receiverName} requested your skill: "${listing.title}"`
+            : `${receiverName} requested to claim your item: "${listing.title}"`,
+          link: isSkill && newClaim ? `/chat/${newClaim.id}` : "/dashboard",
+        }),
       });
 
-      // 2. Increment monthly claim count in user metadata
-      const newClaimCount = userClaimCount + 1;
-      const { error: authError } = await supabase.auth.updateUser({
-        data: { monthly_claim_count: newClaimCount }
-      });
+      if (!isSkill) {
+        // 2. Increment monthly claim count in user metadata for items
+        const newClaimCount = userClaimCount + 1;
+        const { error: authError } = await supabase.auth.updateUser({
+          data: { monthly_claim_count: newClaimCount }
+        });
 
-      if (authError) throw authError;
+        if (authError) throw authError;
 
-      // 3. Increment monthly claim count in database users table
-      await supabase
-        .from("users")
-        .update({ monthly_claim_count: newClaimCount })
-        .eq("id", userId);
+        // 3. Increment monthly claim count in database users table
+        await supabase
+          .from("users")
+          .update({ monthly_claim_count: newClaimCount })
+          .eq("id", userId);
 
-      setUserClaimed(true);
-      setClaimSuccess("Claim request submitted successfully! Donor has been notified.");
+        setUserClaimed(true);
+        setClaimSuccess("Claim request submitted successfully! Donor has been notified.");
+      } else {
+        setClaimSuccess("Session request submitted successfully! Redirecting to chat...");
+        setTimeout(() => {
+          if (newClaim) {
+            router.push(`/chat/${newClaim.id}`);
+          }
+        }, 1500);
+      }
     } catch (err: any) {
-      setClaimError(err.message || "Failed to submit claim request.");
+      setClaimError(err.message || "Failed to submit request.");
     } finally {
       setClaiming(false);
     }
@@ -694,7 +770,7 @@ export default function ListingDetailClient({ initialListing }: { initialListing
               />
             </div>
 
-            {/* Category & Condition */}
+            {/* Category & Condition/MaxBookings */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1">
                 <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest block">Category</label>
@@ -702,7 +778,7 @@ export default function ListingDetailClient({ initialListing }: { initialListing
                   required
                   value={editCategory}
                   onChange={(e) => setEditCategory(e.target.value)}
-                  className="w-full bg-slate-950/50 border border-slate-800 rounded-xl py-2.5 px-3.5 text-xs text-slate-100 focus:outline-none focus:border-teal-500/80 [color-scheme:dark]"
+                  className={`w-full bg-slate-950/50 border border-slate-800 rounded-xl py-2.5 px-3.5 text-xs text-slate-100 focus:outline-none ${listing.listing_type === "skill" ? "focus:border-violet-500/80" : "focus:border-teal-500/80"} [color-scheme:dark]`}
                 >
                   {CATEGORIES.map((cat) => (
                     <option key={cat} value={cat}>{cat}</option>
@@ -710,19 +786,34 @@ export default function ListingDetailClient({ initialListing }: { initialListing
                 </select>
               </div>
 
-              <div className="space-y-1">
-                <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest block">Condition</label>
-                <select
-                  required
-                  value={editCondition}
-                  onChange={(e) => setEditCondition(e.target.value)}
-                  className="w-full bg-slate-950/50 border border-slate-800 rounded-xl py-2.5 px-3.5 text-xs text-slate-100 focus:outline-none focus:border-teal-500/80 [color-scheme:dark]"
-                >
-                  {CONDITIONS.map((cond) => (
-                    <option key={cond} value={cond}>{cond}</option>
-                  ))}
-                </select>
-              </div>
+              {listing.listing_type === "skill" ? (
+                <div className="space-y-1">
+                  <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest block">Max Active Bookings Per User</label>
+                  <select
+                    value={editMaxBookings}
+                    onChange={(e) => setEditMaxBookings(parseInt(e.target.value))}
+                    className="w-full bg-slate-950/50 border border-slate-800 rounded-xl py-2.5 px-3.5 text-xs text-slate-100 focus:outline-none focus:border-violet-500/80 [color-scheme:dark]"
+                  >
+                    {[1, 2, 3, 4, 5, 10].map((num) => (
+                      <option key={num} value={num}>{num} {num === 1 ? "Active Slot" : "Active Slots"}</option>
+                    ))}
+                  </select>
+                </div>
+              ) : (
+                <div className="space-y-1">
+                  <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest block">Condition</label>
+                  <select
+                    required
+                    value={editCondition}
+                    onChange={(e) => setEditCondition(e.target.value)}
+                    className="w-full bg-slate-950/50 border border-slate-800 rounded-xl py-2.5 px-3.5 text-xs text-slate-100 focus:outline-none focus:border-teal-500/80 [color-scheme:dark]"
+                  >
+                    {CONDITIONS.map((cond) => (
+                      <option key={cond} value={cond}>{cond}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
             </div>
 
             {/* Description */}
@@ -911,16 +1002,26 @@ export default function ListingDetailClient({ initialListing }: { initialListing
                     </span>
                   )}
                 </div>
-                {userId && listing.donor_id !== userId && (
+                <div className="flex items-center gap-2">
                   <button
-                    onClick={() => setShowReportModal(true)}
-                    className="inline-flex items-center gap-1.5 text-[10px] font-extrabold text-slate-400 hover:text-red-400 bg-slate-900 border border-slate-800/80 px-2.5 py-1 rounded-md transition-all cursor-pointer"
-                    title="Report Listing"
+                    onClick={handleShare}
+                    className={`inline-flex items-center gap-1.5 text-[10px] font-extrabold ${listing.listing_type === "skill" ? "text-violet-500 hover:text-violet-400" : "text-teal-500 hover:text-teal-400"} bg-slate-900 border border-slate-800/80 px-2.5 py-1 rounded-md transition-all cursor-pointer`}
+                    title="Share Listing"
                   >
-                    <Flag size={10} />
-                    <span>Report</span>
+                    <Share2 size={11} />
+                    <span>{shareText}</span>
                   </button>
-                )}
+                  {userId && listing.donor_id !== userId && (
+                    <button
+                      onClick={() => setShowReportModal(true)}
+                      className="inline-flex items-center gap-1.5 text-[10px] font-extrabold text-slate-400 hover:text-red-400 bg-slate-900 border border-slate-800/80 px-2.5 py-1 rounded-md transition-all cursor-pointer"
+                      title="Report Listing"
+                    >
+                      <Flag size={10} />
+                      <span>Report</span>
+                    </button>
+                  )}
+                </div>
               </div>
               
               <h1 className="text-3xl font-extrabold tracking-tight text-slate-100">
@@ -1005,8 +1106,11 @@ export default function ListingDetailClient({ initialListing }: { initialListing
                   Sign in to {listing.listing_type === "skill" ? "Request Session" : "Claim Item"}
                 </Link>
               ) : userClaimed ? (
-                <div className="p-4 rounded-xl bg-teal-500/10 border border-teal-500/20 text-teal-400 text-xs text-center font-semibold">
-                  ✓ You have already requested this item. Check your profile for status updates.
+                <div className={`p-4 rounded-xl ${listing.listing_type === "skill" ? "bg-violet-500/10 border border-violet-500/20 text-violet-400" : "bg-teal-500/10 border border-teal-500/20 text-teal-400"} text-xs text-center font-semibold`}>
+                  {listing.listing_type === "skill"
+                    ? `✓ You have reached the maximum active bookings (${listing.max_bookings_per_user ?? 2}) allowed by the host.`
+                    : "✓ You have already requested this item. Check your profile for status updates."
+                  }
                 </div>
               ) : listing.donor_id === userId ? (
                 <div className="space-y-4">
