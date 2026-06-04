@@ -31,6 +31,7 @@ export default function ListingDetailClient({ initialListing }: { initialListing
 
   // Claim Request States
   const [userClaimed, setUserClaimed] = useState(false);
+  const [activeClaimId, setActiveClaimId] = useState<string | null>(null);
   const [claimMessage, setClaimMessage] = useState("");
   const [claiming, setClaiming] = useState(false);
   const [claimError, setClaimError] = useState("");
@@ -535,18 +536,21 @@ export default function ListingDetailClient({ initialListing }: { initialListing
         // Check if current user has already claimed this item or reached active bookings cap for skills
         if (userId && data) {
           if (data.listing_type === "skill") {
-            const { count, error: countErr } = await supabase
+            const { data: bookingClaims, error: bookingErr } = await supabase
               .from("claims")
-              .select("id", { count: "exact", head: true })
+              .select("id")
               .eq("listing_id", id)
               .eq("receiver_id", userId)
               .in("status", ["pending", "accepted"]);
 
-            if (!countErr && count !== null) {
-              setActiveBookingsCount(count);
+            if (!bookingErr && bookingClaims) {
+              setActiveBookingsCount(bookingClaims.length);
               const maxCap = data.max_bookings_per_user ?? 2;
-              if (count >= maxCap) {
+              if (bookingClaims.length >= maxCap) {
                 setUserClaimed(true);
+              }
+              if (bookingClaims.length > 0) {
+                setActiveClaimId(bookingClaims[0].id);
               }
             }
           } else {
@@ -555,10 +559,12 @@ export default function ListingDetailClient({ initialListing }: { initialListing
               .select("id")
               .eq("listing_id", id)
               .eq("receiver_id", userId)
+              .in("status", ["pending", "accepted"])
               .maybeSingle();
 
             if (claimData) {
               setUserClaimed(true);
+              setActiveClaimId(claimData.id);
             }
           }
         }
@@ -660,6 +666,9 @@ export default function ListingDetailClient({ initialListing }: { initialListing
           .eq("id", userId);
 
         setUserClaimed(true);
+        if (newClaim) {
+          setActiveClaimId(newClaim.id);
+        }
         setClaimSuccess("Claim request submitted successfully! Donor has been notified.");
       } else {
         setClaimSuccess("Session request submitted successfully! Redirecting to chat...");
@@ -1106,11 +1115,58 @@ export default function ListingDetailClient({ initialListing }: { initialListing
                   Sign in to {listing.listing_type === "skill" ? "Request Session" : "Claim Item"}
                 </Link>
               ) : userClaimed ? (
-                <div className={`p-4 rounded-xl ${listing.listing_type === "skill" ? "bg-violet-500/10 border border-violet-500/20 text-violet-400" : "bg-teal-500/10 border border-teal-500/20 text-teal-400"} text-xs text-center font-semibold`}>
-                  {listing.listing_type === "skill"
-                    ? `✓ You have reached the maximum active bookings (${listing.max_bookings_per_user ?? 2}) allowed by the host.`
-                    : "✓ You have already requested this item. Check your profile for status updates."
-                  }
+                <div className="space-y-3">
+                  <div className={`p-4 rounded-xl ${listing.listing_type === "skill" ? "bg-violet-500/10 border border-violet-500/20 text-violet-400" : "bg-teal-500/10 border border-teal-500/20 text-teal-400"} text-xs text-center font-semibold`}>
+                    {listing.listing_type === "skill"
+                      ? `✓ You have reached the maximum active bookings (${listing.max_bookings_per_user ?? 2}) allowed by the host.`
+                      : "✓ You have already requested this item. Check your profile for status updates."
+                    }
+                  </div>
+                  {activeClaimId && (
+                    <div className="flex gap-2">
+                      <Link
+                        href={`/chat/${activeClaimId}`}
+                        className="flex-1 text-center bg-slate-900 border border-slate-800 text-slate-200 font-bold py-2.5 px-4 rounded-xl text-xs hover:bg-slate-850 transition-colors flex items-center justify-center"
+                      >
+                        Open Chat
+                      </Link>
+                      <button
+                        onClick={async () => {
+                          if (confirm("Are you sure you want to cancel this request?")) {
+                            try {
+                              const res = await fetch(`/api/claims/${activeClaimId}`, {
+                                method: "PATCH",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ status: "cancelled" }),
+                              });
+                              if (res.ok) {
+                                // Decrease monthly claim count in user metadata for items
+                                if (listing.listing_type !== "skill") {
+                                  const newClaimCount = Math.max(0, userClaimCount - 1);
+                                  await supabase.auth.updateUser({
+                                    data: { monthly_claim_count: newClaimCount }
+                                  });
+                                  await supabase
+                                    .from("users")
+                                    .update({ monthly_claim_count: newClaimCount })
+                                    .eq("id", userId);
+                                }
+
+                                setUserClaimed(false);
+                                setActiveClaimId(null);
+                                window.location.reload();
+                              }
+                            } catch (err) {
+                              console.error("Cancel claim failed:", err);
+                            }
+                          }
+                        }}
+                        className="flex-1 bg-red-950/20 hover:bg-red-900/20 text-red-400 border border-red-900/30 hover:border-red-800/40 font-bold py-2.5 px-4 rounded-xl text-xs transition-colors cursor-pointer"
+                      >
+                        Cancel Request
+                      </button>
+                    </div>
+                  )}
                 </div>
               ) : listing.donor_id === userId ? (
                 <div className="space-y-4">
