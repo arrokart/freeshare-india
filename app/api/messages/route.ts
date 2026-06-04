@@ -116,3 +116,35 @@ export async function POST(request: Request) {
     );
   }
 }
+
+// PATCH mark messages as read
+export async function PATCH(request: Request) {
+  try {
+    const body = await request.json();
+    const { claimId, readerId } = body;
+
+    if (!claimId || !readerId) {
+      return NextResponse.json(
+        { error: "Missing claimId or readerId" },
+        { status: 400 }
+      );
+    }
+
+    const { error } = await supabase
+      .from("messages")
+      .update({ is_read: true })
+      .eq("claim_id", claimId)
+      .neq("sender_id", readerId)
+      .eq("is_read", false);
+
+    if (error) throw error;
+
+    return NextResponse.json({ success: true });
+  } catch (error: any) {
+    console.error("Mark messages read error:", error);
+    return NextResponse.json(
+      { error: error.message || "Failed to mark messages as read" },
+      { status: 550 }
+    );
+  }
+}

@@ -536,42 +536,158 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* Dynamic tab switches */}
-        <div className="flex gap-2 border-b border-slate-900 pb-2">
-          <button
-            onClick={() => setActiveTab("donations")}
-            className={`flex items-center gap-2 px-5 py-3 text-sm font-bold border-b-2 transition-all ${
-              activeTab === "donations"
-                ? "border-teal-500 text-teal-400"
-                : "border-transparent text-slate-400 hover:text-slate-200"
-            }`}
-          >
-            <Gift size={16} />
-            My Donations ({myListings.length})
-          </button>
-          <button
-            onClick={() => setActiveTab("claims")}
-            className={`flex items-center gap-2 px-5 py-3 text-sm font-bold border-b-2 transition-all ${
-              activeTab === "claims"
-                ? "border-teal-500 text-teal-400"
-                : "border-transparent text-slate-400 hover:text-slate-200"
-            }`}
-          >
-            <ClipboardList size={16} />
-            My Claims ({myClaims.length})
-          </button>
-          <button
-            onClick={() => setActiveTab("event_chats")}
-            className={`flex items-center gap-2 px-5 py-3 text-sm font-bold border-b-2 transition-all ${
-              activeTab === "event_chats"
-                ? "border-amber-500 text-amber-400"
-                : "border-transparent text-slate-400 hover:text-slate-200"
-            }`}
-          >
-            <MessageSquare size={16} />
-            Event Chats ({eventInquiries.length})
-          </button>
-        </div>
+        {/* Dashboard Navigation via Stat Cards */}
+        {(() => {
+          const availableShares = myListings.filter(l => l.status === "available").length;
+          const reservedShares = myListings.filter(l => l.status === "reserved").length;
+          
+          const pendingRequests = myClaims.filter(c => c.status === "pending").length;
+          const acceptedRequests = myClaims.filter(c => c.status === "accepted").length;
+
+          return (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* My Shares Card */}
+              <button
+                onClick={() => setActiveTab("donations")}
+                className={`relative overflow-hidden rounded-2xl p-5 text-left transition-all duration-300 backdrop-blur-md border cursor-pointer hover:scale-[1.02] hover:-translate-y-0.5 group ${
+                  activeTab === "donations"
+                    ? "bg-slate-900/80 border-teal-500/40 shadow-[0_0_20px_-3px_rgba(20,184,166,0.15)]"
+                    : "bg-slate-950/20 border-slate-900 hover:bg-slate-900/40 hover:border-slate-800"
+                }`}
+              >
+                {/* Active Indicator Bar */}
+                <div className={`absolute left-0 top-0 bottom-0 w-1 transition-all duration-300 ${
+                  activeTab === "donations" ? "bg-teal-500" : "bg-transparent group-hover:bg-slate-800"
+                }`} />
+
+                <div className="flex items-center justify-between">
+                  <span className={`text-[10px] font-extrabold uppercase tracking-widest ${
+                    activeTab === "donations" ? "text-teal-400" : "text-slate-500 group-hover:text-slate-400"
+                  }`}>
+                    My Shares
+                  </span>
+                  <div className={`p-2 rounded-xl border transition-colors ${
+                    activeTab === "donations"
+                      ? "bg-teal-500/10 border-teal-500/20 text-teal-400"
+                      : "bg-slate-900 border-slate-800 text-slate-500 group-hover:text-slate-400"
+                  }`}>
+                    <Gift size={16} />
+                  </div>
+                </div>
+
+                <div className="mt-4 flex items-baseline gap-2">
+                  <span className="text-3xl font-black text-slate-100 tracking-tight">
+                    {myListings.length}
+                  </span>
+                  <span className="text-xs text-slate-500 font-semibold">items shared</span>
+                </div>
+
+                <div className="mt-3 pt-3 border-t border-slate-900/80 flex items-center gap-3 text-[10px] font-bold text-slate-400">
+                  <span className="flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-teal-500/80" />
+                    {availableShares} available
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500/80" />
+                    {reservedShares} reserved
+                  </span>
+                </div>
+              </button>
+
+              {/* My Requests Card */}
+              <button
+                onClick={() => setActiveTab("claims")}
+                className={`relative overflow-hidden rounded-2xl p-5 text-left transition-all duration-300 backdrop-blur-md border cursor-pointer hover:scale-[1.02] hover:-translate-y-0.5 group ${
+                  activeTab === "claims"
+                    ? "bg-slate-900/80 border-emerald-500/40 shadow-[0_0_20px_-3px_rgba(16,185,129,0.15)]"
+                    : "bg-slate-950/20 border-slate-900 hover:bg-slate-900/40 hover:border-slate-800"
+                }`}
+              >
+                {/* Active Indicator Bar */}
+                <div className={`absolute left-0 top-0 bottom-0 w-1 transition-all duration-300 ${
+                  activeTab === "claims" ? "bg-emerald-500" : "bg-transparent group-hover:bg-slate-800"
+                }`} />
+
+                <div className="flex items-center justify-between">
+                  <span className={`text-[10px] font-extrabold uppercase tracking-widest ${
+                    activeTab === "claims" ? "text-emerald-400" : "text-slate-500 group-hover:text-slate-400"
+                  }`}>
+                    My Requests
+                  </span>
+                  <div className={`p-2 rounded-xl border transition-colors ${
+                    activeTab === "claims"
+                      ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400"
+                      : "bg-slate-900 border-slate-800 text-slate-500 group-hover:text-slate-400"
+                  }`}>
+                    <ClipboardList size={16} />
+                  </div>
+                </div>
+
+                <div className="mt-4 flex items-baseline gap-2">
+                  <span className="text-3xl font-black text-slate-100 tracking-tight">
+                    {myClaims.length}
+                  </span>
+                  <span className="text-xs text-slate-500 font-semibold">claims made</span>
+                </div>
+
+                <div className="mt-3 pt-3 border-t border-slate-900/80 flex items-center gap-3 text-[10px] font-bold text-slate-400">
+                  <span className="flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500/80" />
+                    {pendingRequests} pending
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500/80" />
+                    {acceptedRequests} approved
+                  </span>
+                </div>
+              </button>
+
+              {/* Event Inquiries Card */}
+              <button
+                onClick={() => setActiveTab("event_chats")}
+                className={`relative overflow-hidden rounded-2xl p-5 text-left transition-all duration-300 backdrop-blur-md border cursor-pointer hover:scale-[1.02] hover:-translate-y-0.5 group ${
+                  activeTab === "event_chats"
+                    ? "bg-slate-900/80 border-amber-500/40 shadow-[0_0_20px_-3px_rgba(245,158,11,0.15)]"
+                    : "bg-slate-950/20 border-slate-900 hover:bg-slate-900/40 hover:border-slate-800"
+                }`}
+              >
+                {/* Active Indicator Bar */}
+                <div className={`absolute left-0 top-0 bottom-0 w-1 transition-all duration-300 ${
+                  activeTab === "event_chats" ? "bg-amber-500" : "bg-transparent group-hover:bg-slate-800"
+                }`} />
+
+                <div className="flex items-center justify-between">
+                  <span className={`text-[10px] font-extrabold uppercase tracking-widest ${
+                    activeTab === "event_chats" ? "text-amber-400" : "text-slate-500 group-hover:text-slate-400"
+                  }`}>
+                    Event Inquiries
+                  </span>
+                  <div className={`p-2 rounded-xl border transition-colors ${
+                    activeTab === "event_chats"
+                      ? "bg-amber-500/10 border-amber-500/20 text-amber-400"
+                      : "bg-slate-900 border-slate-800 text-slate-500 group-hover:text-slate-400"
+                  }`}>
+                    <MessageSquare size={16} />
+                  </div>
+                </div>
+
+                <div className="mt-4 flex items-baseline gap-2">
+                  <span className="text-3xl font-black text-slate-100 tracking-tight">
+                    {eventInquiries.length}
+                  </span>
+                  <span className="text-xs text-slate-500 font-semibold">active chats</span>
+                </div>
+
+                <div className="mt-3 pt-3 border-t border-slate-900/80 flex items-center gap-1.5 text-[10px] font-bold text-slate-400">
+                  <span className="flex items-center gap-1 truncate">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500/80" />
+                    Private messages & RSVPs
+                  </span>
+                </div>
+              </button>
+            </div>
+          );
+        })()}
 
         {/* Tab contents */}
         {activeTab === "event_chats" ? (

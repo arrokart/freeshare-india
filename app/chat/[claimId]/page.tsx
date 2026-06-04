@@ -131,7 +131,18 @@ export default function ChatRoomPage() {
         // 2. Fetch last 50 historical messages
         const msgRes = await fetch(`/api/messages?claimId=${claimId}&limit=50`);
         const msgData = await msgRes.json();
-        setMessages(Array.isArray(msgData) ? msgData : []);
+        const loadedMessages = Array.isArray(msgData) ? msgData : [];
+        setMessages(loadedMessages);
+
+        // Mark incoming messages as read
+        const hasUnread = loadedMessages.some((m: any) => m.sender_id !== userId && !m.is_read);
+        if (hasUnread) {
+          fetch(`/api/messages`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ claimId, readerId: userId }),
+          }).catch((err) => console.error("Error marking messages read:", err));
+        }
       } catch (err) {
         console.error("Chat details fetch error:", err);
         setErrorMsg("Failed to load chat history.");
@@ -148,38 +159,55 @@ export default function ChatRoomPage() {
   useEffect(() => {
     if (!claimId || !userId) return;
 
-    // 1. Subscribe to Live DB Inserts on messages table
+    // 1. Subscribe to Live DB changes on messages table
     const messageChannel = supabase
       .channel(`live_messages:${claimId}`)
       .on(
         "postgres_changes",
         {
-          event: "INSERT",
+          event: "*",
           schema: "public",
           table: "messages",
         },
         (payload) => {
-          const newMsg = payload.new;
-          if (newMsg.claim_id !== claimId) return;
+          if (payload.eventType === "INSERT") {
+            const newMsg = payload.new;
+            if (newMsg.claim_id !== claimId) return;
 
-          setMessages((prev) => {
-            // 1. If already added (due to fast HTTP response), skip
-            if (prev.some((m) => m.id === newMsg.id)) return prev;
+            setMessages((prev) => {
+              // 1. If already added (due to fast HTTP response), skip
+              if (prev.some((m) => m.id === newMsg.id)) return prev;
 
-            // 2. If it's our own message, check if we have an optimistic placeholder
-            if (newMsg.sender_id === userId) {
-              const optIndex = prev.findIndex((m) => m.id.startsWith("optimistic-"));
-              if (optIndex !== -1) {
-                const updated = [...prev];
-                updated[optIndex] = newMsg;
-                return updated;
+              // 2. If it's our own message, check if we have an optimistic placeholder
+              if (newMsg.sender_id === userId) {
+                const optIndex = prev.findIndex((m) => m.id.startsWith("optimistic-"));
+                if (optIndex !== -1) {
+                  const updated = [...prev];
+                  updated[optIndex] = newMsg;
+                  return updated;
+                }
               }
-            }
 
-            // 3. Otherwise, append normally (message from other user or no placeholder)
-            return [...prev, newMsg];
-          });
-          scrollToBottom();
+              // 3. Otherwise, append normally
+              return [...prev, newMsg];
+            });
+
+            // Mark as read immediately on receive if from other user
+            if (newMsg.sender_id !== userId) {
+              fetch(`/api/messages`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ claimId, readerId: userId })
+              }).catch(err => console.error("Error marking live message read:", err));
+            }
+            scrollToBottom();
+          } else if (payload.eventType === "UPDATE") {
+            const updatedMsg = payload.new;
+            if (updatedMsg.claim_id !== claimId) return;
+            setMessages((prev) =>
+              prev.map((m) => (m.id === updatedMsg.id ? updatedMsg : m))
+            );
+          }
         }
       )
       .subscribe((status) => {
@@ -610,10 +638,19 @@ export default function ChatRoomPage() {
                   {msg.content && <p className="break-words">{msg.content}</p>}
                 </div>
 
-                {/* Bubble Timestamp */}
-                <span className="text-[9px] text-slate-500 font-semibold px-1">
-                  {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                </span>
+                {/* Bubble Timestamp & Status Ticks */}
+                <div className="flex items-center gap-1.5 px-1">
+                  <span className="text-[9px] text-slate-500 font-semibold">
+                    {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                  {isMe && (
+                    <span title={msg.is_read ? "Read" : "Delivered"}>
+                      <CheckCheck 
+                        className={`w-3.5 h-3.5 ${msg.is_read ? "text-teal-400" : "text-slate-600"}`} 
+                      />
+                    </span>
+                  )}
+                </div>
               </div>
             );
           })
