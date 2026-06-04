@@ -947,6 +947,15 @@ export default function HomeFeed() {
                           <p className="text-xs text-slate-400 line-clamp-2 hidden sm:block">
                             {item.description}
                           </p>
+                          {isSkill && item.skill_tags?.length > 0 && (
+                            <div className="hidden sm:flex flex-wrap gap-1 pt-0.5">
+                              {item.skill_tags.slice(0, 3).map((tag: string) => (
+                                <span key={tag} className="text-[9px] font-semibold text-violet-400/80 bg-violet-500/10 px-1.5 py-0.5 rounded-full border border-violet-500/20">
+                                  #{tag}
+                                </span>
+                              ))}
+                            </div>
+                          )}
                         </div>
                         <div className="pt-2 sm:pt-4 mt-1.5 sm:mt-2 border-t border-slate-900/80 flex items-center justify-between text-[9px] sm:text-[10px] text-slate-500">
                           <div className="flex items-center gap-0.5 sm:gap-1 min-w-0">

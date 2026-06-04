@@ -925,6 +925,23 @@ export default function ListingDetailClient({ initialListing }: { initialListing
               </p>
             </div>
 
+            {/* Skill Tags */}
+            {listing.listing_type === "skill" && listing.skill_tags && listing.skill_tags.length > 0 && (
+              <div className="bg-violet-950/20 border border-violet-900/30 rounded-2xl p-5 space-y-3">
+                <h3 className="text-xs font-bold text-violet-400 uppercase tracking-widest">Skill Tags</h3>
+                <div className="flex flex-wrap gap-2">
+                  {listing.skill_tags.map((tag: string) => (
+                    <span
+                      key={tag}
+                      className="inline-flex items-center text-xs font-semibold text-violet-300 bg-violet-500/10 border border-violet-500/25 px-3 py-1 rounded-full"
+                    >
+                      #{tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Donor details card */}
             <div className="border border-slate-900 rounded-2xl p-5 flex items-center justify-between">
               <div className="flex items-center gap-3">

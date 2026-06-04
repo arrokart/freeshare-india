@@ -46,6 +46,8 @@ export default function DonatePage() {
   const [category, setCategory] = useState("");
   const [condition, setCondition] = useState("");
   const [skillDuration, setSkillDuration] = useState("");
+  const [skillTags, setSkillTags] = useState<string[]>([]);
+  const [tagInput, setTagInput] = useState("");
   const [city, setCity] = useState("");
   const [area, setArea] = useState("");
   const [landmark, setLandmark] = useState("");
@@ -82,6 +84,8 @@ export default function DonatePage() {
     setCategory("");
     setCondition("");
     setSkillDuration("");
+    setSkillTags([]);
+    setTagInput("");
     setImages([]);
     setPreviews([]);
   }, [listingType]);
@@ -294,6 +298,7 @@ export default function DonatePage() {
           longitude,
           listing_type: listingType,
           skill_duration: isSkill ? skillDuration : null,
+          skill_tags: isSkill ? skillTags : [],
         }),
       });
 
@@ -563,6 +568,69 @@ export default function DonatePage() {
               className={`w-full bg-slate-950/50 border border-slate-800 rounded-xl py-3 px-4 text-sm text-slate-100 placeholder-slate-600 focus:outline-none ${isSkill ? "focus:border-violet-500/80 focus:ring-1 focus:ring-violet-500/20" : "focus:border-teal-500/80 focus:ring-1 focus:ring-teal-500/20"} transition-all resize-none`}
             />
           </div>
+
+          {/* ─── Skill Tags (only for skill listings) ─── */}
+          {isSkill && (
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider block mb-1">
+                  Skill Tags
+                  <span className="ml-2 text-[10px] font-normal text-slate-500 normal-case">Add specific tags so people can find you (e.g. yoga, python, mehendi)</span>
+                </label>
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {skillTags.map((tag) => (
+                    <span
+                      key={tag}
+                      className="inline-flex items-center gap-1.5 text-xs font-semibold bg-violet-500/10 border border-violet-500/30 text-violet-300 px-3 py-1 rounded-full"
+                    >
+                      #{tag}
+                      <button
+                        type="button"
+                        onClick={() => setSkillTags((prev) => prev.filter((t) => t !== tag))}
+                        className="text-violet-400 hover:text-red-400 transition-colors ml-0.5"
+                      >
+                        <X size={11} />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={tagInput}
+                    onChange={(e) => setTagInput(e.target.value.toLowerCase().replace(/[^a-z0-9 ]/g, ""))}
+                    onKeyDown={(e) => {
+                      if ((e.key === "Enter" || e.key === ",") && tagInput.trim()) {
+                        e.preventDefault();
+                        const newTag = tagInput.trim().replace(/\s+/g, "-");
+                        if (!skillTags.includes(newTag) && skillTags.length < 10) {
+                          setSkillTags((prev) => [...prev, newTag]);
+                        }
+                        setTagInput("");
+                      }
+                    }}
+                    placeholder="Type a tag and press Enter... (e.g. yoga)"
+                    maxLength={30}
+                    className="flex-1 bg-slate-950/50 border border-slate-800 rounded-xl py-2.5 px-4 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-violet-500/80 focus:ring-1 focus:ring-violet-500/20 transition-all"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const newTag = tagInput.trim().replace(/\s+/g, "-");
+                      if (newTag && !skillTags.includes(newTag) && skillTags.length < 10) {
+                        setSkillTags((prev) => [...prev, newTag]);
+                        setTagInput("");
+                      }
+                    }}
+                    className="px-4 py-2.5 rounded-xl bg-violet-500/10 border border-violet-500/30 text-violet-400 text-xs font-bold hover:bg-violet-500/20 transition-all"
+                  >
+                    + Add
+                  </button>
+                </div>
+                <p className="text-[10px] text-slate-600 mt-1.5">{skillTags.length}/10 tags · Press Enter or comma to add</p>
+              </div>
+            </div>
+          )}
 
           {/* ─── Location ─── */}
           <div className="space-y-3">

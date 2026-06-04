@@ -71,9 +71,9 @@ export async function GET(request: Request) {
       query = query.eq("pincode", pincode);
     }
 
-    // Search query filter (Fuzzy / Keyword matching)
+    // Search query filter — matches title, description, and skill tags
     if (search) {
-      query = query.ilike("title", `%${search}%`);
+      query = query.or(`title.ilike.%${search}%,description.ilike.%${search}%,skill_tags.cs.{${search}}`);
     }
 
     const limit = searchParams.get("limit");
@@ -158,6 +158,7 @@ export async function POST(request: Request) {
       longitude,
       listing_type,
       skill_duration,
+      skill_tags,
     } = body;
 
     const isSkill = listing_type === "skill";
@@ -200,6 +201,7 @@ export async function POST(request: Request) {
         status: "available",
         listing_type: listing_type || "item",
         skill_duration: isSkill ? (skill_duration || null) : null,
+        skill_tags: isSkill ? (skill_tags || []) : [],
       })
       .select();
 
@@ -236,6 +238,7 @@ export async function PUT(request: Request) {
       longitude,
       listing_type,
       skill_duration,
+      skill_tags,
     } = body;
 
     const isSkill = listing_type === "skill";
@@ -297,6 +300,7 @@ export async function PUT(request: Request) {
         receiver_preference: receiver_preference || "all",
         listing_type: listing_type || "item",
         skill_duration: isSkill ? (skill_duration || null) : null,
+        skill_tags: isSkill ? (skill_tags || []) : [],
         is_flagged: false,
         updated_at: new Date().toISOString()
       })

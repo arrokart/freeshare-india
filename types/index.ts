@@ -82,6 +82,7 @@ export interface Listing {
   view_count: number;
   listing_type?: ListingType;
   skill_duration?: SkillDuration;
+  skill_tags?: string[];
   created_at: string;
   completed_at?: string;
 }
