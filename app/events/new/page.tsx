@@ -53,6 +53,22 @@ export default function CreateEventPage() {
     checkUser();
   }, [router]);
 
+  useEffect(() => {
+    const now = new Date();
+    // Round to the nearest 5 minutes for a clean interface, starting 5 minutes from now
+    const start = new Date(Math.ceil(now.getTime() / (5 * 60 * 1000)) * (5 * 60 * 1000) + 5 * 60 * 1000);
+    const end = new Date(start.getTime() + 2 * 60 * 60 * 1000); // 2 hours duration
+    
+    const formatLocal = (d: Date) => {
+      const offset = d.getTimezoneOffset();
+      const local = new Date(d.getTime() - (offset * 60 * 1000));
+      return local.toISOString().slice(0, 16);
+    };
+    
+    setStartDate(formatLocal(start));
+    setEndDate(formatLocal(end));
+  }, []);
+
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
@@ -79,8 +95,8 @@ export default function CreateEventPage() {
     const end = new Date(endDate);
     const now = new Date();
 
-    if (start.getTime() <= now.getTime() + 30 * 60 * 1000) {
-      setErrorMsg("Event start time must be scheduled at least 30 minutes in the future.");
+    if (start.getTime() < now.getTime() - 10 * 60 * 1000) {
+      setErrorMsg("Event start time cannot be in the past.");
       setSubmitting(false);
       return;
     }

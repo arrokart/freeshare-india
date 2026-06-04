@@ -98,10 +98,10 @@ export async function POST(request: Request) {
     const end = new Date(end_date);
     const now = new Date();
 
-    // Validate start date is at least 30 minutes in the future
-    if (start.getTime() <= now.getTime() + 30 * 60 * 1000) {
+    // Validate start date is not in the past (allow 10 mins grace period for form filling)
+    if (start.getTime() < now.getTime() - 10 * 60 * 1000) {
       return NextResponse.json(
-        { error: "Event must be scheduled to start at least 30 minutes in the future" },
+        { error: "Event start time cannot be in the past" },
         { status: 400 }
       );
     }
