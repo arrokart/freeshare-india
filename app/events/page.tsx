@@ -239,9 +239,10 @@ export default function EventsFeedPage() {
               const isFull = event.max_participants && rsvpCount >= event.max_participants;
 
               return (
-                <div
+                <Link
                   key={event.id}
-                  className="group bg-slate-900/30 border border-slate-900 rounded-3xl p-5 hover:border-slate-800/80 transition-all flex flex-col gap-5 shadow-lg relative overflow-hidden"
+                  href={`/events/${event.id}`}
+                  className="group bg-slate-900/30 border border-slate-900 rounded-3xl p-5 hover:border-slate-800/80 transition-all flex flex-col gap-5 shadow-lg relative overflow-hidden block"
                 >
                   {/* Event Promo Header Image if Present */}
                   {event.image_url && (
@@ -264,9 +265,9 @@ export default function EventsFeedPage() {
                     {/* Event Details Content */}
                     <div className="flex-1 space-y-2.5">
                       <div className="flex flex-wrap items-center gap-2">
-                        <Link href={`/events/${event.id}`} className="text-base font-extrabold text-slate-200 hover:text-amber-400 transition-colors">
+                        <span className="text-base font-extrabold text-slate-200 group-hover:text-amber-400 transition-colors">
                           {event.title}
-                        </Link>
+                        </span>
 
                         {/* Organizer badge */}
                         {event.organizer?.is_ngo ? (
@@ -309,7 +310,11 @@ export default function EventsFeedPage() {
                       </div>
 
                       <button
-                        onClick={() => handleRsvpToggle(event.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
+                          handleRsvpToggle(event.id);
+                        }}
                         disabled={rsvpLoadingId === event.id || (!isGoing && isFull)}
                         className={`w-full px-4 py-2 text-xs font-black rounded-xl transition-all cursor-pointer select-none text-center ${
                           isGoing
@@ -332,7 +337,7 @@ export default function EventsFeedPage() {
                     </div>
                   </div>
 
-                </div>
+                </Link>
               );
             })}
           </div>
