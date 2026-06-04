@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
-import { Search, Filter, Plus, User as UserIcon, LogOut, Loader2, Sparkles, MapPin, Grid, MessageSquare, Gift, AlertCircle, Bell, CheckCircle, ArrowRight, Heart, Star, Smile, BookOpen, Smartphone, ShieldCheck, Award, Tv, Shirt, ToyBrick, Soup, Trophy, Quote, HeartHandshake } from "lucide-react";
+import { Search, Filter, Plus, User as UserIcon, LogOut, Loader2, Sparkles, MapPin, Grid, MessageSquare, Gift, AlertCircle, Bell, CheckCircle, ArrowRight, Heart, Star, Smile, BookOpen, Smartphone, ShieldCheck, Award, Tv, Shirt, ToyBrick, Soup, Trophy, Quote, HeartHandshake, Calendar } from "lucide-react";
 import dynamic from "next/dynamic";
 import LocationPickerModal from "@/components/LocationPickerModal";
 import { getTranslation, Language } from "@/lib/i18n";
@@ -447,10 +447,18 @@ export default function HomeFeed() {
       {/* Navigation Navbar */}
       <nav className="border-b border-slate-900 bg-slate-950/80 backdrop-blur-md sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-5">
             <span className="text-xl font-black bg-gradient-to-r from-teal-400 to-emerald-400 bg-clip-text text-transparent select-none">
               {t("app_title")}
             </span>
+            
+            <Link
+              href="/events"
+              className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-slate-800 bg-slate-900/50 hover:bg-slate-900 text-xs font-bold text-slate-350 hover:text-amber-400 transition-all cursor-pointer"
+            >
+              <Calendar size={13} className="text-amber-500" />
+              <span>Events</span>
+            </Link>
             
             {/* Location selector trigger button */}
             <button

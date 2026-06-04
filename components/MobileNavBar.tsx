@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
-import { Home, Plus, MessageSquare, User, ShieldAlert } from "lucide-react";
+import { Home, Plus, Calendar, MessageSquare, User, ShieldAlert } from "lucide-react";
 
 export default function MobileNavBar() {
   const pathname = usePathname();
@@ -40,6 +40,7 @@ export default function MobileNavBar() {
   const navItems = [
     { label: "Home", href: "/", icon: Home },
     { label: "Share", href: "/donate", icon: Plus },
+    { label: "Events", href: "/events", icon: Calendar },
     { label: "Dashboard", href: "/dashboard", icon: MessageSquare },
     { label: "Profile", href: userId ? `/profile/${userId}` : "/login", icon: User },
   ];

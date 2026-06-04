@@ -9,6 +9,7 @@ interface ReportModalProps {
   reporterId: string | null;
   reportedUserId?: string;
   reportedListingId?: string;
+  reportedEventId?: string;
   targetName: string; // "listing 'Wooden table'" or "user 'Demo User'"
 }
 
@@ -27,6 +28,7 @@ export default function ReportModal({
   reporterId,
   reportedUserId,
   reportedListingId,
+  reportedEventId,
   targetName,
 }: ReportModalProps) {
   const [reason, setReason] = useState("");
@@ -65,6 +67,7 @@ export default function ReportModal({
           reporterId,
           reportedUserId,
           reportedListingId,
+          reportedEventId,
           reason,
           description,
         }),

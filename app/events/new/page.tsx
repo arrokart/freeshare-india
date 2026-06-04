@@ -1,0 +1,299 @@
+"use client";
+
+import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { supabase } from "@/lib/supabaseClient";
+import { ArrowLeft, Loader2, Calendar, MapPin, AlignLeft, Users, Send } from "lucide-react";
+import CityAutocomplete from "@/components/CityAutocomplete";
+import { normalizeCityName } from "@/lib/cities";
+
+export default function CreateEventPage() {
+  const router = useRouter();
+  const [user, setUser] = useState<any>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+
+  // Form Fields
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [eventDate, setEventDate] = useState("");
+  const [locationName, setLocationName] = useState("");
+  const [city, setCity] = useState("");
+  const [area, setArea] = useState("");
+  const [pincode, setPincode] = useState("");
+  const [maxParticipants, setMaxParticipants] = useState("");
+  
+  // Submit States
+  const [submitting, setSubmitting] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
+  const [successMsg, setSuccessMsg] = useState("");
+
+  useEffect(() => {
+    const checkUser = async () => {
+      const { data } = await supabase.auth.getUser();
+      if (!data?.user) {
+        router.push("/login?next=/events/new");
+      } else {
+        setUser(data.user);
+        
+        // Load location defaults if they exist on user metadata
+        setCity(data.user.user_metadata?.city || "");
+        setArea(data.user.user_metadata?.area || "");
+        setPincode(data.user.user_metadata?.pincode || "");
+      }
+      setAuthLoading(false);
+    };
+    checkUser();
+  }, [router]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) return;
+
+    setSubmitting(true);
+    setErrorMsg("");
+    setSuccessMsg("");
+
+    // Validate date is in the future
+    const scheduledDate = new Date(eventDate);
+    const now = new Date();
+    if (scheduledDate.getTime() <= now.getTime() + 30 * 60 * 1000) {
+      setErrorMsg("Event date must be scheduled at least 30 minutes in the future.");
+      setSubmitting(false);
+      return;
+    }
+
+    try {
+      const res = await fetch("/api/events", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          organizer_id: user.id,
+          title,
+          description,
+          event_date: eventDate,
+          location_name: locationName,
+          city: normalizeCityName(city),
+          area,
+          pincode,
+          max_participants: maxParticipants ? parseInt(maxParticipants) : null
+        })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to create event.");
+      }
+
+      setSuccessMsg("Event published successfully! Redirecting...");
+      setTimeout(() => {
+        router.push("/events");
+      }, 1500);
+    } catch (err: any) {
+      setErrorMsg(err.message || "An unexpected error occurred.");
+      setSubmitting(false);
+    }
+  };
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center gap-3">
+        <Loader2 className="animate-spin text-amber-500" size={28} />
+        <p className="text-xs text-slate-500">Checking credentials...</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans pb-16 selection:bg-amber-500 selection:text-black">
+      
+      {/* Header navbar */}
+      <nav className="border-b border-slate-900 bg-slate-950/80 backdrop-blur-md sticky top-0 z-50">
+        <div className="max-w-4xl mx-auto px-4 h-16 flex items-center gap-3">
+          <Link href="/events" className="text-slate-400 hover:text-slate-200 transition-colors p-1.5 rounded-lg hover:bg-slate-900">
+            <ArrowLeft size={20} />
+          </Link>
+          <span className="text-xl font-black bg-gradient-to-r from-amber-400 to-orange-500 bg-clip-text text-transparent select-none">
+            Post New Event
+          </span>
+        </div>
+      </nav>
+
+      {/* Form Page */}
+      <main className="max-w-lg mx-auto px-4 pt-8">
+        
+        {errorMsg && (
+          <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs text-center animate-pulse">
+            {errorMsg}
+          </div>
+        )}
+
+        {successMsg && (
+          <div className="mb-6 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs text-center">
+            {successMsg}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-6 bg-slate-900/20 backdrop-blur-xl border border-slate-900 rounded-3xl p-6 shadow-2xl shadow-black/45">
+          
+          {/* Title */}
+          <div className="space-y-2">
+            <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest block">
+              Event Title
+            </label>
+            <input
+              type="text"
+              required
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="e.g. Karol Bagh Donation Drive (min 10 chars)"
+              className="w-full bg-slate-950/40 border border-slate-800 rounded-xl py-3 px-4 text-xs text-slate-100 placeholder-slate-700 focus:outline-none focus:border-amber-500/80 transition-all"
+            />
+          </div>
+
+          {/* Description */}
+          <div className="space-y-2">
+            <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest block">
+              Description / Instructions
+            </label>
+            <div className="relative group">
+              <span className="absolute top-3.5 left-4 text-slate-600 group-focus-within:text-amber-500 transition-colors">
+                <AlignLeft size={16} />
+              </span>
+              <textarea
+                required
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                rows={5}
+                placeholder="Detail what people should bring, how they can find you, and the scope of the drive (min 20 chars)..."
+                className="w-full bg-slate-950/40 border border-slate-800 rounded-xl py-3 pl-11 pr-4 text-xs text-slate-100 placeholder-slate-700 focus:outline-none focus:border-amber-500/80 transition-all resize-none"
+              />
+            </div>
+          </div>
+
+          {/* Date & Time */}
+          <div className="space-y-2">
+            <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest block">
+              Date and Time
+            </label>
+            <div className="relative group">
+              <span className="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-600 group-focus-within:text-amber-500 transition-colors">
+                <Calendar size={16} />
+              </span>
+              <input
+                type="datetime-local"
+                required
+                value={eventDate}
+                onChange={(e) => setEventDate(e.target.value)}
+                className="w-full bg-slate-950/40 border border-slate-800 rounded-xl py-3 pl-11 pr-4 text-xs text-slate-100 focus:outline-none focus:border-amber-500/80 transition-all [color-scheme:dark]"
+              />
+            </div>
+          </div>
+
+          {/* Location Name / Address */}
+          <div className="space-y-2">
+            <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest block">
+              Venue / Address Details
+            </label>
+            <div className="relative group">
+              <span className="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-600 group-focus-within:text-amber-500 transition-colors">
+                <MapPin size={16} />
+              </span>
+              <input
+                type="text"
+                required
+                value={locationName}
+                onChange={(e) => setLocationName(e.target.value)}
+                placeholder="e.g. Near Metro Gate 1 Park, Community Hall"
+                className="w-full bg-slate-950/40 border border-slate-800 rounded-xl py-3 pl-11 pr-4 text-xs text-slate-100 placeholder-slate-700 focus:outline-none focus:border-amber-500/80 transition-all"
+              />
+            </div>
+          </div>
+
+          {/* City & Area */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest block">
+                City
+              </label>
+              <CityAutocomplete
+                value={city}
+                onChange={setCity}
+                placeholder="e.g. Delhi"
+                className="w-full bg-slate-950/40 border border-slate-800 rounded-xl py-3 px-4 text-xs text-slate-100 placeholder-slate-750 focus:outline-none focus:border-amber-500/80 transition-all"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest block">
+                Area
+              </label>
+              <input
+                type="text"
+                required
+                value={area}
+                onChange={(e) => setArea(e.target.value)}
+                placeholder="e.g. Karol Bagh"
+                className="w-full bg-slate-950/40 border border-slate-800 rounded-xl py-3 px-4 text-xs text-slate-100 placeholder-slate-700 focus:outline-none focus:border-amber-500/80 transition-all"
+              />
+            </div>
+          </div>
+
+          {/* Pincode & Max Participants */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest block">
+                Pincode (Optional)
+              </label>
+              <input
+                type="text"
+                value={pincode}
+                onChange={(e) => setPincode(e.target.value)}
+                placeholder="e.g. 110005"
+                className="w-full bg-slate-950/40 border border-slate-800 rounded-xl py-3 px-4 text-xs text-slate-100 placeholder-slate-700 focus:outline-none focus:border-amber-500/80 transition-all"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest block">
+                Participant Cap (Optional)
+              </label>
+              <div className="relative group">
+                <span className="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-600 group-focus-within:text-amber-500 transition-colors">
+                  <Users size={15} />
+                </span>
+                <input
+                  type="number"
+                  min="1"
+                  value={maxParticipants}
+                  onChange={(e) => setMaxParticipants(e.target.value)}
+                  placeholder="e.g. 50"
+                  className="w-full bg-slate-950/40 border border-slate-800 rounded-xl py-3 pl-11 pr-4 text-xs text-slate-100 placeholder-slate-700 focus:outline-none focus:border-amber-500/80 transition-all"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Submit Button */}
+          <button
+            type="submit"
+            disabled={submitting}
+            className="w-full mt-4 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-450 hover:to-orange-450 text-slate-950 font-black py-3.5 px-4 rounded-xl shadow-lg shadow-amber-500/10 flex items-center justify-center gap-2 transition-all active:scale-[0.99] disabled:opacity-50 uppercase tracking-wider text-xs"
+          >
+            {submitting ? (
+              <Loader2 className="animate-spin text-slate-950" size={18} />
+            ) : (
+              <>
+                <Send size={14} />
+                <span>Publish Event</span>
+              </>
+            )}
+          </button>
+
+        </form>
+
+      </main>
+    </div>
+  );
+}
