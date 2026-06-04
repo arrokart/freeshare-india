@@ -11,7 +11,7 @@ import ReportModal from "@/components/ReportModal";
 
 
 
-type ProfileTabState = "listings" | "reviews";
+type ProfileTabState = "listings" | "events" | "reviews";
 
 export default function UserProfilePage() {
   const params = useParams();
@@ -21,6 +21,7 @@ export default function UserProfilePage() {
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<any>(null);
   const [listings, setListings] = useState<any[]>([]);
+  const [events, setEvents] = useState<any[]>([]);
   const [reviews, setReviews] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState<ProfileTabState>("listings");
 
@@ -263,6 +264,15 @@ export default function UserProfilePage() {
           .order("created_at", { ascending: false });
 
         setReviews(userReviews || []);
+
+        // 4. Fetch events organized by this user
+        const { data: userEvents } = await supabase
+          .from("events")
+          .select("*, rsvps:event_rsvps(user_id)")
+          .eq("organizer_id", id)
+          .order("start_date", { ascending: true });
+
+        setEvents(userEvents || []);
 
       } catch (err) {
         console.error("Profile load error:", err);
@@ -600,6 +610,18 @@ export default function UserProfilePage() {
             <Gift size={16} />
             Available Listings ({listings.length})
           </button>
+
+          <button
+            onClick={() => setActiveTab("events")}
+            className={`flex items-center gap-2 px-5 py-3 text-sm font-bold border-b-2 transition-all ${
+              activeTab === "events"
+                ? "border-amber-500 text-amber-400"
+                : "border-transparent text-slate-400 hover:text-slate-200"
+            }`}
+          >
+            <Calendar size={16} />
+            Events Organised ({events.length})
+          </button>
           
           <button
             onClick={() => setActiveTab("reviews")}
@@ -643,6 +665,64 @@ export default function UserProfilePage() {
                     </div>
                   </Link>
                 ))}
+              </div>
+            )}
+          </div>
+        ) : activeTab === "events" ? (
+          /* Events Organised */
+          <div className="mt-4">
+            {events.length === 0 ? (
+              <div className="text-center py-16 border border-dashed border-slate-900 rounded-3xl">
+                <Calendar className="mx-auto text-slate-700 mb-3" size={32} />
+                <p className="text-sm text-slate-500">No events organised by this user yet.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                {events.map((event) => {
+                  const rsvpCount = event.rsvps?.length || 0;
+                  const isPast = new Date(event.end_date) < new Date();
+                  
+                  return (
+                    <Link
+                      key={event.id}
+                      href={`/events/${event.id}`}
+                      className="group bg-slate-900/30 border border-slate-900 hover:border-amber-500/50 rounded-2xl overflow-hidden flex flex-col shadow-lg transition-all h-full"
+                    >
+                      <div className="aspect-video relative overflow-hidden bg-slate-950">
+                        {event.image_url ? (
+                          <img
+                            src={event.image_url}
+                            alt={event.title}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-amber-950/40 to-slate-950 text-2xl">
+                            📢
+                          </div>
+                        )}
+                        <span className={`absolute top-2 left-2 text-[8px] font-extrabold uppercase px-2 py-0.5 rounded bg-black/60 tracking-wider ${
+                          isPast ? "text-slate-500" : "text-amber-400"
+                        }`}>
+                          {isPast ? "Ended" : "Upcoming"}
+                        </span>
+                      </div>
+                      <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
+                        <div className="space-y-1">
+                          <h4 className="font-bold text-xs text-slate-100 group-hover:text-amber-400 transition-colors line-clamp-1">
+                            {event.title}
+                          </h4>
+                          <p className="text-[10px] text-slate-400 line-clamp-2">
+                            {event.description}
+                          </p>
+                        </div>
+                        <div className="pt-2 border-t border-slate-900/50 flex items-center justify-between text-[9px] text-slate-550">
+                          <span>{event.area}</span>
+                          <span>{rsvpCount} attending</span>
+                        </div>
+                      </div>
+                    </Link>
+                  );
+                })}
               </div>
             )}
           </div>

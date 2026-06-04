@@ -42,7 +42,7 @@ export async function GET(request: Request) {
     // Note: We can show all upcoming events using start_date
     const now = new Date();
     const upcomingEvents = (data || []).filter((event: any) => {
-      return new Date(event.start_date) >= now;
+      return new Date(event.end_date) >= now;
     });
 
     return NextResponse.json(upcomingEvents);

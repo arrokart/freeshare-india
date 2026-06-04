@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
-import { ArrowLeft, MapPin, User, Star, Loader2, Send, ShieldAlert, Award, Upload, X, Image as ImageIcon, Save, Edit, Sparkles, Flag } from "lucide-react";
+import { ArrowLeft, MapPin, User, Star, Loader2, Send, ShieldAlert, Award, Upload, X, Image as ImageIcon, Save, Edit, Sparkles, Flag, Trash } from "lucide-react";
 import { getR2PublicUrl } from "@/lib/r2";
 import CityAutocomplete from "@/components/CityAutocomplete";
 import { normalizeCityName } from "@/lib/cities";
@@ -58,6 +58,7 @@ export default function ListingDetailClient({ initialListing }: { initialListing
   const [editImages, setEditImages] = useState<(string | File)[]>([]);
   const [editPreviews, setEditPreviews] = useState<string[]>([]);
   const [detectingLocation, setDetectingLocation] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
   const [saveLoading, setSaveLoading] = useState(false);
   const [saveError, setSaveError] = useState("");
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
@@ -207,6 +208,29 @@ export default function ListingDetailClient({ initialListing }: { initialListing
   const removeImage = (index: number) => {
     setEditImages((prev) => prev.filter((_, i) => i !== index));
     setEditPreviews((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleDeleteListing = async () => {
+    if (!window.confirm("Are you sure you want to permanently delete this listing? This action cannot be undone.")) {
+      return;
+    }
+    
+    setDeleteLoading(true);
+    try {
+      const { error } = await supabase
+        .from("listings")
+        .delete()
+        .eq("id", listing.id);
+        
+      if (error) throw error;
+      
+      alert("Listing deleted successfully.");
+      router.push("/dashboard");
+    } catch (err: any) {
+      alert(err.message || "Failed to delete listing.");
+    } finally {
+      setDeleteLoading(false);
+    }
   };
 
   const handleStartEdit = () => {
@@ -995,6 +1019,18 @@ export default function ListingDetailClient({ initialListing }: { initialListing
                   >
                     <Edit size={14} />
                     Edit Listing Details
+                  </button>
+                  <button
+                    onClick={handleDeleteListing}
+                    disabled={deleteLoading}
+                    className="w-full flex items-center justify-center gap-1.5 px-4 py-3 text-sm font-extrabold rounded-xl bg-red-950/20 hover:bg-red-900/20 text-red-400 border border-red-900/30 hover:border-red-800/40 transition-all active:scale-[0.98] disabled:opacity-50"
+                  >
+                    {deleteLoading ? (
+                      <Loader2 size={14} className="animate-spin" />
+                    ) : (
+                      <Trash size={14} />
+                    )}
+                    Delete Listing
                   </button>
                 </div>
               ) : isLimitReached ? (

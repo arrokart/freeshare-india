@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
-import { Calendar, MapPin, Users, Loader2, ArrowLeft, Flag } from "lucide-react";
+import { Calendar, MapPin, Users, Loader2, ArrowLeft, Flag, Trash } from "lucide-react";
 import ReportModal from "@/components/ReportModal";
 
 export default function EventDetailPage() {
@@ -13,6 +13,7 @@ export default function EventDetailPage() {
   const id = params?.id as string;
 
   const [user, setUser] = useState<any>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
   const [event, setEvent] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   
@@ -55,6 +56,29 @@ export default function EventDetailPage() {
       fetchEventDetails();
     }
   }, [id]);
+
+  const handleDeleteEvent = async () => {
+    if (!window.confirm("Are you sure you want to permanently delete this event? This action cannot be undone.")) {
+      return;
+    }
+    
+    setDeleteLoading(true);
+    try {
+      const { error } = await supabase
+        .from("events")
+        .delete()
+        .eq("id", id);
+        
+      if (error) throw error;
+      
+      alert("Event deleted successfully.");
+      router.push("/events");
+    } catch (err: any) {
+      alert(err.message || "Failed to delete event.");
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
 
   const handleRsvpToggle = async () => {
     if (!user) {
@@ -203,27 +227,42 @@ export default function EventDetailPage() {
               )}
             </div>
 
-            <button
-              onClick={handleRsvpToggle}
-              disabled={rsvpLoading || (!isGoing && isFull)}
-              className={`w-full py-3 text-xs font-black rounded-xl transition-all cursor-pointer uppercase tracking-wider select-none ${
-                isGoing
-                  ? "bg-slate-850 hover:bg-red-500/10 border border-slate-800 hover:border-red-500/20 text-slate-400 hover:text-red-400"
-                  : isFull
-                  ? "bg-slate-950 border border-slate-900 text-slate-700 cursor-not-allowed"
-                  : "bg-amber-500 text-slate-950 hover:bg-amber-400 shadow-lg shadow-amber-500/10"
-              }`}
-            >
-              {rsvpLoading ? (
-                <Loader2 className="animate-spin mx-auto text-slate-500" size={16} />
-              ) : isGoing ? (
-                "Cancel RSVP"
-              ) : isFull ? (
-                "Event Full"
-              ) : (
-                "RSVP Now"
-              )}
-            </button>
+            {user && user.id === event.organizer_id ? (
+              <button
+                onClick={handleDeleteEvent}
+                disabled={deleteLoading}
+                className="w-full py-3 text-xs font-black rounded-xl transition-all cursor-pointer bg-red-950/20 hover:bg-red-900/20 text-red-400 border border-red-900/30 hover:border-red-800/40 uppercase tracking-wider flex items-center justify-center gap-1.5"
+              >
+                {deleteLoading ? (
+                  <Loader2 className="animate-spin" size={14} />
+                ) : (
+                  <Trash size={14} />
+                )}
+                Delete Event
+              </button>
+            ) : (
+              <button
+                onClick={handleRsvpToggle}
+                disabled={rsvpLoading || (!isGoing && isFull)}
+                className={`w-full py-3 text-xs font-black rounded-xl transition-all cursor-pointer uppercase tracking-wider select-none ${
+                  isGoing
+                    ? "bg-slate-850 hover:bg-red-500/10 border border-slate-800 hover:border-red-500/20 text-slate-400 hover:text-red-400"
+                    : isFull
+                    ? "bg-slate-950 border border-slate-900 text-slate-700 cursor-not-allowed"
+                    : "bg-amber-500 text-slate-950 hover:bg-amber-400 shadow-lg shadow-amber-500/10"
+                }`}
+              >
+                {rsvpLoading ? (
+                  <Loader2 className="animate-spin mx-auto text-slate-500" size={16} />
+                ) : isGoing ? (
+                  "Cancel RSVP"
+                ) : isFull ? (
+                  "Event Full"
+                ) : (
+                  "RSVP Now"
+                )}
+              </button>
+            )}
           </div>
 
         </div>
@@ -248,7 +287,9 @@ export default function EventDetailPage() {
             </div>
             <div>
               <span className="text-[9px] font-extrabold text-slate-500 uppercase tracking-widest block">Organized By</span>
-              <span className="text-xs font-bold text-slate-350">{event.organizer?.name}</span>
+              <Link href={`/profile/${event.organizer_id}`} className="text-xs font-bold text-slate-350 hover:text-amber-500 transition-colors">
+                {event.organizer?.name}
+              </Link>
             </div>
           </div>
 
