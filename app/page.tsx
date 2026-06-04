@@ -116,17 +116,21 @@ export default function HomeFeed() {
   const [trialDaysLeft, setTrialDaysLeft] = useState<number>(0);
 
   const getUserData = async () => {
-    const { data: authData } = await supabase.auth.getUser();
-    if (authData?.user) {
+    const { data: { session } } = await supabase.auth.getSession();
+    const user = session?.user;
+    if (user) {
+      // Set cookie helper for SSR / Next.js proxy token checks
+      document.cookie = `sb-access-token=${session.access_token}; path=/; max-age=${session.expires_in || 3600}; SameSite=Lax; Secure`;
+
       // Query profile to get latest bio (custom claim limit overrides) and claim count
       const { data: profile } = await supabase
         .from("users")
         .select("id, email, name, is_admin, is_premium, is_ngo, bio, monthly_claim_count, created_at")
-        .eq("id", authData.user.id)
+        .eq("id", user.id)
         .single();
 
-      setUser(profile || authData.user);
-      setClaimCount(profile?.monthly_claim_count ?? authData.user.user_metadata?.monthly_claim_count ?? 0);
+      setUser(profile || user);
+      setClaimCount(profile?.monthly_claim_count ?? user.user_metadata?.monthly_claim_count ?? 0);
 
       // Check if welcome trial is enabled globally
       try {

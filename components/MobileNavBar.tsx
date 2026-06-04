@@ -17,6 +17,7 @@ export default function MobileNavBar() {
       if (session?.user) {
         setUserId(session.user.id);
         setIsAdmin(session.user.email === "admin@freeshare.in"); // Simple check matching admin console
+        document.cookie = `sb-access-token=${session.access_token}; path=/; max-age=${session.expires_in || 3600}; SameSite=Lax; Secure`;
       }
     };
     checkAuth();
@@ -25,9 +26,11 @@ export default function MobileNavBar() {
       if (session?.user) {
         setUserId(session.user.id);
         setIsAdmin(session.user.email === "admin@freeshare.in");
+        document.cookie = `sb-access-token=${session.access_token}; path=/; max-age=${session.expires_in || 3600}; SameSite=Lax; Secure`;
       } else {
         setUserId(null);
         setIsAdmin(false);
+        document.cookie = "sb-access-token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;";
       }
     });
 
