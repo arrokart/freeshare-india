@@ -122,7 +122,7 @@ export default function HomeFeed() {
   const [systemSettings, setSystemSettings] = useState<any>(null);
   const [trialDaysLeft, setTrialDaysLeft] = useState<number>(0);
 
-  const getUserData = async () => {
+  const getUserData = async (settingsData?: any) => {
     const { data: { session } } = await supabase.auth.getSession();
     const user = session?.user;
     if (user) {
@@ -139,23 +139,18 @@ export default function HomeFeed() {
       setUser(profile || user);
       setClaimCount(profile?.monthly_claim_count ?? user.user_metadata?.monthly_claim_count ?? 0);
 
-      // Check if welcome trial is enabled globally
-      try {
-        const settingsRes = await fetch("/api/admin/settings");
-        if (settingsRes.ok) {
-          const settingsData = await settingsRes.json();
-          if (settingsData.welcome_trial_enabled !== false && profile?.created_at) {
-            const createdDate = new Date(profile.created_at);
-            const diffTime = Math.abs(new Date().getTime() - createdDate.getTime());
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-            const remaining = 30 - diffDays;
-            setTrialDaysLeft(remaining > 0 ? remaining : 0);
-          } else {
-            setTrialDaysLeft(0);
-          }
+      // Check if welcome trial is enabled globally using passed settings or state
+      const settings = settingsData || systemSettings;
+      if (settings) {
+        if (settings.welcome_trial_enabled !== false && profile?.created_at) {
+          const createdDate = new Date(profile.created_at);
+          const diffTime = Math.abs(new Date().getTime() - createdDate.getTime());
+          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+          const remaining = 30 - diffDays;
+          setTrialDaysLeft(remaining > 0 ? remaining : 0);
+        } else {
+          setTrialDaysLeft(0);
         }
-      } catch {
-        setTrialDaysLeft(0);
       }
     }
   };
@@ -196,23 +191,28 @@ export default function HomeFeed() {
   useEffect(() => {
     const initializeData = async () => {
       setAuthLoading(true);
-      // Fetch settings first
+      
+      let fetchedSettings: any = null;
+      // Parallel loading of system settings and user details initialization
       try {
-        const res = await fetch("/api/admin/settings");
-        if (res.ok) {
-          const data = await res.json();
-          setSystemSettings(data);
-          if (data.campaign_type && data.campaign_type !== "none") {
-            setActiveCampaign(data);
+        const [settingsRes] = await Promise.all([
+          fetch("/api/admin/settings").catch(() => null)
+        ]);
+
+        if (settingsRes && settingsRes.ok) {
+          fetchedSettings = await settingsRes.json();
+          setSystemSettings(fetchedSettings);
+          if (fetchedSettings.campaign_type && fetchedSettings.campaign_type !== "none") {
+            setActiveCampaign(fetchedSettings);
           }
         }
       } catch (err) {
         console.error("Failed to load settings:", err);
       }
       
-      // Then fetch user data
+      // Then fetch user data with already-loaded settings to avoid duplicate network requests
       try {
-        await getUserData();
+        await getUserData(fetchedSettings);
       } catch (err) {
         console.error(err);
       } finally {
@@ -1595,6 +1595,7 @@ function LandingPageView({ listings, trendingListings, lang }: { listings: any[]
                   <img
                     src={item.images?.[0]}
                     alt={item.title}
+                    loading="lazy"
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
                   <span className={`absolute top-1.5 left-1.5 sm:top-2.5 sm:left-2.5 text-[8px] sm:text-[9px] font-extrabold uppercase px-1.5 py-0.5 sm:px-2 sm:py-1 rounded bg-black/60 backdrop-blur-md tracking-wider ${
