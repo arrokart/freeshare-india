@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
-import { Calendar, MapPin, Users, Loader2, ArrowLeft, Flag, Trash } from "lucide-react";
+import { Calendar, MapPin, Users, Loader2, ArrowLeft, Flag, Trash, Share2 } from "lucide-react";
 import ReportModal from "@/components/ReportModal";
 
 export default function EventDetailPage() {
@@ -20,6 +20,13 @@ export default function EventDetailPage() {
   // RSVP Actions
   const [rsvpLoading, setRsvpLoading] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
+  const [shareText, setShareText] = useState("Share");
+
+  // Q&A Comments States
+  const [comments, setComments] = useState<any[]>([]);
+  const [commentsLoading, setCommentsLoading] = useState(true);
+  const [newCommentText, setNewCommentText] = useState("");
+  const [commentSubmitting, setCommentSubmitting] = useState(false);
 
   const fetchEventDetails = async () => {
     try {
@@ -54,8 +61,99 @@ export default function EventDetailPage() {
     
     if (id) {
       fetchEventDetails();
+      fetchComments();
     }
   }, [id]);
+
+  const handleShare = async () => {
+    const shareData = {
+      title: event?.title || "Community Event",
+      text: event?.description || "Check out this community event on FreeShare India",
+      url: window.location.href,
+    };
+    
+    if (typeof navigator !== "undefined" && navigator.share) {
+      try {
+        await navigator.share(shareData);
+      } catch (err) {
+        console.log("Web share failed, falling back to copy:", err);
+        copyToClipboard();
+      }
+    } else {
+      copyToClipboard();
+    }
+  };
+
+  const copyToClipboard = () => {
+    if (typeof navigator !== "undefined" && navigator.clipboard) {
+      navigator.clipboard.writeText(window.location.href);
+      setShareText("Copied!");
+      setTimeout(() => {
+        setShareText("Share");
+      }, 2000);
+    }
+  };
+
+  const fetchComments = async () => {
+    try {
+      const res = await fetch(`/api/events/comments?eventId=${id}`);
+      const data = await res.json();
+      setComments(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error("Error loading comments:", err);
+    } finally {
+      setCommentsLoading(false);
+    }
+  };
+
+  const handlePostComment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) {
+      router.push(`/login?next=/events/${id}`);
+      return;
+    }
+    if (newCommentText.trim().length < 2) return;
+
+    setCommentSubmitting(true);
+    try {
+      const res = await fetch("/api/events/comments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          event_id: id,
+          user_id: user.id,
+          content: newCommentText.trim()
+        }),
+      });
+
+      const newComment = await res.json();
+      if (!res.ok) throw new Error(newComment.error || "Failed to submit comment");
+
+      setComments((prev) => [...prev, newComment]);
+      setNewCommentText("");
+    } catch (err: any) {
+      alert(err.message || "Failed to post comment.");
+    } finally {
+      setCommentSubmitting(false);
+    }
+  };
+
+  const handleDeleteComment = async (commentId: string) => {
+    if (!window.confirm("Are you sure you want to delete this comment?")) return;
+
+    try {
+      const res = await fetch(`/api/events/comments?commentId=${commentId}&userId=${user.id}`, {
+        method: "DELETE"
+      });
+
+      const resData = await res.json();
+      if (!res.ok) throw new Error(resData.error || "Failed to delete comment");
+
+      setComments((prev) => prev.filter((c) => c.id !== commentId));
+    } catch (err: any) {
+      alert(err.message || "Failed to delete comment.");
+    }
+  };
 
   const handleDeleteEvent = async () => {
     if (!window.confirm("Are you sure you want to permanently delete this event? This action cannot be undone.")) {
@@ -150,15 +248,25 @@ export default function EventDetailPage() {
             <span className="text-sm font-extrabold text-slate-400">Back to Events</span>
           </div>
 
-          {user && user.id !== event.organizer_id && (
+          <div className="flex items-center gap-2">
             <button
-              onClick={() => setShowReportModal(true)}
-              className="flex items-center gap-1 text-[10px] uppercase font-bold text-red-500 hover:text-red-400 px-3 py-1.5 rounded-lg hover:bg-red-500/5 border border-transparent hover:border-red-500/10 transition-all cursor-pointer"
+              onClick={handleShare}
+              className="flex items-center gap-1.5 text-[10px] uppercase font-bold text-amber-500 hover:text-amber-400 px-3 py-1.5 rounded-lg hover:bg-amber-500/5 border border-transparent hover:border-amber-500/10 transition-all cursor-pointer"
             >
-              <Flag size={12} />
-              <span>Report</span>
+              <Share2 size={12} />
+              <span>{shareText}</span>
             </button>
-          )}
+
+            {user && user.id !== event.organizer_id && (
+              <button
+                onClick={() => setShowReportModal(true)}
+                className="flex items-center gap-1 text-[10px] uppercase font-bold text-red-500 hover:text-red-400 px-3 py-1.5 rounded-lg hover:bg-red-500/5 border border-transparent hover:border-red-500/10 transition-all cursor-pointer"
+              >
+                <Flag size={12} />
+                <span>Report</span>
+              </button>
+            )}
+          </div>
         </div>
       </nav>
 
@@ -273,6 +381,90 @@ export default function EventDetailPage() {
           <p className="text-sm text-slate-300 leading-relaxed whitespace-pre-wrap">
             {event.description}
           </p>
+        </div>
+
+        {/* Public Q&A / Comments Board */}
+        <div className="space-y-4 bg-slate-900/10 border border-slate-900 rounded-3xl p-6">
+          <div className="flex items-center justify-between border-b border-slate-900 pb-3">
+            <h2 className="text-xs font-extrabold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+              💬 Questions & Discussion ({comments.length})
+            </h2>
+          </div>
+
+          {/* Comments List */}
+          {commentsLoading ? (
+            <div className="flex items-center justify-center py-6 text-slate-500 text-xs">
+              <Loader2 className="animate-spin text-amber-500 mr-2" size={14} />
+              Loading discussion...
+            </div>
+          ) : comments.length === 0 ? (
+            <p className="text-xs text-slate-500 italic py-4 text-center">
+              No questions or comments yet. Be the first to ask!
+            </p>
+          ) : (
+            <div className="space-y-4 max-h-72 overflow-y-auto pr-1">
+              {comments.map((cmt) => {
+                const isCmtAuthor = user && cmt.user_id === user.id;
+                const isEventHost = user && event.organizer_id === user.id;
+                const showDelete = isCmtAuthor || isEventHost;
+                
+                return (
+                  <div key={cmt.id} className="flex gap-3 bg-slate-950/20 border border-slate-900/60 p-3 rounded-2xl relative group/cmt">
+                    {/* User Avatar */}
+                    <div className="w-8 h-8 rounded-full overflow-hidden bg-slate-950 border border-slate-850 text-slate-500 text-xs flex items-center justify-center font-black shrink-0">
+                      {cmt.user?.avatar_url ? (
+                        <img src={cmt.user.avatar_url} alt={cmt.user.name} className="w-full h-full object-cover" />
+                      ) : (
+                        cmt.user?.name?.charAt(0) || "U"
+                      )}
+                    </div>
+                    {/* Content */}
+                    <div className="flex-1 space-y-1 min-w-0 pr-6">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-black text-slate-350">{cmt.user?.name || "Community Member"}</span>
+                        {cmt.user_id === event.organizer_id && (
+                          <span className="text-[8px] uppercase tracking-wider font-extrabold text-amber-500 bg-amber-500/10 border border-amber-500/20 px-1 py-0.5 rounded">Host</span>
+                        )}
+                        <span className="text-[8px] text-slate-500 font-medium">
+                          {new Date(cmt.created_at).toLocaleDateString("en-IN", { hour: "numeric", minute: "2-digit" })}
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-300 leading-relaxed break-words">{cmt.content}</p>
+                    </div>
+                    {/* Delete button */}
+                    {showDelete && (
+                      <button
+                        onClick={() => handleDeleteComment(cmt.id)}
+                        className="absolute right-3 top-3 text-slate-600 hover:text-red-500 transition-colors p-1 rounded-md opacity-0 group-hover/cmt:opacity-100 focus:opacity-100"
+                        title="Delete Comment"
+                      >
+                        <Trash size={12} />
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Comment Form */}
+          <form onSubmit={handlePostComment} className="flex gap-2 pt-2 border-t border-slate-900">
+            <input
+              type="text"
+              required
+              value={newCommentText}
+              onChange={(e) => setNewCommentText(e.target.value)}
+              placeholder={user ? "Ask a question or leave a comment..." : "Sign in to join the discussion..."}
+              className="flex-1 bg-slate-950/40 border border-slate-800 rounded-xl py-2 px-3 text-xs text-slate-100 placeholder-slate-700 focus:outline-none focus:border-amber-500/80 transition-all"
+            />
+            <button
+              type="submit"
+              disabled={commentSubmitting || newCommentText.trim().length < 2}
+              className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs transition-all active:scale-[0.98] disabled:opacity-50 shrink-0 uppercase tracking-wider"
+            >
+              {commentSubmitting ? <Loader2 className="animate-spin text-slate-950" size={12} /> : "Post"}
+            </button>
+          </form>
         </div>
 
         {/* Organizer Host Info */}
