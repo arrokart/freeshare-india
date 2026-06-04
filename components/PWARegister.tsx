@@ -42,6 +42,21 @@ export default function PWARegister() {
         const registration = await navigator.serviceWorker.register("/sw.js");
         console.log("[PWA] Service Worker registered with scope:", registration.scope);
 
+        // Check for updates to the service worker and trigger automatic cache invalidation reload
+        registration.addEventListener("updatefound", () => {
+          const newWorker = registration.installing;
+          if (newWorker) {
+            newWorker.addEventListener("statechange", () => {
+              if (newWorker.state === "installed") {
+                if (navigator.serviceWorker.controller) {
+                  console.log("[PWA] New service worker version detected. Reloading page to apply updates...");
+                  window.location.reload();
+                }
+              }
+            });
+          }
+        });
+
         // 2. Listen for Auth State changes to subscribe to Push Manager
         const { data: { session } } = await supabase.auth.getSession();
         if (session?.user) {

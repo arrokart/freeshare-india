@@ -113,10 +113,26 @@ export default function CreateEventPage() {
       // Upload promotional image if selected
       if (imageFile) {
         setUploadingImage(true);
+        let fileToUpload = imageFile;
+
+        // Compress image before upload
+        try {
+          const imageCompression = (await import("browser-image-compression")).default;
+          const options = {
+            maxSizeMB: 0.8,
+            maxWidthOrHeight: 1200,
+            useWebWorker: true,
+          };
+          const compressed = await imageCompression(imageFile, options);
+          fileToUpload = new File([compressed], imageFile.name, { type: imageFile.type });
+        } catch (compressErr) {
+          console.error("Compression failed, uploading original:", compressErr);
+        }
+
         const presignRes = await fetch("/api/listings/presign", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ filename: imageFile.name, fileType: imageFile.type }),
+          body: JSON.stringify({ filename: fileToUpload.name, fileType: fileToUpload.type }),
         });
 
         const { uploadUrl, fileKey } = await presignRes.json();
@@ -124,8 +140,8 @@ export default function CreateEventPage() {
 
         const uploadRes = await fetch(uploadUrl, {
           method: "PUT",
-          headers: { "Content-Type": imageFile.type },
-          body: imageFile,
+          headers: { "Content-Type": fileToUpload.type },
+          body: fileToUpload,
         });
 
         if (!uploadRes.ok) throw new Error("Failed to upload promotional image");

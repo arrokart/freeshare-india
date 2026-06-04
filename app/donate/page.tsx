@@ -259,7 +259,21 @@ export default function DonatePage() {
       const uploadedUrls: string[] = [];
 
       // Upload images (only if any provided)
-      for (const file of images) {
+      for (let file of images) {
+        // Compress image before upload
+        try {
+          const imageCompression = (await import("browser-image-compression")).default;
+          const options = {
+            maxSizeMB: 0.8,
+            maxWidthOrHeight: 1200,
+            useWebWorker: true,
+          };
+          const compressed = await imageCompression(file, options);
+          file = new File([compressed], file.name, { type: file.type });
+        } catch (compressErr) {
+          console.error("Compression failed, uploading original:", compressErr);
+        }
+
         const presignRes = await fetch("/api/listings/presign", {
           method: "POST",
           headers: { "Content-Type": "application/json" },

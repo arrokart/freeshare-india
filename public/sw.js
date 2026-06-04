@@ -1,4 +1,4 @@
-const CACHE_NAME = "freeshare-cache-v1";
+const CACHE_NAME = "freeshare-cache-v2";
 const OFFLINE_URLs = [
   "/",
   "/favicon.ico",
