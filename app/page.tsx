@@ -926,7 +926,7 @@ export default function HomeFeed() {
                       }`}
                     >
                       <div className="aspect-square relative overflow-hidden bg-slate-950">
-                        {isSkill ? (
+                        {isSkill && (!item.images || item.images.length === 0 || !item.images[0]) ? (
                           <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-violet-950/60 to-slate-950">
                             <div className="w-14 h-14 sm:w-20 sm:h-20 rounded-full overflow-hidden border-2 border-violet-500/30 mb-2">
                               {item.donor?.avatar_url
@@ -1018,7 +1018,7 @@ export default function HomeFeed() {
                     }`}
                   >
                     <div className="aspect-square relative overflow-hidden bg-slate-950">
-                      {isSkill ? (
+                      {isSkill && (!item.images || item.images.length === 0 || !item.images[0]) ? (
                         <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-violet-950/60 to-slate-950">
                           <div className="w-14 h-14 sm:w-20 sm:h-20 rounded-full overflow-hidden border-2 border-violet-500/30 mb-2">
                             {item.donor?.avatar_url
