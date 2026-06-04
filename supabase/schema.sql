@@ -418,10 +418,10 @@ BEGIN
     NEW.id,
     NEW.email,
     COALESCE(NEW.raw_user_meta_data->>'name', NEW.raw_user_meta_data->>'full_name', 'User'),
-    (NEW.raw_user_meta_data->>'date_of_birth')::date,
-    NEW.raw_user_meta_data->>'city',
-    NEW.raw_user_meta_data->>'area',
-    NEW.raw_user_meta_data->>'pincode',
+    COALESCE((NEW.raw_user_meta_data->>'date_of_birth')::date, '2000-01-01'::date),
+    COALESCE(NEW.raw_user_meta_data->>'city', 'Delhi'),
+    COALESCE(NEW.raw_user_meta_data->>'area', 'Delhi'),
+    COALESCE(NEW.raw_user_meta_data->>'pincode', ''),
     NEW.raw_user_meta_data->>'gender'
   )
   ON CONFLICT (id) DO UPDATE SET
