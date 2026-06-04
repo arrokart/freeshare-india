@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabaseClient";
+import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
 // GET events with city/area filters
 export async function GET(request: Request) {
@@ -114,7 +115,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from("events")
       .insert({
         organizer_id,

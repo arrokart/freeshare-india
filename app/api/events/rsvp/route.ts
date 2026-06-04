@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabaseClient";
+import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
 // POST toggle RSVP status for an event
 export async function POST(request: Request) {
@@ -14,7 +14,7 @@ export async function POST(request: Request) {
     }
 
     // Check if user already RSVP'd
-    const { data: existingRsvp, error: selectError } = await supabase
+    const { data: existingRsvp, error: selectError } = await supabaseAdmin
       .from("event_rsvps")
       .select("id")
       .eq("event_id", eventId)
@@ -25,7 +25,7 @@ export async function POST(request: Request) {
 
     if (existingRsvp) {
       // User has RSVP'd already -> Cancel RSVP (Delete)
-      const { error: deleteError } = await supabase
+      const { error: deleteError } = await supabaseAdmin
         .from("event_rsvps")
         .delete()
         .eq("id", existingRsvp.id);
@@ -35,7 +35,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ status: "cancelled", message: "RSVP cancelled successfully" });
     } else {
       // Check if event has participant cap limits
-      const { data: event, error: eventError } = await supabase
+      const { data: event, error: eventError } = await supabaseAdmin
         .from("events")
         .select("max_participants")
         .eq("id", eventId)
@@ -44,7 +44,7 @@ export async function POST(request: Request) {
       if (eventError) throw eventError;
 
       if (event?.max_participants) {
-        const { count, error: countError } = await supabase
+        const { count, error: countError } = await supabaseAdmin
           .from("event_rsvps")
           .select("id", { count: "exact", head: true })
           .eq("event_id", eventId);
@@ -60,7 +60,7 @@ export async function POST(request: Request) {
       }
 
       // User has not RSVP'd -> Join Event (Insert)
-      const { error: insertError } = await supabase
+      const { error: insertError } = await supabaseAdmin
         .from("event_rsvps")
         .insert({
           event_id: eventId,
