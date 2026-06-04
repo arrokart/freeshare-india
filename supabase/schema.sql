@@ -61,10 +61,7 @@ CREATE TABLE IF NOT EXISTS public.listings (
     donor_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
     title TEXT NOT NULL CHECK (char_length(title) >= 5 AND char_length(title) <= 80),
     description TEXT NOT NULL CHECK (char_length(description) >= 20 AND char_length(description) <= 500),
-    category TEXT NOT NULL CHECK (category IN (
-        'Furniture', 'Electronics', 'Books', 'Clothing', 'Toys', 
-        'Kitchen', 'Appliances', 'Sports', 'Office', 'Miscellaneous'
-    )),
+    category TEXT NOT NULL,
     condition TEXT NOT NULL CHECK (condition IN (
         'Like New', 'Good', 'Fair', 'Needs Repair'
     )),
