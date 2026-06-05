@@ -17,6 +17,7 @@ export default function DashboardPage() {
   // Event Chats States
   const [eventInquiries, setEventInquiries] = useState<any[]>([]);
   const [loadingEventInquiries, setLoadingEventInquiries] = useState(false);
+  const [selectedEventInquiryId, setSelectedEventInquiryId] = useState<string | null>(null);
 
   // Notifications State
   const [notifications, setNotifications] = useState<any[]>([]);
@@ -314,7 +315,14 @@ export default function DashboardPage() {
         const inqRes = await fetch(`/api/events/inquiry?userId=${uid}`);
         if (inqRes.ok) {
           const inqData = await inqRes.json();
-          setEventInquiries(Array.isArray(inqData) ? inqData : []);
+          const resolvedInqs = Array.isArray(inqData) ? inqData : [];
+          setEventInquiries(resolvedInqs);
+          if (resolvedInqs.length > 0) {
+            setSelectedEventInquiryId((prev) => {
+              if (prev && resolvedInqs.some((i) => i.id === prev)) return prev;
+              return resolvedInqs[0].id;
+            });
+          }
         }
       } catch (inqErr) {
         console.error("Error loading event inquiries:", inqErr);
@@ -710,80 +718,166 @@ export default function DashboardPage() {
 
         {/* Tab contents */}
         {activeTab === "event_chats" ? (
-          <div className="bg-slate-900/10 border border-slate-900 rounded-3xl p-6 space-y-4">
-            <h3 className="text-sm font-black text-slate-100 flex items-center gap-2">
-              📢 Private Event Inquiries ({eventInquiries.length})
-            </h3>
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
             {loadingEventInquiries ? (
-              <div className="flex items-center justify-center py-16 text-slate-500 text-xs">
+              <div className="lg:col-span-12 flex items-center justify-center py-16 text-slate-500 text-xs">
                 <Loader2 className="animate-spin text-amber-500 mr-2" size={16} />
                 Loading inquiries...
               </div>
             ) : eventInquiries.length === 0 ? (
-              <div className="text-center py-16 border border-dashed border-slate-900 rounded-3xl">
+              <div className="lg:col-span-12 text-center py-16 border border-dashed border-slate-900 rounded-3xl bg-slate-900/10">
                 <MessageSquare className="mx-auto text-slate-700 mb-3" size={32} />
-                <p className="text-sm text-slate-500">No event inquiry chats found.</p>
-                <p className="text-[10px] text-slate-650 mt-1">If you organize events or ask hosts questions, those private chats will appear here.</p>
+                <p className="text-sm font-bold text-slate-400">No event inquiry chats found</p>
+                <p className="text-xs text-slate-500 mt-1">When you coordinate or discuss details for listed local events, they will show up here.</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {eventInquiries.map((inq) => {
-                  const isHost = userId === inq.event.organizer_id;
-                  const partner = isHost ? inq.user : inq.host;
-                  const lastMsg = inq.lastMessage;
-                  
-                  return (
-                    <Link
-                      key={inq.id}
-                      href={`/events/chat/${inq.id}`}
-                      className="flex items-center justify-between p-4 rounded-2xl border border-slate-900 bg-slate-950/20 hover:bg-slate-900/30 hover:border-amber-500/30 transition-all group cursor-pointer"
-                    >
-                      <div className="flex items-center gap-3 min-w-0 flex-1">
-                        {/* Avatar */}
-                        <div className="w-10 h-10 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center text-xs font-black text-amber-500 uppercase overflow-hidden shrink-0">
-                          {partner?.avatar_url ? (
-                            <img src={partner.avatar_url} alt={partner.name} className="w-full h-full object-cover" />
-                          ) : (
-                            partner?.name?.charAt(0) || "U"
-                          )}
-                        </div>
-                        {/* Details */}
-                        <div className="min-w-0 flex-1 space-y-1">
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs font-black text-slate-200 group-hover:text-amber-400 transition-colors truncate">
-                              {partner?.name || "Community Member"}
-                            </span>
-                            <span className="text-[8px] uppercase tracking-wider font-extrabold text-slate-500 bg-slate-850 px-1 py-0.5 rounded shrink-0">
-                              {isHost ? "Inquirer" : "Host"}
-                            </span>
+              <>
+                {/* Left sidebar: Event Chats Conversational Inbox */}
+                <div className="lg:col-span-4 space-y-3 bg-slate-900/15 border border-slate-900/60 p-4 rounded-3xl max-h-[600px] overflow-y-auto">
+                  <h3 className="text-[10px] font-extrabold text-slate-500 uppercase tracking-widest px-1 pb-1">
+                    Event Chats ({eventInquiries.length})
+                  </h3>
+                  <div className="space-y-2">
+                    {eventInquiries.map((inq) => {
+                      const isSelected = selectedEventInquiryId === inq.id;
+                      const isHost = userId === inq.event.organizer_id;
+                      const partner = isHost ? inq.user : inq.host;
+                      const lastMsg = inq.lastMessage;
+
+                      return (
+                        <div
+                          key={inq.id}
+                          onClick={() => setSelectedEventInquiryId(inq.id)}
+                          className={`flex items-start gap-3 p-3 rounded-2xl cursor-pointer transition-all border ${
+                            isSelected
+                              ? "bg-slate-900/80 border-amber-500/30 shadow-md shadow-amber-500/5 text-slate-100"
+                              : "bg-slate-950/20 border-transparent hover:bg-slate-900/30 text-slate-450 hover:text-slate-200"
+                          }`}
+                        >
+                          {/* Partner Avatar Initials */}
+                          <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-amber-500/10 to-orange-500/10 border border-amber-500/20 flex items-center justify-center text-amber-500 font-extrabold text-sm shrink-0 shadow-inner">
+                            {partner?.name ? partner.name[0].toUpperCase() : "U"}
                           </div>
-                          <span className="text-[9px] font-bold text-amber-500 truncate block">
-                            Event: {inq.event.title}
-                          </span>
-                          <p className="text-[11px] text-slate-400 truncate">
-                            {lastMsg ? (
-                              <>
-                                <strong className="text-slate-500 font-semibold">
-                                  {lastMsg.sender_id === userId ? "You: " : `${partner?.name?.split(" ")[0] || "User"}: `}
-                                </strong>
-                                {lastMsg.content}
-                              </>
-                            ) : (
-                              <span className="italic text-slate-650">No messages yet. Click to start chatting!</span>
-                            )}
-                          </p>
+                          <div className="flex-1 min-w-0 space-y-0.5">
+                            <div className="flex items-center justify-between">
+                              <h4 className="font-bold text-xs truncate text-slate-200">
+                                {partner?.name || "Community Member"}
+                              </h4>
+                              <span className="text-[7.5px] uppercase tracking-wider font-extrabold text-slate-500 bg-slate-850 px-1 py-0.2 rounded shrink-0">
+                                {isHost ? "Host" : "Guest"}
+                              </span>
+                            </div>
+                            <p className="text-[10px] text-amber-500 font-medium truncate leading-normal">
+                              {inq.event.title}
+                            </p>
+                            <p className="text-[9px] text-slate-400 truncate italic leading-normal">
+                              {lastMsg ? lastMsg.content : "No messages yet"}
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Right side: Detailed Workspace for selected event inquiry */}
+                <div className="lg:col-span-8 space-y-6">
+                  {(() => {
+                    const inq = eventInquiries.find((i) => i.id === selectedEventInquiryId);
+                    if (!inq) {
+                      return (
+                        <div className="text-center py-16 bg-slate-900/10 border border-slate-900 rounded-3xl text-slate-500 text-xs">
+                          Select a chat from the inbox.
+                        </div>
+                      );
+                    }
+
+                    const isHost = userId === inq.event.organizer_id;
+                    const partner = isHost ? inq.user : inq.host;
+                    const lastMsg = inq.lastMessage;
+
+                    return (
+                      <div className="bg-slate-900/30 border border-slate-900 rounded-3xl p-6 space-y-6">
+                        {/* Event Details Header */}
+                        <div className="flex gap-4 items-center border-b border-slate-900/80 pb-4">
+                          <div className="w-14 h-14 rounded-xl bg-slate-950 border border-slate-800 shrink-0 flex items-center justify-center text-amber-500">
+                            <Calendar size={24} />
+                          </div>
+                          <div className="space-y-1">
+                            <span className="text-[9px] font-extrabold text-amber-500 uppercase tracking-widest block">Associated Event</span>
+                            <h3 className="font-extrabold text-base text-slate-100">{inq.event.title}</h3>
+                            <p className="text-xs text-slate-400">Scheduled: {new Date(inq.event.date).toLocaleDateString()}</p>
+                          </div>
+                        </div>
+
+                        {/* Partner Profile card */}
+                        <div className="p-4 rounded-2xl bg-slate-950/40 border border-slate-900 space-y-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-11 h-11 rounded-full bg-gradient-to-tr from-amber-500/10 to-orange-500/10 border border-amber-500/20 flex items-center justify-center text-amber-500 font-extrabold text-base shrink-0 shadow-inner">
+                              {partner?.name ? partner.name[0].toUpperCase() : "U"}
+                            </div>
+                            <div className="space-y-0.5">
+                              <span className="text-[9px] font-extrabold text-slate-500 uppercase tracking-widest block">
+                                {isHost ? "Inquirer profile" : "Event Organizer"}
+                              </span>
+                              <Link href={`/profile/${partner?.id}`} className="text-sm font-bold text-slate-200 hover:text-amber-400 hover:underline transition-colors block">
+                                {partner?.name}
+                              </Link>
+                              <div className="flex flex-wrap items-center gap-2 pt-0.5">
+                                <span className="text-[9px] text-slate-450 font-bold bg-slate-900 px-1.5 py-0.5 rounded border border-slate-800/80 flex items-center gap-0.5">
+                                  ★ {partner?.trust_score || "5.0"}
+                                </span>
+                                {partner?.is_ngo && (
+                                  <span className="text-[9px] font-extrabold bg-amber-500/10 text-amber-400 border border-amber-500/20 px-1.5 py-0.5 rounded uppercase">
+                                    ♥ NGO
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="pt-3 border-t border-slate-900/60 space-y-1.5">
+                            <span className="text-[9px] font-extrabold text-slate-550 uppercase tracking-widest block">Last Chat Snippet</span>
+                            <div className="p-3.5 bg-slate-900/40 border border-slate-900 rounded-xl text-xs text-slate-350 italic leading-relaxed">
+                              {lastMsg ? (
+                                <>
+                                  <strong className="text-slate-400 font-bold">
+                                    {lastMsg.sender_id === userId ? "You: " : `${partner?.name || "User"}: `}
+                                  </strong>
+                                  "{lastMsg.content}"
+                                </>
+                              ) : (
+                                "No messages exchanged yet."
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Communication Action Panel */}
+                        <div className="p-5 rounded-2xl bg-slate-950/20 border border-slate-900 space-y-4">
+                          <h4 className="text-xs font-black uppercase tracking-wider text-slate-350">Workspace Tools</h4>
+                          <div className="flex flex-col sm:flex-row gap-3 pt-1">
+                            <Link
+                              href={`/events/chat/${inq.id}`}
+                              className="flex-1 justify-center text-xs font-bold bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-440 hover:to-orange-440 text-slate-950 py-3 px-4 rounded-xl flex items-center gap-1.5 transition-all shadow-lg active:scale-[0.98]"
+                            >
+                              <MessageSquare size={14} />
+                              Open Event Chat Room
+                            </Link>
+
+                            <Link
+                              href={`/events/${inq.event.id}`}
+                              className="flex-1 justify-center text-xs font-bold bg-slate-900 border border-slate-800 text-slate-400 py-3 px-4 rounded-xl flex items-center gap-1.5 hover:bg-slate-850 hover:text-slate-250 transition-all active:scale-[0.98]"
+                            >
+                              View Public Event Details
+                            </Link>
+                          </div>
                         </div>
                       </div>
-                      
-                      <div className="text-right shrink-0 ml-3 pl-2 border-l border-slate-900/60">
-                        <span className="text-[8px] text-slate-600 font-bold block">
-                          {lastMsg ? new Date(lastMsg.created_at).toLocaleDateString() : new Date(inq.created_at).toLocaleDateString()}
-                        </span>
-                      </div>
-</Link>
-                  );
-                })}
-              </div>
+                    );
+                  })()}
+                </div>
+              </>
             )}
           </div>
         ) : activeTab === "donations" ? (
