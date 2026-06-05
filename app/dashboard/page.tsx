@@ -40,6 +40,7 @@ export default function DashboardPage() {
   // Donation Manager Workspace States
   const [selectedListingId, setSelectedListingId] = useState<string | null>(null);
   const [selectedClaimId, setSelectedClaimId] = useState<string | null>(null);
+  const [selectedClaimMadeId, setSelectedClaimMadeId] = useState<string | null>(null);
   const [shortlistedClaimIds, setShortlistedClaimIds] = useState<string[]>([]);
   const [claimsSortKey, setClaimsSortKey] = useState<"newest" | "oldest" | "trust" | "first-time">("newest");
   const [requesterStats, setRequesterStats] = useState<{ [receiverId: string]: { totalCompleted: number; completedFromMe: number } }>({});
@@ -292,12 +293,20 @@ export default function DashboardPage() {
         .from("claims")
         .select(`
           *,
-          listing:listing_id(id, title, images, status, city, area)
+          listing:listing_id(id, title, images, status, city, area),
+          donor:donor_id(id, name, trust_score, avatar_url, is_ngo, is_verified)
         `)
         .eq("receiver_id", uid)
         .order("created_at", { ascending: false });
 
-      setMyClaims(claimsMade || []);
+      const resolvedClaimsMade = claimsMade || [];
+      setMyClaims(resolvedClaimsMade);
+      if (resolvedClaimsMade.length > 0) {
+        setSelectedClaimMadeId((prev) => {
+          if (prev && resolvedClaimsMade.some((c) => c.id === prev)) return prev;
+          return resolvedClaimsMade[0].id;
+        });
+      }
 
       // Fetch event inquiries
       setLoadingEventInquiries(true);
@@ -1021,81 +1030,203 @@ export default function DashboardPage() {
             );
           })()
         ) : (
-          /* Claims made List mapping */
-          <div className="space-y-4">
+          /* Claims made (My Requests) Splitscreen Workspace */
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
             {myClaims.length === 0 ? (
-              <div className="text-center py-16 border border-dashed border-slate-900 rounded-3xl">
+              <div className="lg:col-span-12 text-center py-16 border border-dashed border-slate-900 rounded-3xl bg-slate-900/10">
                 <ClipboardList className="mx-auto text-slate-700 mb-3" size={32} />
-                <p className="text-sm font-bold text-slate-400">No claims submitted yet</p>
+                <p className="text-sm font-bold text-slate-400">No requests submitted yet</p>
                 <Link href="/" className="text-xs text-teal-400 hover:underline mt-1 inline-block">Browse feed and claim items</Link>
               </div>
             ) : (
-              myClaims.map((claim) => (
-                <div key={claim.id} className="bg-slate-900/30 border border-slate-900 rounded-3xl p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                  <div className="flex gap-4">
-                    <div className="w-14 h-14 rounded-xl overflow-hidden bg-slate-950 border border-slate-800 shrink-0 flex items-center justify-center">
-                      {claim.listing?.images?.[0] && !brokenImages[claim.id + "_claim"] ? (
-                        <img
-                          src={claim.listing.images[0]}
-                          alt="Thumbnail"
-                          className="w-full h-full object-cover"
-                          onError={() => setBrokenImages(prev => ({ ...prev, [claim.id + "_claim"]: true }))}
-                        />
-                      ) : (
-                        <ImageIcon className="text-slate-500" size={18} />
-                      )}
-                    </div>
-                    <div className="space-y-1">
-                      <h4 className="font-bold text-sm text-slate-100">{claim.listing?.title}</h4>
-                      <p className="text-[10px] text-slate-500">{claim.listing?.area}, {claim.listing?.city}</p>
-                      <div className="flex items-center gap-2.5">
-                        <span className={`text-[9px] font-extrabold uppercase px-2 py-0.5 rounded ${
-                          claim.status === "pending" ? "bg-slate-800 text-slate-400" :
-                          claim.status === "accepted" ? "bg-emerald-500/10 text-emerald-400" :
-                          claim.status === "declined" ? "bg-red-500/10 text-red-400" :
-                          claim.status === "completed" ? "bg-teal-500/10 text-teal-400" :
-                          "bg-slate-800 text-slate-500"
-                        }`}>
-                          {claim.status}
-                        </span>
-                        <Link href={`/profile/${claim.donor_id}`} className="text-[10px] text-teal-400 hover:text-teal-300 hover:underline font-bold transition-all">
-                          View Donor Profile
-                        </Link>
-                      </div>
-                    </div>
-                  </div>
+              <>
+                {/* Left sidebar: Outbound Claims Conversational Inbox */}
+                <div className="lg:col-span-4 space-y-3 bg-slate-900/15 border border-slate-900/60 p-4 rounded-3xl max-h-[600px] overflow-y-auto">
+                  <h3 className="text-[10px] font-extrabold text-slate-500 uppercase tracking-widest px-1 pb-1">
+                    Outbound Requests ({myClaims.length})
+                  </h3>
+                  <div className="space-y-2">
+                    {myClaims.map((claim) => {
+                      const isSelected = selectedClaimMadeId === claim.id;
 
-                  <div className="flex gap-2 w-full sm:w-auto">
-                    {/* Rate Donor Button if completed */}
-                    {claim.status === "completed" && (
-                      <button
-                        onClick={() => {
-                          setReviewClaimId(claim.id);
-                          setReviewedUserId(claim.donor_id);
-                          setReviewedUserName("the Donor");
-                          setReviewRole("receiver_reviewing_donor");
-                          setShowReviewModal(true);
-                        }}
-                        className="w-full sm:w-auto text-xs font-bold bg-slate-900 border border-slate-850 hover:bg-slate-800 text-yellow-500 py-2.5 px-4 rounded-xl flex items-center gap-1"
-                      >
-                        <Star size={14} className="fill-yellow-500 text-yellow-500" />
-                        Rate Donor
-                      </button>
-                    )}
-
-                    {/* Chat navigation buttons if request is accepted */}
-                    {claim.status === "accepted" && (
-                      <Link
-                        href={`/chat/${claim.id}`}
-                        className="w-full sm:w-auto justify-center text-xs font-bold bg-teal-500 text-slate-950 py-2.5 px-4 rounded-xl flex items-center gap-1.5 hover:bg-teal-400 shadow-lg shadow-teal-500/10 transition-colors"
-                      >
-                        <MessageSquare size={14} />
-                        Chat with Donor
-                      </Link>
-                    )}
+                      return (
+                        <div
+                          key={claim.id}
+                          onClick={() => {
+                            setSelectedClaimMadeId(claim.id);
+                          }}
+                          className={`flex items-start gap-3 p-3 rounded-2xl cursor-pointer transition-all border ${
+                            isSelected
+                              ? "bg-slate-900/80 border-teal-500/30 shadow-md shadow-teal-500/5 text-slate-100"
+                              : "bg-slate-950/20 border-transparent hover:bg-slate-900/30 text-slate-450 hover:text-slate-200"
+                          }`}
+                        >
+                          {/* Donor Initials Avatar */}
+                          <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-teal-500/10 to-emerald-500/10 border border-teal-500/20 flex items-center justify-center text-teal-500 font-extrabold text-sm shrink-0 shadow-inner">
+                            {claim.donor?.name ? claim.donor.name[0].toUpperCase() : "D"}
+                          </div>
+                          <div className="flex-1 min-w-0 space-y-0.5">
+                            <div className="flex items-center justify-between">
+                              <h4 className="font-bold text-xs truncate text-slate-200">
+                                {claim.donor?.name || "Donor"}
+                              </h4>
+                              <span className={`text-[8px] font-extrabold uppercase px-1.5 py-0.5 rounded shrink-0 ${
+                                claim.status === "pending" ? "bg-slate-800 text-slate-400" :
+                                claim.status === "accepted" ? "bg-emerald-500/10 text-emerald-400" :
+                                claim.status === "completed" ? "bg-teal-500/10 text-teal-400" :
+                                claim.status === "declined" ? "bg-red-500/10 text-red-400" :
+                                "bg-slate-800 text-slate-500"
+                              }`}>
+                                {claim.status === "accepted" ? "reserved" : claim.status}
+                              </span>
+                            </div>
+                            <p className="text-[10px] text-slate-350 truncate leading-normal">
+                              {claim.listing?.title || "Item"}
+                            </p>
+                            <p className="text-[9px] text-slate-500 truncate italic leading-normal">
+                              "{claim.message}"
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
-              ))
+
+                {/* Right side: Detailed Workspace for selected claim made */}
+                <div className="lg:col-span-8 space-y-6">
+                  {(() => {
+                    const selectedClaim = myClaims.find((c) => c.id === selectedClaimMadeId);
+                    if (!selectedClaim) {
+                      return (
+                        <div className="text-center py-16 bg-slate-900/10 border border-slate-900 rounded-3xl text-slate-500 text-xs">
+                          Select a request from the sidebar inbox.
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <div className="bg-slate-900/30 border border-slate-900 rounded-3xl p-6 space-y-6">
+                        {/* Listing summary header */}
+                        <div className="flex gap-4 items-center border-b border-slate-900/80 pb-4">
+                          <div className="w-14 h-14 rounded-xl overflow-hidden bg-slate-950 border border-slate-800 shrink-0 flex items-center justify-center">
+                            {selectedClaim.listing?.images?.[0] ? (
+                              <img
+                                src={selectedClaim.listing.images[0]}
+                                alt="Listing thumbnail"
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <ImageIcon className="text-slate-500" size={18} />
+                            )}
+                          </div>
+                          <div className="space-y-1">
+                            <span className="text-[9px] font-extrabold text-slate-550 uppercase tracking-widest block">Requested Listing</span>
+                            <h3 className="font-extrabold text-base text-slate-100">{selectedClaim.listing?.title}</h3>
+                            <p className="text-xs text-slate-400">{selectedClaim.listing?.area}, {selectedClaim.listing?.city}</p>
+                          </div>
+                        </div>
+
+                        {/* Donor Profile card */}
+                        <div className="p-4 rounded-2xl bg-slate-950/40 border border-slate-900 space-y-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-11 h-11 rounded-full bg-gradient-to-tr from-teal-500/10 to-emerald-500/10 border border-teal-500/20 flex items-center justify-center text-teal-500 font-extrabold text-base shrink-0 shadow-inner">
+                              {selectedClaim.donor?.name ? selectedClaim.donor.name[0].toUpperCase() : "D"}
+                            </div>
+                            <div className="space-y-0.5">
+                              <span className="text-[9px] font-extrabold text-slate-500 uppercase tracking-widest block">Donor Profile</span>
+                              <Link href={`/profile/${selectedClaim.donor_id}`} className="text-sm font-bold text-slate-200 hover:text-teal-400 hover:underline transition-colors block">
+                                {selectedClaim.donor?.name}
+                              </Link>
+                              <div className="flex flex-wrap items-center gap-2 pt-0.5">
+                                <span className="text-[9px] text-slate-450 font-bold bg-slate-900 px-1.5 py-0.5 rounded border border-slate-800/80 flex items-center gap-0.5">
+                                  ★ {selectedClaim.donor?.trust_score || "5.0"}
+                                </span>
+                                {selectedClaim.donor?.is_ngo && (
+                                  <span className="text-[9px] font-extrabold bg-teal-500/10 text-teal-400 border border-teal-500/20 px-1.5 py-0.5 rounded uppercase">
+                                    ♥ NGO
+                                  </span>
+                                )}
+                                {selectedClaim.donor?.is_verified && (
+                                  <span className="text-[9px] font-extrabold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-1.5 py-0.5 rounded uppercase">
+                                    ✓ Verified
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="pt-3 border-t border-slate-900/60 space-y-1.5">
+                            <span className="text-[9px] font-extrabold text-slate-500 uppercase tracking-widest block">Your Sent Message</span>
+                            <div className="p-3.5 bg-slate-900/40 border border-slate-900 rounded-xl text-xs text-slate-300 italic leading-relaxed">
+                              "{selectedClaim.message}"
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Claim Status and Action Controls */}
+                        <div className="p-5 rounded-2xl bg-slate-950/20 border border-slate-900 space-y-4">
+                          <h4 className="text-xs font-black uppercase tracking-wider text-slate-350">Request Status & Actions</h4>
+                          <div className="flex items-center gap-3">
+                            <span className="text-xs text-slate-400 font-medium">Current Stage:</span>
+                            <span className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded border ${
+                              selectedClaim.status === "pending" ? "bg-slate-800 text-slate-400 border-slate-700" :
+                              selectedClaim.status === "accepted" ? "bg-emerald-500/15 text-emerald-450 border-emerald-500/20" :
+                              selectedClaim.status === "completed" ? "bg-teal-500/15 text-teal-450 border-teal-500/20" :
+                              selectedClaim.status === "declined" ? "bg-red-500/15 text-red-450 border-red-500/20" :
+                              "bg-slate-800 text-slate-500 border-slate-800"
+                            }`}>
+                              {selectedClaim.status === "accepted" ? "reserved" : selectedClaim.status}
+                            </span>
+                          </div>
+
+                          <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                            {/* Standard Connect Chat Link */}
+                            {(selectedClaim.status === "accepted" || selectedClaim.status === "pending") && (
+                              <Link
+                                href={`/chat/${selectedClaim.id}`}
+                                className="flex-1 justify-center text-xs font-bold bg-teal-500 text-slate-950 hover:bg-teal-400 py-3 px-4 rounded-xl flex items-center gap-1.5 transition-all shadow-lg shadow-teal-500/10 active:scale-[0.98]"
+                              >
+                                <MessageSquare size={14} />
+                                Chat with Donor
+                              </Link>
+                            )}
+
+                            {/* Rate Donor Button */}
+                            {selectedClaim.status === "completed" && (
+                              <button
+                                onClick={() => {
+                                  setReviewClaimId(selectedClaim.id);
+                                  setReviewedUserId(selectedClaim.donor_id);
+                                  setReviewedUserName(selectedClaim.donor?.name || "the Donor");
+                                  setReviewRole("receiver_reviewing_donor");
+                                  setShowReviewModal(true);
+                                }}
+                                className="flex-1 justify-center text-xs font-bold bg-slate-900 border border-slate-800 text-yellow-500 hover:bg-slate-850 py-3 px-4 rounded-xl flex items-center gap-1.5 transition-all active:scale-[0.98]"
+                              >
+                                <Star size={14} className="fill-yellow-500 text-yellow-500" />
+                                Rate Donor
+                              </button>
+                            )}
+
+                            {/* Cancel Request Button */}
+                            {(selectedClaim.status === "pending" || selectedClaim.status === "accepted") && (
+                              <button
+                                disabled={actionLoadingId !== null}
+                                onClick={() => handleClaimAction(selectedClaim.id, "cancelled")}
+                                className="flex-1 justify-center text-xs font-bold bg-slate-900 border border-slate-800 text-slate-400 py-3 px-4 rounded-xl flex items-center gap-1.5 hover:text-red-400 hover:bg-red-500/10 hover:border-red-900/20 transition-all active:scale-[0.98] disabled:opacity-50"
+                              >
+                                <X size={14} />
+                                Cancel Request
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
+              </>
             )}
           </div>
         )}
