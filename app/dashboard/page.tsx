@@ -941,6 +941,21 @@ export default function DashboardPage() {
                                 <p className="text-[9px] text-slate-500 truncate italic leading-normal">
                                   "{claim.message}"
                                 </p>
+                                
+                                {/* Past Exchange Badge */}
+                                {(() => {
+                                  const stats = requesterStats[claim.receiver_id];
+                                  if (stats && stats.totalCompleted > 0) {
+                                    return (
+                                      <div className="pt-1">
+                                        <span className="inline-flex items-center gap-0.5 text-[8px] font-black bg-amber-500/10 text-amber-400 px-1.5 py-0.2 rounded border border-amber-550/20">
+                                          🤝 {stats.totalCompleted} Past Exchange{stats.totalCompleted > 1 ? "s" : ""}
+                                        </span>
+                                      </div>
+                                    );
+                                  }
+                                  return null;
+                                })()}
                               </div>
                             </div>
                           );
