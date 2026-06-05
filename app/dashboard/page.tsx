@@ -883,7 +883,29 @@ export default function DashboardPage() {
         ) : activeTab === "donations" ? (
           /* Donations Splitscreen Workspace */
           (() => {
-            const allReceivedClaims = myListings.flatMap((item) => claimsReceived[item.id] || []);
+            // Group received claims by listing_id and receiver_id, taking the most active/recent claim
+            const uniqueReceivedClaimsMap: { [key: string]: any } = {};
+            myListings.forEach((item) => {
+              const claims = claimsReceived[item.id] || [];
+              claims.forEach((claim) => {
+                const key = `${claim.listing_id}-${claim.receiver_id}`;
+                const existing = uniqueReceivedClaimsMap[key];
+                
+                // Prioritize status order: pending > accepted > completed > declined/cancelled
+                const statusPriority = (status: string) => {
+                  if (status === "pending") return 4;
+                  if (status === "accepted") return 3;
+                  if (status === "completed") return 2;
+                  return 1;
+                };
+
+                if (!existing || statusPriority(claim.status) > statusPriority(existing.status) || (statusPriority(claim.status) === statusPriority(existing.status) && new Date(claim.created_at) > new Date(existing.created_at))) {
+                  uniqueReceivedClaimsMap[key] = claim;
+                }
+              });
+            });
+
+            const allReceivedClaims = Object.values(uniqueReceivedClaimsMap);
 
             return (
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
@@ -901,7 +923,7 @@ export default function DashboardPage() {
                         Inbox Conversations ({allReceivedClaims.length})
                       </h3>
                       <div className="space-y-2">
-                        {allReceivedClaims.map((claim) => {
+                        {allReceivedClaims.map((claim: any) => {
                           const isSelected = selectedClaimId === claim.id;
 
                           return (
@@ -1140,23 +1162,44 @@ export default function DashboardPage() {
           })()
         ) : (
           /* Claims made (My Requests) Splitscreen Workspace */
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-            {myClaims.length === 0 ? (
-              <div className="lg:col-span-12 text-center py-16 border border-dashed border-slate-900 rounded-3xl bg-slate-900/10">
-                <ClipboardList className="mx-auto text-slate-700 mb-3" size={32} />
-                <p className="text-sm font-bold text-slate-400">No requests submitted yet</p>
-                <Link href="/" className="text-xs text-teal-400 hover:underline mt-1 inline-block">Browse feed and claim items</Link>
-              </div>
-            ) : (
-              <>
-                {/* Left sidebar: Outbound Claims Conversational Inbox */}
-                <div className="lg:col-span-4 space-y-3 bg-slate-900/15 border border-slate-900/60 p-4 rounded-3xl max-h-[600px] overflow-y-auto">
-                  <h3 className="text-[10px] font-extrabold text-slate-500 uppercase tracking-widest px-1 pb-1">
-                    Outbound Requests ({myClaims.length})
-                  </h3>
-                  <div className="space-y-2">
-                    {myClaims.map((claim) => {
-                      const isSelected = selectedClaimMadeId === claim.id;
+          (() => {
+            const uniqueClaimsMadeMap: { [key: string]: any } = {};
+            myClaims.forEach((claim) => {
+              const key = `${claim.listing_id}-${claim.donor_id}`;
+              const existing = uniqueClaimsMadeMap[key];
+
+              const statusPriority = (status: string) => {
+                if (status === "pending") return 4;
+                if (status === "accepted") return 3;
+                if (status === "completed") return 2;
+                return 1;
+              };
+
+              if (!existing || statusPriority(claim.status) > statusPriority(existing.status) || (statusPriority(claim.status) === statusPriority(existing.status) && new Date(claim.created_at) > new Date(existing.created_at))) {
+                uniqueClaimsMadeMap[key] = claim;
+              }
+            });
+
+            const allOutboundClaims = Object.values(uniqueClaimsMadeMap);
+
+            return (
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                {allOutboundClaims.length === 0 ? (
+                  <div className="lg:col-span-12 text-center py-16 border border-dashed border-slate-900 rounded-3xl bg-slate-900/10">
+                    <ClipboardList className="mx-auto text-slate-700 mb-3" size={32} />
+                    <p className="text-sm font-bold text-slate-400">No requests submitted yet</p>
+                    <Link href="/" className="text-xs text-teal-400 hover:underline mt-1 inline-block">Browse feed and claim items</Link>
+                  </div>
+                ) : (
+                  <>
+                    {/* Left sidebar: Outbound Claims Conversational Inbox */}
+                    <div className="lg:col-span-4 space-y-3 bg-slate-900/15 border border-slate-900/60 p-4 rounded-3xl max-h-[600px] overflow-y-auto">
+                      <h3 className="text-[10px] font-extrabold text-slate-500 uppercase tracking-widest px-1 pb-1">
+                        Outbound Requests ({allOutboundClaims.length})
+                      </h3>
+                      <div className="space-y-2">
+                        {allOutboundClaims.map((claim: any) => {
+                          const isSelected = selectedClaimMadeId === claim.id;
 
                       return (
                         <div
@@ -1338,7 +1381,9 @@ export default function DashboardPage() {
               </>
             )}
           </div>
-        )}
+          );
+        })()
+      )}
       </div>
 
       {/* RATING SUBMISSION MODAL OVERLAY */}
