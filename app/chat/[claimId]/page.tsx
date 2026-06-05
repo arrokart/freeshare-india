@@ -33,6 +33,13 @@ export default function ChatRoomPage() {
   const [statusChanging, setStatusChanging] = useState(false);
   const [nudging, setNudging] = useState(false);
 
+  // Past Exchanges / Sibling claims mapping
+  const [pastClaims, setPastClaims] = useState<any[]>([]);
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [historyMessages, setHistoryMessages] = useState<any[]>([]);
+  const [loadingHistoryMessages, setLoadingHistoryMessages] = useState(false);
+  const [selectedHistoryClaimId, setSelectedHistoryClaimId] = useState<string | null>(null);
+
   const handleUpdateStatus = async (newStatus: string) => {
     if (!claimId) return;
     setStatusChanging(true);
@@ -86,6 +93,21 @@ export default function ChatRoomPage() {
     }
   };
 
+  const handleFetchHistoryMessages = async (pastId: string) => {
+    setSelectedHistoryClaimId(pastId);
+    setLoadingHistoryMessages(true);
+    try {
+      const res = await fetch(`/api/messages?claimId=${pastId}&limit=100`);
+      if (!res.ok) throw new Error("Failed to load archived chat");
+      const data = await res.json();
+      setHistoryMessages(Array.isArray(data) ? data : []);
+    } catch (err: any) {
+      alert(err.message || "Failed to load past chat messages.");
+    } finally {
+      setLoadingHistoryMessages(false);
+    }
+  };
+
   const chatEndRef = useRef<HTMLDivElement>(null);
   const typingTimerRef = useRef<NodeJS.Timeout | null>(null);
   const presenceChannelRef = useRef<any>(null);
@@ -128,7 +150,19 @@ export default function ChatRoomPage() {
         const isDonor = claimData.donor_id === userId;
         setOtherUserName(isDonor ? claimData.receiver?.name : claimData.donor?.name);
 
-        // 2. Fetch last 50 historical messages
+        // 2. Fetch sibling claims (historical requests) between these two users for this listing
+        const { data: siblings } = await supabase
+          .from("claims")
+          .select("id, status, created_at, message")
+          .eq("listing_id", claimData.listing_id)
+          .eq("receiver_id", claimData.receiver_id)
+          .eq("donor_id", claimData.donor_id)
+          .neq("id", claimId)
+          .order("created_at", { ascending: false });
+        
+        setPastClaims(siblings || []);
+
+        // 3. Fetch last 50 historical messages
         const msgRes = await fetch(`/api/messages?claimId=${claimId}&limit=50`);
         const msgData = await msgRes.json();
         const loadedMessages = Array.isArray(msgData) ? msgData : [];
@@ -600,6 +634,28 @@ export default function ChatRoomPage() {
           </div>
         </div>
 
+        {/* Sibling claim link banner */}
+        {pastClaims.length > 0 && (
+          <div className="p-4 rounded-2xl bg-amber-500/5 border border-amber-500/15 text-xs text-slate-300 flex items-center justify-between gap-3 max-w-4xl mx-auto animate-in fade-in duration-350">
+            <div className="flex items-center gap-2">
+              <span className="text-amber-500 text-sm">ℹ️</span>
+              <p className="text-[11px] text-slate-350 leading-relaxed font-semibold">
+                You have {pastClaims.length} past exchange history records for this item with this user.
+              </p>
+            </div>
+            <button
+              onClick={() => {
+                setShowHistoryModal(true);
+                // Auto load the first past claim history messages
+                handleFetchHistoryMessages(pastClaims[0].id);
+              }}
+              className="text-[10px] font-black uppercase text-amber-500 hover:text-amber-400 border-b border-dashed border-amber-550/40 pb-0.5 tracking-wider shrink-0 transition-colors"
+            >
+              View History
+            </button>
+          </div>
+        )}
+
         {errorMsg && (
           <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-xs text-center flex items-center justify-center gap-2">
             <AlertCircle size={14} />
@@ -751,6 +807,100 @@ export default function ChatRoomPage() {
           </form>
         </div>
       </footer>
+
+      {/* HISTORICAL EXCHANGE/CHAT HISTORY OVERLAY MODAL */}
+      {showHistoryModal && (
+        <div className="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-4">
+          <div className="w-full max-w-2xl bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-6 shadow-2xl flex flex-col max-h-[90vh] animate-in fade-in zoom-in-95 duration-200">
+            {/* Header */}
+            <div className="flex justify-between items-start border-b border-slate-800 pb-4 shrink-0">
+              <div>
+                <h3 className="text-lg font-bold text-slate-100 flex items-center gap-2">
+                  📂 Archived Exchange History
+                </h3>
+                <p className="text-xs text-slate-400">
+                  Read past conversation threads between you and {otherUserName} for this listing
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  setShowHistoryModal(false);
+                  setHistoryMessages([]);
+                  setSelectedHistoryClaimId(null);
+                }}
+                className="p-1.5 hover:bg-slate-800 rounded-lg text-slate-450 hover:text-slate-200 transition-all cursor-pointer"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Claims selection Tabs row if there are multiple sibling claims */}
+            {pastClaims.length > 1 && (
+              <div className="flex gap-2 overflow-x-auto pb-2 shrink-0 border-b border-slate-900">
+                {pastClaims.map((pc, index) => {
+                  const isSelected = selectedHistoryClaimId === pc.id;
+                  return (
+                    <button
+                      key={pc.id}
+                      onClick={() => handleFetchHistoryMessages(pc.id)}
+                      className={`text-[10px] font-black uppercase px-3.5 py-2 rounded-xl transition-all tracking-wider shrink-0 cursor-pointer ${
+                        isSelected
+                          ? "bg-amber-500/15 border border-amber-500/25 text-amber-400"
+                          : "bg-slate-950/40 border border-slate-850 text-slate-400 hover:text-slate-200"
+                      }`}
+                    >
+                      Exchange #{pastClaims.length - index} ({pc.status})
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Chat message content box */}
+            <div className="flex-1 overflow-y-auto bg-slate-950/40 border border-slate-900 rounded-2xl p-4 space-y-4 min-h-[300px]">
+              {loadingHistoryMessages ? (
+                <div className="flex flex-col items-center justify-center h-full gap-2 text-slate-500 py-16">
+                  <Loader2 className="animate-spin text-amber-500" size={24} />
+                  <span className="text-[11px]">Loading archived messages...</span>
+                </div>
+              ) : historyMessages.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-full text-slate-650 py-16 text-center">
+                  <p className="text-xs">No chat logs found in the database for this attempt.</p>
+                  <p className="text-[10px] text-slate-700 mt-1">
+                    (Note: Messages older than 90 days are automatically cleared from the platform).
+                  </p>
+                </div>
+              ) : (
+                historyMessages.map((msg) => {
+                  const isMe = msg.sender_id === userId;
+                  return (
+                    <div
+                      key={msg.id}
+                      className={`flex flex-col max-w-[80%] space-y-1 ${
+                        isMe ? "ml-auto items-end" : "mr-auto items-start"
+                      }`}
+                    >
+                      <div
+                        className={`p-3 rounded-2xl text-xs leading-relaxed ${
+                          isMe
+                            ? "bg-slate-800 text-slate-100 rounded-tr-none border border-slate-750"
+                            : "bg-slate-900 text-slate-300 rounded-tl-none border border-slate-850"
+                        }`}
+                      >
+                        {msg.content}
+                      </div>
+                      <span className="text-[8px] text-slate-500 px-1 font-semibold">
+                        {new Date(msg.created_at).toLocaleDateString()} at{" "}
+                        {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
+        </div>
+      )}
       
     </div>
   );
