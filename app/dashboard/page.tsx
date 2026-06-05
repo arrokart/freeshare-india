@@ -1003,24 +1003,27 @@ export default function DashboardPage() {
                         return (
                           <div className="bg-slate-900/30 border border-slate-900 rounded-3xl p-6 space-y-6">
                             {/* Listing summary header */}
-                            <div className="flex gap-4 items-center border-b border-slate-900/80 pb-4">
-                              <div className="w-14 h-14 rounded-xl overflow-hidden bg-slate-950 border border-slate-800 shrink-0 flex items-center justify-center">
-                                {selectedClaim.listing?.images?.[0] ? (
-                                  <img
-                                    src={selectedClaim.listing.images[0]}
-                                    alt="Listing thumbnail"
-                                    className="w-full h-full object-cover"
-                                  />
-                                ) : (
-                                  <ImageIcon className="text-slate-500" size={18} />
-                                )}
-                              </div>
-                              <div className="space-y-1">
-                                <span className="text-[9px] font-extrabold text-slate-550 uppercase tracking-widest block">Requested Item</span>
-                                <h3 className="font-extrabold text-base text-slate-100">{selectedClaim.listing?.title}</h3>
-                                <p className="text-xs text-slate-400">{selectedClaim.listing?.area}, {selectedClaim.listing?.city}</p>
-                              </div>
-                            </div>
+                            <Link
+                               href={`/listing/${selectedClaim.listing_id}`}
+                               className="flex gap-4 items-center border-b border-slate-900/80 pb-4 group hover:opacity-90 transition-opacity cursor-pointer"
+                             >
+                               <div className="w-14 h-14 rounded-xl overflow-hidden bg-slate-950 border border-slate-800 shrink-0 flex items-center justify-center transition-transform group-hover:scale-105 duration-200">
+                                 {selectedClaim.listing?.images?.[0] ? (
+                                   <img
+                                     src={selectedClaim.listing.images[0]}
+                                     alt="Listing thumbnail"
+                                     className="w-full h-full object-cover"
+                                   />
+                                 ) : (
+                                   <ImageIcon className="text-slate-500" size={18} />
+                                 )}
+                               </div>
+                               <div className="space-y-1">
+                                 <span className="text-[9px] font-extrabold text-slate-550 uppercase tracking-widest block">Requested Item</span>
+                                 <h3 className="font-extrabold text-base text-slate-100 group-hover:text-teal-400 transition-colors">{selectedClaim.listing?.title}</h3>
+                                 <p className="text-xs text-slate-400">{selectedClaim.listing?.area}, {selectedClaim.listing?.city}</p>
+                               </div>
+                             </Link>
 
                             {/* Requester Profile card */}
                             <div className="p-4 rounded-2xl bg-slate-950/40 border border-slate-900 space-y-4">
@@ -1260,8 +1263,11 @@ export default function DashboardPage() {
                     return (
                       <div className="bg-slate-900/30 border border-slate-900 rounded-3xl p-6 space-y-6">
                         {/* Listing summary header */}
-                        <div className="flex gap-4 items-center border-b border-slate-900/80 pb-4">
-                          <div className="w-14 h-14 rounded-xl overflow-hidden bg-slate-950 border border-slate-800 shrink-0 flex items-center justify-center">
+                        <Link
+                          href={`/listing/${selectedClaim.listing_id}`}
+                          className="flex gap-4 items-center border-b border-slate-900/80 pb-4 group hover:opacity-90 transition-opacity cursor-pointer"
+                        >
+                          <div className="w-14 h-14 rounded-xl overflow-hidden bg-slate-950 border border-slate-800 shrink-0 flex items-center justify-center transition-transform group-hover:scale-105 duration-200">
                             {selectedClaim.listing?.images?.[0] ? (
                               <img
                                 src={selectedClaim.listing.images[0]}
@@ -1274,10 +1280,10 @@ export default function DashboardPage() {
                           </div>
                           <div className="space-y-1">
                             <span className="text-[9px] font-extrabold text-slate-550 uppercase tracking-widest block">Requested Listing</span>
-                            <h3 className="font-extrabold text-base text-slate-100">{selectedClaim.listing?.title}</h3>
+                            <h3 className="font-extrabold text-base text-slate-100 group-hover:text-teal-400 transition-colors">{selectedClaim.listing?.title}</h3>
                             <p className="text-xs text-slate-400">{selectedClaim.listing?.area}, {selectedClaim.listing?.city}</p>
                           </div>
-                        </div>
+                        </Link>
 
                         {/* Donor Profile card */}
                         <div className="p-4 rounded-2xl bg-slate-950/40 border border-slate-900 space-y-4">
