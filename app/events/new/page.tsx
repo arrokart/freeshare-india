@@ -36,6 +36,38 @@ export default function CreateEventPage() {
   const [errorMsg, setErrorMsg] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
 
+  // Appeal States
+  const [appealExplanation, setAppealExplanation] = useState("");
+  const [appealing, setAppealing] = useState(false);
+  const [appealSuccessMsg, setAppealSuccessMsg] = useState("");
+  const [appealErrorMsg, setAppealErrorMsg] = useState("");
+
+  const handleAppealSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) return;
+    setAppealing(true);
+    setAppealErrorMsg("");
+    setAppealSuccessMsg("");
+    try {
+      const res = await fetch("/api/events/appeal", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          explanation: appealExplanation,
+          userId: user.id
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to submit appeal");
+      setAppealSuccessMsg(data.message);
+      setAppealExplanation("");
+    } catch (err: any) {
+      setAppealErrorMsg(err.message || "Failed to submit appeal");
+    } finally {
+      setAppealing(false);
+    }
+  };
+
   useEffect(() => {
     const checkUser = async () => {
       const { data } = await supabase.auth.getUser();
@@ -279,6 +311,60 @@ export default function CreateEventPage() {
                 {isSuspendedByAdmin ? "Suspended" : "Active"}
               </span>
             </div>
+          </div>
+
+          {/* Appeal Form UI */}
+          <div className="w-full mt-8 bg-slate-900/10 border border-slate-900 rounded-3xl p-5 space-y-4 text-left">
+            <h3 className="text-sm font-black text-slate-100 flex items-center gap-1.5">
+              <Award size={16} className="text-amber-500" />
+              Appeal Suspension
+            </h3>
+            <p className="text-[11px] text-slate-500 leading-relaxed">
+              If you have positive updates, proof of community cleanup efforts, or believe this was an error, submit an appeal below. An administrator will review it.
+            </p>
+
+            {appealSuccessMsg && (
+              <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-450 text-xs">
+                {appealSuccessMsg}
+              </div>
+            )}
+
+            {appealErrorMsg && (
+              <div className="p-3.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs animate-pulse">
+                {appealErrorMsg}
+              </div>
+            )}
+
+            {!appealSuccessMsg && (
+              <form onSubmit={handleAppealSubmit} className="space-y-3">
+                <textarea
+                  required
+                  value={appealExplanation}
+                  onChange={(e) => setAppealExplanation(e.target.value)}
+                  placeholder="Provide details about your planned event, cleanup history, or general context (minimum 15 characters)..."
+                  rows={3}
+                  className="w-full bg-slate-950/40 border border-slate-850 focus:border-amber-500/80 rounded-xl p-3 text-xs text-slate-100 focus:outline-none placeholder-slate-700 resize-none"
+                />
+                
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] text-slate-600 font-mono">
+                    {appealExplanation.length} chars (min 15)
+                  </span>
+                  
+                  <button
+                    type="submit"
+                    disabled={appealing || appealExplanation.trim().length < 15}
+                    className="bg-amber-500 hover:bg-amber-450 disabled:opacity-50 text-slate-950 font-black text-[11px] px-4 py-2 rounded-xl transition-all flex items-center gap-1.5 uppercase tracking-wider"
+                  >
+                    {appealing ? (
+                      <Loader2 className="animate-spin text-slate-950" size={13} />
+                    ) : (
+                      "Submit Appeal"
+                    )}
+                  </button>
+                </div>
+              </form>
+            )}
           </div>
 
           <Link href="/events" className="mt-8 inline-flex items-center gap-1.5 text-xs text-amber-500 hover:text-amber-400 font-black uppercase tracking-wider transition-colors">

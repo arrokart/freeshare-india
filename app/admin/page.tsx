@@ -327,7 +327,7 @@ export default function AdminPage() {
   // Execute moderation actions
   const handleModerationAction = async (
     reportId: string | undefined,
-    action: "ban_user" | "unban_user" | "remove_listing" | "approve_appeal" | "reject_appeal" | "dismiss" | "adjust_trust" | "grant_premium" | "revoke_premium",
+    action: "ban_user" | "unban_user" | "remove_listing" | "approve_appeal" | "reject_appeal" | "dismiss" | "adjust_trust" | "grant_premium" | "revoke_premium" | "approve_event_appeal" | "reject_event_appeal",
     targetUserId?: string,
     targetListingId?: string,
     extraParams: any = {}
@@ -734,6 +734,7 @@ export default function AdminPage() {
               ) : (
                 paginatedReports.map((rep) => {
                   const isAppeal = rep.reason === "other" && rep.description?.startsWith("[APPEAL]");
+                  const isEventAppeal = rep.reason === "other" && rep.description?.startsWith("[EVENT_APPEAL]");
                   const reportsOnListing = rep.reported_listing_id ? getListingReportCount(rep.reported_listing_id) : 0;
                   const reportsOnUser = rep.reported_user_id ? getUserReportCount(rep.reported_user_id) : 0;
 
@@ -744,11 +745,11 @@ export default function AdminPage() {
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-900/60 pb-3">
                         <div className="flex flex-wrap gap-2 items-center">
                           <span className={`inline-flex items-center gap-1 text-[9px] font-extrabold uppercase tracking-widest px-2.5 py-0.5 rounded ${
-                            isAppeal ? "bg-amber-500/10 text-amber-450 border border-amber-500/20" :
+                            (isAppeal || isEventAppeal) ? "bg-amber-500/10 text-amber-440 border border-amber-500/20" :
                             "bg-red-500/10 text-red-400 border border-red-500/20"
                           }`}>
                             <Flag size={10} />
-                            {isAppeal ? "appeal" : rep.reason}
+                            {isEventAppeal ? "event appeal" : isAppeal ? "appeal" : rep.reason}
                           </span>
                           <span className="text-xs text-slate-500">
                             Reported by <span className="font-bold text-slate-400">{rep.reporter?.name || "Anonymous"}</span>
@@ -810,10 +811,32 @@ export default function AdminPage() {
                         )}
                       </div>
 
-                      {/* Resolution controls */}
-                      {rep.status === "pending" && (
+                       {rep.status === "pending" && (
                         <div className="flex flex-wrap gap-2 pt-2 border-t border-slate-900/80">
-                          {isAppeal ? (
+                          {isEventAppeal ? (
+                            <>
+                              {rep.reported_user && (
+                                <>
+                                  <button
+                                    disabled={actionLoadingId !== null}
+                                    onClick={() => handleModerationAction(rep.id, "approve_event_appeal", rep.reported_user.id)}
+                                    className="text-[11px] font-bold bg-teal-500 hover:bg-teal-400 text-slate-950 px-4 py-2 rounded-xl flex items-center gap-1.5 transition-colors shadow-lg shadow-teal-500/5"
+                                  >
+                                    <Check size={13} strokeWidth={3} />
+                                    Restore Event Privileges
+                                  </button>
+                                  <button
+                                    disabled={actionLoadingId !== null}
+                                    onClick={() => handleModerationAction(rep.id, "reject_event_appeal", rep.reported_user.id)}
+                                    className="text-[11px] font-bold bg-slate-900 border border-slate-850 hover:bg-red-500/10 text-red-400 px-3.5 py-2 rounded-xl flex items-center gap-1.5 transition-colors"
+                                  >
+                                    <X size={13} />
+                                    Reject Appeal
+                                  </button>
+                                </>
+                              )}
+                            </>
+                          ) : isAppeal ? (
                             <>
                               {rep.reported_listing && (
                                 <>

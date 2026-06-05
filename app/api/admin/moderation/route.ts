@@ -155,13 +155,48 @@ export async function POST(request: Request) {
       if (error) throw error;
     }
 
+    if (action === "approve_event_appeal" && targetUserId) {
+      // Fetch target user's current trust score
+      const { data: userProfile } = await supabase
+        .from("users")
+        .select("trust_score")
+        .eq("id", targetUserId)
+        .single();
+      
+      const currentTrust = (userProfile && userProfile.trust_score !== null) ? Number(userProfile.trust_score) : 5.0;
+      const nextTrust = Math.max(currentTrust, 3.50);
+
+      // Restore privilege and unblock trust threshold if low
+      const { error } = await supabase
+        .from("users")
+        .update({
+          can_create_events: true,
+          trust_score: nextTrust
+        })
+        .eq("id", targetUserId);
+      if (error) throw error;
+    }
+
+    if (action === "reject_event_appeal" && targetUserId) {
+      // Keep suspended, maybe log note
+      const { error } = await supabase
+        .from("users")
+        .update({
+          bio: JSON.stringify({ event_appeal_notes: "Appeal rejected by administrator." })
+        })
+        .eq("id", targetUserId);
+      // Fail silently if bio parsing is complex
+    }
+
     // 2. Mark report status as resolved if reportId is provided
     if (reportId) {
       let finalStatus = "action_taken";
       if (action === "dismiss") {
         finalStatus = "dismissed";
-      } else if (action === "approve_appeal") {
+      } else if (action === "approve_appeal" || action === "approve_event_appeal") {
         finalStatus = "resolved";
+      } else if (action === "reject_appeal" || action === "reject_event_appeal") {
+        finalStatus = "action_taken";
       }
 
       const { error: reportUpdateErr } = await supabase
