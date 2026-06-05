@@ -243,12 +243,12 @@ export default function UserProfilePage() {
         if (profileErr) throw profileErr;
         setProfile(userProfile);
 
-        // 2. Fetch active listings by this user
+        // 2. Fetch listings by this user
         const { data: userListings } = await supabase
           .from("listings")
           .select("*")
           .eq("donor_id", id)
-          .eq("status", "available")
+          .in("status", ["available", "completed"])
           .order("created_at", { ascending: false });
 
         setListings(userListings || []);
@@ -608,7 +608,7 @@ export default function UserProfilePage() {
             }`}
           >
             <Gift size={16} />
-            Available Listings ({listings.length})
+            Listings ({listings.length})
           </button>
 
           <button
@@ -643,7 +643,7 @@ export default function UserProfilePage() {
             {listings.length === 0 ? (
               <div className="text-center py-16 border border-dashed border-slate-900 rounded-3xl">
                 <Gift className="mx-auto text-slate-700 mb-3" size={32} />
-                <p className="text-sm text-slate-500">No active listings available from this donor.</p>
+                <p className="text-sm text-slate-500">No listings available from this donor.</p>
               </div>
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-3.5 sm:gap-6">
@@ -655,9 +655,17 @@ export default function UserProfilePage() {
                   >
                     <div className="aspect-square relative overflow-hidden bg-slate-950">
                       <img src={item.images?.[0]} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                      <span className="absolute top-2 left-2 text-[8px] font-extrabold uppercase px-2 py-0.5 rounded bg-black/60 text-teal-400">
-                        {item.condition}
-                      </span>
+                      {item.status === "completed" ? (
+                        <div className="absolute inset-0 bg-slate-950/65 backdrop-blur-[1px] flex items-center justify-center z-10">
+                          <span className="text-[9px] sm:text-xs font-black uppercase tracking-wider px-2.5 py-1 rounded-xl border bg-emerald-500/20 text-emerald-450 border-emerald-500/30">
+                            🌱 Donated
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="absolute top-2 left-2 text-[8px] font-extrabold uppercase px-2 py-0.5 rounded bg-black/60 text-teal-400">
+                          {item.condition}
+                        </span>
+                      )}
                     </div>
                     <div className="p-3 sm:p-4 space-y-1">
                       <h4 className="font-bold text-xs text-slate-100 group-hover:text-teal-400 transition-colors line-clamp-1">{item.title}</h4>
