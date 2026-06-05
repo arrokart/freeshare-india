@@ -660,9 +660,25 @@ export default function ListingDetailClient({ initialListing }: { initialListing
           body: isSkill
             ? `${receiverName} requested your skill: "${listing.title}"`
             : `${receiverName} requested to claim your item: "${listing.title}"`,
-          link: isSkill && newClaim ? `/chat/${newClaim.id}` : "/dashboard",
+          link: newClaim ? `/chat/${newClaim.id}` : "/dashboard",
         }),
       });
+
+      if (newClaim) {
+        try {
+          await fetch("/api/messages", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              claim_id: newClaim.id,
+              sender_id: userId,
+              content: claimMessage,
+            }),
+          });
+        } catch (msgErr) {
+          console.error("Failed to post initial claim message:", msgErr);
+        }
+      }
 
       if (!isSkill) {
         // 2. Increment monthly claim count in user metadata for items
@@ -683,15 +699,14 @@ export default function ListingDetailClient({ initialListing }: { initialListing
         if (newClaim) {
           setActiveClaimId(newClaim.id);
         }
-        setClaimSuccess("Claim request submitted successfully! Donor has been notified.");
-      } else {
-        setClaimSuccess("Session request submitted successfully! Redirecting to chat...");
-        setTimeout(() => {
-          if (newClaim) {
-            router.push(`/chat/${newClaim.id}`);
-          }
-        }, 1500);
       }
+
+      setClaimSuccess("Request submitted successfully! Redirecting to chat...");
+      setTimeout(() => {
+        if (newClaim) {
+          router.push(`/chat/${newClaim.id}`);
+        }
+      }, 1500);
     } catch (err: any) {
       setClaimError(err.message || "Failed to submit request.");
     } finally {

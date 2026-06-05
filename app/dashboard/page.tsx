@@ -39,6 +39,7 @@ export default function DashboardPage() {
 
   // Donation Manager Workspace States
   const [selectedListingId, setSelectedListingId] = useState<string | null>(null);
+  const [selectedClaimId, setSelectedClaimId] = useState<string | null>(null);
   const [shortlistedClaimIds, setShortlistedClaimIds] = useState<string[]>([]);
   const [claimsSortKey, setClaimsSortKey] = useState<"newest" | "oldest" | "trust" | "first-time">("newest");
   const [requesterStats, setRequesterStats] = useState<{ [receiverId: string]: { totalCompleted: number; completedFromMe: number } }>({});
@@ -225,7 +226,8 @@ export default function DashboardPage() {
           .from("claims")
           .select(`
             *,
-             receiver:receiver_id(id, name, trust_score, avatar_url, is_ngo)
+            listing:listing_id(id, title, images, status, city, area),
+            receiver:receiver_id(id, name, trust_score, avatar_url, is_ngo)
           `)
           .in("listing_id", listingIds)
           .order("created_at", { ascending: false });
@@ -241,6 +243,14 @@ export default function DashboardPage() {
         });
 
         setClaimsReceived(claimsMap);
+
+        const allReceivedClaims = claimsList;
+        if (allReceivedClaims.length > 0) {
+          setSelectedClaimId((prev) => {
+            if (prev && allReceivedClaims.some((c) => c.id === prev)) return prev;
+            return allReceivedClaims[0].id;
+          });
+        }
 
         // Fetch completed claims stats for all unique requesters
         const receiverIds = Array.from(new Set(claimsList.map((c) => c.receiver_id)));
@@ -761,7 +771,7 @@ export default function DashboardPage() {
                           {lastMsg ? new Date(lastMsg.created_at).toLocaleDateString() : new Date(inq.created_at).toLocaleDateString()}
                         </span>
                       </div>
-                    </Link>
+</Link>
                   );
                 })}
               </div>
@@ -769,407 +779,247 @@ export default function DashboardPage() {
           </div>
         ) : activeTab === "donations" ? (
           /* Donations Splitscreen Workspace */
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-            {myListings.length === 0 ? (
-              <div className="lg:col-span-12 text-center py-16 border border-dashed border-slate-900 rounded-3xl bg-slate-900/10">
-                <Gift className="mx-auto text-slate-700 mb-3" size={32} />
-                <p className="text-sm font-bold text-slate-400">No items listed yet</p>
-                <Link href="/donate" className="text-xs text-teal-400 hover:underline mt-1 inline-block">Donate an item now</Link>
-              </div>
-            ) : (
-              <>
-                {/* Left sidebar: Listing selections */}
-                <div className="lg:col-span-4 space-y-3 bg-slate-900/15 border border-slate-900/60 p-4 rounded-3xl max-h-[600px] overflow-y-auto">
-                  <h3 className="text-[10px] font-extrabold text-slate-500 uppercase tracking-widest px-1 pb-1">
-                    My Listings ({myListings.length})
-                  </h3>
-                  <div className="space-y-2">
-                    {myListings.map((item) => {
-                      const allClaims = claimsReceived[item.id] || [];
-                      const pendingCount = allClaims.filter((c) => c.status === "pending").length;
-                      const isSelected = selectedListingId === item.id;
+          (() => {
+            const allReceivedClaims = myListings.flatMap((item) => claimsReceived[item.id] || []);
 
-                      return (
-                        <div
-                          key={item.id}
-                          onClick={() => setSelectedListingId(item.id)}
-                          className={`flex items-center gap-3 p-3 rounded-2xl cursor-pointer transition-all border ${
-                            isSelected
-                              ? "bg-slate-900/80 border-teal-500/30 shadow-md shadow-teal-500/5 text-slate-100"
-                              : "bg-slate-950/20 border-transparent hover:bg-slate-900/30 text-slate-450 hover:text-slate-200"
-                          }`}
-                        >
-                          <div className="w-11 h-11 rounded-xl overflow-hidden bg-slate-950 border border-slate-800/80 shrink-0 flex items-center justify-center">
-                            {item.images?.[0] && !brokenImages[item.id] ? (
-                              <img
-                                src={item.images[0]}
-                                alt="Listing thumbnail"
-                                className="w-full h-full object-cover"
-                                onError={() => setBrokenImages(prev => ({ ...prev, [item.id]: true }))}
-                              />
-                            ) : (
-                              <ImageIcon className="text-slate-500" size={16} />
-                            )}
-                          </div>
-                          <div className="flex-1 min-w-0 space-y-1">
-                            <h4 className="font-bold text-xs truncate">{item.title}</h4>
-                            <div className="flex items-center justify-between">
-                              <span className={`text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded ${
-                                item.status === "available" ? "bg-teal-500/10 text-teal-400" :
-                                item.status === "reserved" ? "bg-amber-500/10 text-amber-400" :
-                                "bg-slate-850 text-slate-500"
-                              }`}>
-                                {item.status}
-                              </span>
-                              {pendingCount > 0 && (
-                                <span className="bg-teal-500 text-slate-950 text-[9px] font-extrabold px-1.5 py-0.5 rounded-full shrink-0">
-                                  {pendingCount} new
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
+            return (
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                {allReceivedClaims.length === 0 ? (
+                  <div className="lg:col-span-12 text-center py-16 border border-dashed border-slate-900 rounded-3xl bg-slate-900/10">
+                    <Gift className="mx-auto text-slate-700 mb-3" size={32} />
+                    <p className="text-sm font-bold text-slate-400">No requests received yet</p>
+                    <p className="text-xs text-slate-500 mt-1">When someone claims your items or requests sessions, they will show up here as conversations.</p>
                   </div>
-                </div>
+                ) : (
+                  <>
+                    {/* Left sidebar: Conversational Inbox */}
+                    <div className="lg:col-span-4 space-y-3 bg-slate-900/15 border border-slate-900/60 p-4 rounded-3xl max-h-[600px] overflow-y-auto">
+                      <h3 className="text-[10px] font-extrabold text-slate-500 uppercase tracking-widest px-1 pb-1">
+                        Inbox Conversations ({allReceivedClaims.length})
+                      </h3>
+                      <div className="space-y-2">
+                        {allReceivedClaims.map((claim) => {
+                          const isSelected = selectedClaimId === claim.id;
 
-                {/* Right side: Detailed Workspace for selected listing */}
-                <div className="lg:col-span-8 space-y-6">
-                  {(() => {
-                    const selectedItem = myListings.find((l) => l.id === selectedListingId);
-                    if (!selectedItem) {
-                      return (
-                        <div className="text-center py-16 bg-slate-900/10 border border-slate-900 rounded-3xl text-slate-500 text-xs">
-                          Select a listing from the sidebar to manage claims.
-                        </div>
-                      );
-                    }
-
-                    const allClaims = claimsReceived[selectedItem.id] || [];
-                    const pendingClaims = allClaims.filter((c) => c.status === "pending");
-                    const historicalClaims = allClaims.filter((c) => ["declined", "cancelled", "expired"].includes(c.status));
-                    const activeClaim = allClaims.find((c) => c.id === selectedItem.active_claim_id);
-
-                    // Sorting Logic
-                    const sortedPendingClaims = [...pendingClaims].sort((a, b) => {
-                      // Shortlisted items pinned to top
-                      const isAShort = shortlistedClaimIds.includes(a.id);
-                      const isBShort = shortlistedClaimIds.includes(b.id);
-                      if (isAShort && !isBShort) return -1;
-                      if (!isAShort && isBShort) return 1;
-
-                      switch (claimsSortKey) {
-                        case "oldest":
-                          return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
-                        case "trust":
-                          return (b.receiver?.trust_score || 5.0) - (a.receiver?.trust_score || 5.0);
-                        case "first-time":
-                          const aClaims = requesterStats[a.receiver_id]?.totalCompleted || 0;
-                          const bClaims = requesterStats[b.receiver_id]?.totalCompleted || 0;
-                          return aClaims - bClaims;
-                        case "newest":
-                        default:
-                          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-                      }
-                    });
-
-                    return (
-                      <div className="bg-slate-900/30 border border-slate-900 rounded-3xl p-6 space-y-6">
-                        {/* Selected Item header detail */}
-                        <div className="flex gap-4 items-center border-b border-slate-900/80 pb-4">
-                          <div className="w-14 h-14 rounded-xl overflow-hidden bg-slate-950 border border-slate-800 shrink-0 flex items-center justify-center">
-                            {selectedItem.images?.[0] && !brokenImages[selectedItem.id + "_selected"] ? (
-                              <img
-                                src={selectedItem.images[0]}
-                                alt="Listing thumbnail"
-                                className="w-full h-full object-cover"
-                                onError={() => setBrokenImages(prev => ({ ...prev, [selectedItem.id + "_selected"]: true }))}
-                              />
-                            ) : (
-                              <ImageIcon className="text-slate-500" size={18} />
-                            )}
-                          </div>
-                          <div className="space-y-1">
-                            <h3 className="font-extrabold text-base text-slate-100">{selectedItem.title}</h3>
-                            <p className="text-xs text-slate-400">{selectedItem.area}, {selectedItem.city}</p>
-                            <span className={`inline-block text-[9px] font-extrabold uppercase px-2 py-0.5 rounded ${
-                              selectedItem.status === "available" ? "bg-teal-500/10 text-teal-400" :
-                              selectedItem.status === "reserved" ? "bg-amber-500/10 text-amber-400" :
-                              "bg-slate-800 text-slate-500"
-                            }`}>
-                              {selectedItem.status}
-                            </span>
-                          </div>
-                        </div>
-
-                        {/* WARNING CARD FOR FLAGGED LISTING */}
-                        {selectedItem.is_flagged && !selectedItem.admin_removed && (
-                          <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 space-y-3">
-                            <div className="flex items-start gap-3">
-                              <AlertCircle className="text-amber-400 shrink-0 mt-0.5" size={16} />
-                              <div className="flex-1 space-y-1">
-                                <h4 className="text-xs font-bold text-amber-450">Listing Flagged & Warning Triggered</h4>
-                                <p className="text-[11px] text-slate-350 leading-relaxed">
-                                  Your listing has been flagged by users for guidelines/spam/commercial reselling. Please review and edit your listing details within 24 hours to comply with community standards. Edits automatically resolve the warning and clear the flag.
-                                </p>
+                          return (
+                            <div
+                              key={claim.id}
+                              onClick={() => {
+                                setSelectedClaimId(claim.id);
+                                setSelectedListingId(claim.listing_id);
+                              }}
+                              className={`flex items-start gap-3 p-3 rounded-2xl cursor-pointer transition-all border ${
+                                isSelected
+                                  ? "bg-slate-900/80 border-teal-500/30 shadow-md shadow-teal-500/5 text-slate-100"
+                                  : "bg-slate-950/20 border-transparent hover:bg-slate-900/30 text-slate-450 hover:text-slate-200"
+                              }`}
+                            >
+                              {/* Receiver Avatar Initials */}
+                              <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-teal-500/10 to-emerald-500/10 border border-teal-500/20 flex items-center justify-center text-teal-500 font-extrabold text-sm shrink-0 shadow-inner">
+                                {claim.receiver?.name ? claim.receiver.name[0].toUpperCase() : "U"}
                               </div>
-                            </div>
-                            <div className="flex gap-2">
-                              <Link
-                                href={`/listing/${selectedItem.id}?edit=true`}
-                                className="text-[11px] font-extrabold bg-amber-500 hover:bg-amber-400 text-slate-950 px-3.5 py-1.5 rounded-xl transition-all inline-flex items-center gap-1.5"
-                              >
-                                Edit & Resolve Listing
-                              </Link>
-                            </div>
-                          </div>
-                        )}
-
-                        {/* WARNING CARD FOR SUSPENDED/ADMIN REMOVED LISTING */}
-                        {selectedItem.admin_removed && (
-                          <div className="p-4 rounded-2xl bg-red-500/10 border border-red-500/20 space-y-3">
-                            <div className="flex items-start gap-3">
-                              <AlertCircle className="text-red-400 shrink-0 mt-0.5" size={16} />
-                              <div className="flex-1 space-y-1">
-                                <h4 className="text-xs font-bold text-red-450">⛔ Listing Suspended & Hidden</h4>
-                                <p className="text-[11px] text-slate-350 leading-relaxed">
-                                  This listing was reported by the community and has been hidden from the public feed.
-                                  {pendingAppeals.includes(selectedItem.id) 
-                                    ? " Your appeal has been submitted and is currently under review by administrators." 
-                                    : " If you believe this is a mistake, you can submit an appeal explaining why the listing complies with community guidelines."}
-                                </p>
-                              </div>
-                            </div>
-                            <div className="flex gap-2">
-                              {pendingAppeals.includes(selectedItem.id) ? (
-                                <span className="text-[11px] font-bold text-amber-400 bg-amber-500/10 px-3 py-1.5 rounded-xl border border-amber-500/25 flex items-center gap-1.5">
-                                  ⏳ Appeal Under Review
-                                </span>
-                              ) : (
-                                <button
-                                  onClick={() => {
-                                    setAppealListingId(selectedItem.id);
-                                    setAppealExplanation("");
-                                    setAppealMessage("");
-                                    setAppealError("");
-                                    setShowAppealModal(true);
-                                  }}
-                                  className="text-[11px] font-extrabold bg-red-500 hover:bg-red-450 text-slate-100 px-3.5 py-1.5 rounded-xl transition-all"
-                                >
-                                  Appeal Relisting
-                                </button>
-                              )}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* RESERVED STATUS ACTION CARD */}
-                        {selectedItem.status === "reserved" && activeClaim && (
-                          <div className="p-4 rounded-2xl bg-slate-950/40 border border-slate-900 space-y-4">
-                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-                              <div className="space-y-1">
-                                <span className="text-[10px] font-extrabold text-slate-500 uppercase tracking-widest block">Reserved For</span>
-                                <Link href={`/profile/${activeClaim.receiver?.id}`} className="text-sm font-bold text-slate-200 hover:text-teal-400 hover:underline transition-colors block">
-                                  {activeClaim.receiver?.name}
-                                </Link>
-                                {activeClaim.expires_at && (
-                                  <span className="text-[9px] text-slate-500 flex items-center gap-1">
-                                    <Calendar size={11} />
-                                    Expires: {new Date(activeClaim.expires_at).toLocaleString()}
+                              <div className="flex-1 min-w-0 space-y-0.5">
+                                <div className="flex items-center justify-between">
+                                  <h4 className="font-bold text-xs truncate text-slate-200">
+                                    {claim.receiver?.name || "A neighbor"}
+                                  </h4>
+                                  <span className={`text-[8px] font-extrabold uppercase px-1.5 py-0.5 rounded shrink-0 ${
+                                    claim.status === "pending" ? "bg-teal-500/10 text-teal-400" :
+                                    claim.status === "accepted" ? "bg-amber-500/10 text-amber-400" :
+                                    claim.status === "completed" ? "bg-emerald-500/10 text-emerald-400" :
+                                    "bg-slate-800 text-slate-500"
+                                  }`}>
+                                    {claim.status === "accepted" ? "reserved" : claim.status}
                                   </span>
+                                </div>
+                                <p className="text-[10px] text-slate-350 truncate leading-normal">
+                                  {claim.listing?.title || "Item"}
+                                </p>
+                                <p className="text-[9px] text-slate-500 truncate italic leading-normal">
+                                  "{claim.message}"
+                                </p>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Right side: Detailed Workspace for selected claim */}
+                    <div className="lg:col-span-8 space-y-6">
+                      {(() => {
+                        const selectedClaim = allReceivedClaims.find((c) => c.id === selectedClaimId);
+                        if (!selectedClaim) {
+                          return (
+                            <div className="text-center py-16 bg-slate-900/10 border border-slate-900 rounded-3xl text-slate-500 text-xs">
+                              Select a conversation from the inbox to manage the claim.
+                            </div>
+                          );
+                        }
+
+                        const stats = requesterStats[selectedClaim.receiver_id] || { totalCompleted: 0, completedFromMe: 0 };
+                        const isShortlisted = shortlistedClaimIds.includes(selectedClaim.id);
+
+                        return (
+                          <div className="bg-slate-900/30 border border-slate-900 rounded-3xl p-6 space-y-6">
+                            {/* Listing summary header */}
+                            <div className="flex gap-4 items-center border-b border-slate-900/80 pb-4">
+                              <div className="w-14 h-14 rounded-xl overflow-hidden bg-slate-950 border border-slate-800 shrink-0 flex items-center justify-center">
+                                {selectedClaim.listing?.images?.[0] ? (
+                                  <img
+                                    src={selectedClaim.listing.images[0]}
+                                    alt="Listing thumbnail"
+                                    className="w-full h-full object-cover"
+                                  />
+                                ) : (
+                                  <ImageIcon className="text-slate-500" size={18} />
                                 )}
                               </div>
-                              
-                              <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+                              <div className="space-y-1">
+                                <span className="text-[9px] font-extrabold text-slate-550 uppercase tracking-widest block">Requested Item</span>
+                                <h3 className="font-extrabold text-base text-slate-100">{selectedClaim.listing?.title}</h3>
+                                <p className="text-xs text-slate-400">{selectedClaim.listing?.area}, {selectedClaim.listing?.city}</p>
+                              </div>
+                            </div>
+
+                            {/* Requester Profile card */}
+                            <div className="p-4 rounded-2xl bg-slate-950/40 border border-slate-900 space-y-4">
+                              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-11 h-11 rounded-full bg-gradient-to-tr from-teal-500/10 to-emerald-500/10 border border-teal-500/20 flex items-center justify-center text-teal-500 font-extrabold text-base shrink-0 shadow-inner">
+                                    {selectedClaim.receiver?.name ? selectedClaim.receiver.name[0].toUpperCase() : "U"}
+                                  </div>
+                                  <div className="space-y-0.5">
+                                    <span className="text-[9px] font-extrabold text-slate-500 uppercase tracking-widest block">Requester Profile</span>
+                                    <Link href={`/profile/${selectedClaim.receiver_id}`} className="text-sm font-bold text-slate-200 hover:text-teal-400 hover:underline transition-colors block">
+                                      {selectedClaim.receiver?.name}
+                                    </Link>
+                                    <div className="flex flex-wrap items-center gap-2 pt-0.5">
+                                      <span className="text-[9px] text-slate-450 font-bold bg-slate-900 px-1.5 py-0.5 rounded border border-slate-800/80 flex items-center gap-0.5">
+                                        ★ {selectedClaim.receiver?.trust_score || "5.0"}
+                                      </span>
+                                      {selectedClaim.receiver?.is_ngo && (
+                                        <span className="text-[9px] font-extrabold bg-teal-500/10 text-teal-400 border border-teal-500/20 px-1.5 py-0.5 rounded uppercase">
+                                          ♥ NGO
+                                        </span>
+                                      )}
+                                      <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" title="Total successful claims on the platform">
+                                        🎁 {stats.totalCompleted} claimed
+                                      </span>
+                                      {stats.completedFromMe > 0 && (
+                                        <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-teal-500/10 text-teal-400 border border-teal-500/20">
+                                          🤝 Got {stats.completedFromMe} from you
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <div className="flex gap-2 w-full sm:w-auto">
+                                  <button
+                                    onClick={() => {
+                                      setShortlistedClaimIds((prev) =>
+                                        isShortlisted ? prev.filter((id) => id !== selectedClaim.id) : [...prev, selectedClaim.id]
+                                      );
+                                    }}
+                                    className={`p-2 rounded-xl transition-all border ${
+                                      isShortlisted
+                                        ? "bg-amber-500/15 border-amber-500/30 text-amber-400"
+                                        : "bg-slate-900 border-slate-800 text-slate-500 hover:text-slate-350 hover:bg-slate-850"
+                                    }`}
+                                    title={isShortlisted ? "Remove Shortlist" : "Shortlist Requester"}
+                                  >
+                                    <Star size={14} fill={isShortlisted ? "currentColor" : "none"} />
+                                  </button>
+                                </div>
+                              </div>
+
+                              <div className="pt-3 border-t border-slate-900/60 space-y-1.5">
+                                <span className="text-[9px] font-extrabold text-slate-500 uppercase tracking-widest block">First Request Message</span>
+                                <div className="p-3.5 bg-slate-900/40 border border-slate-900 rounded-xl text-xs text-slate-300 italic leading-relaxed">
+                                  "{selectedClaim.message}"
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Claim Decision / Actions card */}
+                            <div className="p-5 rounded-2xl bg-slate-950/20 border border-slate-900 space-y-4">
+                              <h4 className="text-xs font-black uppercase tracking-wider text-slate-350">Claim Status & Actions</h4>
+                              <div className="flex items-center gap-3">
+                                <span className="text-xs text-slate-400 font-medium">Current Stage:</span>
+                                <span className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded border ${
+                                  selectedClaim.status === "pending" ? "bg-teal-500/15 text-teal-455 border-teal-500/20" :
+                                  selectedClaim.status === "accepted" ? "bg-amber-500/15 text-amber-455 border-amber-500/20" :
+                                  selectedClaim.status === "completed" ? "bg-emerald-500/15 text-emerald-450 border-emerald-500/20" :
+                                  "bg-slate-900 text-slate-500 border-slate-800"
+                                }`}>
+                                  {selectedClaim.status === "accepted" ? "reserved" : selectedClaim.status}
+                                </span>
+                              </div>
+
+                              <div className="flex flex-col sm:flex-row gap-3 pt-2">
                                 <Link
-                                  href={`/chat/${activeClaim.id}`}
-                                  className="flex-1 sm:flex-none justify-center text-xs font-bold bg-slate-900 border border-slate-800 text-teal-400 hover:bg-slate-850 py-2 px-3 rounded-xl flex items-center gap-1.5 transition-colors"
+                                  href={`/chat/${selectedClaim.id}`}
+                                  className="flex-1 justify-center text-xs font-bold bg-slate-900 border border-slate-800 text-teal-400 hover:bg-slate-850 py-3 px-4 rounded-xl flex items-center gap-1.5 transition-all active:scale-[0.98]"
                                 >
                                   <MessageSquare size={14} />
-                                  Chat
+                                  Open Chat & Connect
                                 </Link>
-                                <button
-                                  disabled={actionLoadingId !== null}
-                                  onClick={() => handleClaimAction(activeClaim.id, "completed", {
-                                    userId: activeClaim.receiver?.id,
-                                    userName: activeClaim.receiver?.name,
-                                    role: "donor_reviewing_receiver"
-                                  })}
-                                  className="flex-1 sm:flex-none justify-center text-xs font-bold bg-teal-500 text-slate-950 py-2 px-3 rounded-xl flex items-center gap-1 hover:bg-teal-400 transition-colors"
-                                >
-                                  <Check size={14} strokeWidth={3} />
-                                  Handed-Over
-                                </button>
-                                <button
-                                  disabled={actionLoadingId !== null}
-                                  onClick={() => handleClaimAction(activeClaim.id, "cancelled")}
-                                  className="flex-1 sm:flex-none justify-center text-xs font-bold bg-slate-900 border border-slate-800 text-red-400 py-2 px-3 rounded-xl flex items-center gap-1 hover:bg-red-500/10 transition-colors"
-                                >
-                                  <X size={14} />
-                                  No-Show
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        )}
 
-                        {/* AVAILABLE / PENDING REQUESTS PANEL */}
-                        {selectedItem.status === "available" && (
-                          <div className="space-y-4">
-                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-900/60 pb-3">
-                              <h4 className="text-xs font-bold text-slate-350 uppercase tracking-wider flex items-center gap-1.5">
-                                Pending Requests ({pendingClaims.length})
-                              </h4>
-                              
-                              {pendingClaims.length > 0 && (
-                                <div className="flex items-center gap-2 text-xs">
-                                  <span className="text-slate-500 flex items-center gap-1 text-[10px]"><ArrowUpDown size={12} /> Sort:</span>
-                                  <select
-                                    value={claimsSortKey}
-                                    onChange={(e: any) => setClaimsSortKey(e.target.value)}
-                                    className="bg-slate-950 border border-slate-800 rounded-lg px-2 py-1 text-xs text-slate-350 focus:outline-none focus:border-teal-500/50"
-                                  >
-                                    <option value="newest">Newest</option>
-                                    <option value="oldest">Oldest</option>
-                                    <option value="trust">Trust Score</option>
-                                    <option value="first-time">First-time Requesters</option>
-                                  </select>
-                                </div>
-                              )}
-                            </div>
-
-                            {pendingClaims.length === 0 ? (
-                              <p className="text-xs text-slate-500 text-center py-8">Waiting for claims. Interested users will show up here.</p>
-                            ) : (
-                              <div className="space-y-3">
-                                {sortedPendingClaims.map((claim) => {
-                                  const stats = requesterStats[claim.receiver_id] || { totalCompleted: 0, completedFromMe: 0 };
-                                  const isShortlisted = shortlistedClaimIds.includes(claim.id);
-
-                                  return (
-                                    <div
-                                      key={claim.id}
-                                      className={`p-4 rounded-2xl bg-slate-950/40 border transition-all space-y-3 ${
-                                        isShortlisted ? "border-amber-500/30 bg-amber-500/[0.01]" : "border-slate-900"
-                                      }`}
+                                {selectedClaim.status === "pending" && (
+                                  <>
+                                    <button
+                                      disabled={actionLoadingId !== null}
+                                      onClick={() => handleClaimAction(selectedClaim.id, "accepted")}
+                                      className="flex-1 justify-center text-xs font-bold bg-gradient-to-r from-teal-500 to-emerald-500 text-slate-950 py-3 px-4 rounded-xl flex items-center gap-1 hover:from-teal-400 hover:to-emerald-400 transition-all active:scale-[0.98] disabled:opacity-50"
                                     >
-                                      <div className="flex justify-between items-center">
-                                        <div className="flex flex-wrap items-center gap-2">
-                                          {/* Shortlist star */}
-                                          <button
-                                            onClick={() => {
-                                              setShortlistedClaimIds((prev) =>
-                                                isShortlisted ? prev.filter((id) => id !== claim.id) : [...prev, claim.id]
-                                              );
-                                            }}
-                                            className={`p-1 rounded-full transition-colors ${
-                                              isShortlisted ? "text-amber-400 hover:text-amber-500" : "text-slate-650 hover:text-slate-400"
-                                            }`}
-                                            title={isShortlisted ? "Remove Shortlist" : "Shortlist Requester"}
-                                          >
-                                            <Star size={14} fill={isShortlisted ? "currentColor" : "none"} />
-                                          </button>
+                                      Accept & Reserve
+                                    </button>
+                                    <button
+                                      disabled={actionLoadingId !== null}
+                                      onClick={() => handleClaimAction(selectedClaim.id, "declined")}
+                                      className="flex-1 justify-center text-xs font-bold bg-slate-900 border border-slate-800 text-slate-400 py-3 px-4 rounded-xl flex items-center gap-1 hover:text-red-400 hover:bg-red-500/10 hover:border-red-900/20 transition-all active:scale-[0.98] disabled:opacity-50"
+                                    >
+                                      Decline
+                                    </button>
+                                  </>
+                                )}
 
-                                          <Link href={`/profile/${claim.receiver?.id}`} className="text-xs font-bold text-slate-200 hover:text-teal-400 hover:underline transition-colors inline-flex items-center gap-1.5">
-                                            {claim.receiver?.name}
-                                            {claim.receiver?.is_ngo && (
-                                              <span className="inline-flex items-center gap-0.5 text-[9px] font-extrabold bg-teal-500/10 text-teal-400 border border-teal-500/20 px-1.5 py-0.5 rounded uppercase" title="Verified NGO / Charity">
-                                                ♥ Verified NGO
-                                              </span>
-                                            )}
-                                          </Link>
-
-                                          {/* Trust Score */}
-                                          <span className="text-[9px] text-slate-400 font-bold bg-slate-900 px-1.5 py-0.5 rounded border border-slate-800 flex items-center gap-0.5">
-                                            ★ {claim.receiver?.trust_score || "5.0"}
-                                          </span>
-
-                                          {/* Requester stats badges */}
-                                          <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" title="Total successful claims on the platform">
-                                            🎁 {stats.totalCompleted} claimed
-                                          </span>
-
-                                          {stats.completedFromMe > 0 && (
-                                            <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-teal-500/10 text-teal-400 border border-teal-500/20" title="Previous successful claims from you">
-                                              🤝 Got {stats.completedFromMe} from you
-                                            </span>
-                                          )}
-                                        </div>
-
-                                        <div className="flex gap-1.5">
-                                          <button
-                                            disabled={actionLoadingId !== null}
-                                            onClick={() => handleClaimAction(claim.id, "accepted")}
-                                            className="p-1.5 rounded-lg bg-teal-500/10 text-teal-400 hover:bg-teal-500/20 transition-all cursor-pointer"
-                                            title="Accept Request"
-                                          >
-                                            <Check size={14} />
-                                          </button>
-                                          <button
-                                            disabled={actionLoadingId !== null}
-                                            onClick={() => handleClaimAction(claim.id, "declined")}
-                                            className="p-1.5 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-all cursor-pointer"
-                                            title="Decline Request"
-                                          >
-                                            <X size={14} />
-                                          </button>
-                                        </div>
-                                      </div>
-
-                                      <p className="text-xs text-slate-350 leading-relaxed italic bg-slate-950/20 p-2.5 rounded-xl border border-slate-900/60">
-                                        "{claim.message}"
-                                      </p>
-                                    </div>
-                                  );
-                                })}
+                                {selectedClaim.status === "accepted" && (
+                                  <>
+                                    <button
+                                      disabled={actionLoadingId !== null}
+                                      onClick={() => handleClaimAction(selectedClaim.id, "completed", {
+                                        userId: selectedClaim.receiver?.id,
+                                        userName: selectedClaim.receiver?.name,
+                                        role: "donor_reviewing_receiver"
+                                      })}
+                                      className="flex-1 justify-center text-xs font-bold bg-gradient-to-r from-teal-500 to-emerald-500 text-slate-950 py-3 px-4 rounded-xl flex items-center gap-1 hover:from-teal-400 hover:to-emerald-400 transition-all active:scale-[0.98] disabled:opacity-50"
+                                    >
+                                      <Check size={14} strokeWidth={3} />
+                                      Mark Handed-Over
+                                    </button>
+                                    <button
+                                      disabled={actionLoadingId !== null}
+                                      onClick={() => handleClaimAction(selectedClaim.id, "cancelled")}
+                                      className="flex-1 justify-center text-xs font-bold bg-slate-900 border border-slate-800 text-red-400 py-3 px-4 rounded-xl flex items-center gap-1 hover:text-red-400 hover:bg-red-500/10 hover:border-red-900/20 transition-all active:scale-[0.98] disabled:opacity-50"
+                                    >
+                                      <X size={14} />
+                                      Mark No-Show
+                                    </button>
+                                  </>
+                                )}
                               </div>
-                            )}
+                            </div>
                           </div>
-                        )}
-
-                        {/* HISTORICAL / DECLINED CLAIMS COLLAPSIBLE DRAWER */}
-                        {historicalClaims.length > 0 && (
-                          <div className="border-t border-slate-900/80 pt-4">
-                            <button
-                              onClick={() => setShowDeclinedDrawer(!showDeclinedDrawer)}
-                              className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-300 font-bold transition-all select-none"
-                            >
-                              {showDeclinedDrawer ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-                              <span>Archived / Declined Requests ({historicalClaims.length})</span>
-                            </button>
-
-                            {showDeclinedDrawer && (
-                              <div className="mt-3 space-y-2">
-                                {historicalClaims.map((claim) => (
-                                  <div key={claim.id} className="p-3.5 rounded-xl bg-slate-950/25 border border-slate-900/70 flex justify-between items-center gap-3">
-                                    <div className="space-y-1 flex-1 min-w-0">
-                                      <div className="flex items-center gap-2">
-                                        <span className="text-xs font-bold text-slate-400">{claim.receiver?.name}</span>
-                                        <span className={`text-[8px] font-extrabold uppercase px-1 py-0.25 rounded ${
-                                          claim.status === "declined" ? "bg-red-500/10 text-red-400 border border-red-500/10" : "bg-slate-800 text-slate-500"
-                                        }`}>
-                                          {claim.status}
-                                        </span>
-                                      </div>
-                                      <p className="text-[11px] text-slate-500 italic truncate">"{claim.message}"</p>
-                                    </div>
-                                    <span className="text-[10px] text-slate-600 shrink-0">
-                                      {formatTimeAgo(claim.created_at)}
-                                    </span>
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })()}
-                </div>
-              </>
-            )}
-          </div>
+                        );
+                      })()}
+                    </div>
+                  </>
+                )}
+              </div>
+            );
+          })()
         ) : (
           /* Claims made List mapping */
           <div className="space-y-4">

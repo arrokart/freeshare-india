@@ -467,24 +467,27 @@ export default function ChatRoomPage() {
         </div>
       </header>
 
-      {claim?.listing?.listing_type === "skill" && (
+      {/* Dynamic Claim/Booking Action Header */}
+      {claim && (
         <div className="bg-slate-900/60 border-b border-slate-900 px-4 py-3 backdrop-blur-md">
           <div className="max-w-4xl mx-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold text-slate-400">Booking Status:</span>
+              <span className="text-xs font-semibold text-slate-400">
+                {claim.listing?.listing_type === "skill" ? "Booking Status:" : "Request Status:"}
+              </span>
               {claim.status === "pending" && (
                 <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-amber-500/10 text-amber-400 border border-amber-500/20">
-                  Pending Request
+                  {claim.listing?.listing_type === "skill" ? "Pending Request" : "Pending Approval"}
                 </span>
               )}
               {claim.status === "accepted" && (
                 <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-violet-500/10 text-violet-400 border border-violet-500/20">
-                  Booking Confirmed
+                  {claim.listing?.listing_type === "skill" ? "Booking Confirmed" : "Item Reserved"}
                 </span>
               )}
               {claim.status === "completed" && (
                 <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                  Completed
+                  🌱 {claim.listing?.listing_type === "skill" ? "Completed" : "Donated"}
                 </span>
               )}
               {claim.status === "declined" && (
@@ -500,7 +503,7 @@ export default function ChatRoomPage() {
             </div>
 
             <div className="flex items-center gap-2 flex-wrap">
-              {/* Host actions */}
+              {/* Donor / Host actions */}
               {claim.donor_id === userId && (
                 <>
                   {claim.status === "pending" && (
@@ -508,9 +511,9 @@ export default function ChatRoomPage() {
                       <button
                         onClick={() => handleUpdateStatus("accepted")}
                         disabled={statusChanging}
-                        className="px-3 py-1.5 rounded-lg text-xs font-bold bg-violet-500 hover:bg-violet-400 text-slate-950 transition-all disabled:opacity-50 active:scale-[0.98] cursor-pointer"
+                        className="px-3 py-1.5 rounded-lg text-xs font-bold bg-teal-500 hover:bg-teal-400 text-slate-950 transition-all disabled:opacity-50 active:scale-[0.98] cursor-pointer"
                       >
-                        Accept Booking
+                        {claim.listing?.listing_type === "skill" ? "Accept Booking" : "Accept & Reserve"}
                       </button>
                       <button
                         onClick={() => handleUpdateStatus("declined")}
@@ -528,21 +531,21 @@ export default function ChatRoomPage() {
                         disabled={statusChanging}
                         className="px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition-all disabled:opacity-50 active:scale-[0.98] cursor-pointer"
                       >
-                        Mark Completed
+                        {claim.listing?.listing_type === "skill" ? "Mark Completed" : "Mark Handed-Over"}
                       </button>
                       <button
                         onClick={() => handleUpdateStatus("cancelled")}
                         disabled={statusChanging}
                         className="px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-800 hover:bg-slate-750 text-slate-400 border border-slate-750 transition-all disabled:opacity-50 active:scale-[0.98] cursor-pointer"
                       >
-                        Cancel Booking
+                        {claim.listing?.listing_type === "skill" ? "Cancel Booking" : "Mark No-Show"}
                       </button>
                     </>
                   )}
                 </>
               )}
 
-              {/* Requester actions */}
+              {/* Requester / Claimant actions */}
               {claim.receiver_id === userId && (
                 <>
                   {(claim.status === "pending" || claim.status === "accepted") && (
@@ -568,10 +571,10 @@ export default function ChatRoomPage() {
                         claim.last_nudged_at &&
                         Date.now() - new Date(claim.last_nudged_at).getTime() < 3600000
                           ? "You can nudge again in 1 hour"
-                          : "Send a reminder push notification to the host"
+                          : "Send a reminder push notification to the host/donor"
                       }
                     >
-                      {nudging ? "Nudging..." : "⏱ Nudge Host"}
+                      {nudging ? "Nudging..." : "⏱ Nudge Donor"}
                     </button>
                   )}
                 </>
