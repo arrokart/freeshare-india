@@ -761,8 +761,8 @@ export default function AdminPage() {
                       </div>
 
                       {/* Description comment */}
-                      <div className="bg-slate-950/20 p-3.5 rounded-2xl border border-slate-900/60">
-                        <p className="text-xs text-slate-300 leading-relaxed font-mono">
+                      <div className="bg-slate-950/20 p-3.5 rounded-2xl border border-slate-900/60 overflow-hidden">
+                        <p className="text-xs text-slate-300 leading-relaxed font-mono break-all whitespace-pre-wrap">
                           "{rep.description}"
                         </p>
                       </div>
