@@ -357,7 +357,7 @@ export default function DonatePage() {
   const categories = isSkill ? SKILL_CATEGORIES : ITEM_CATEGORIES;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-slate-100 font-sans pb-12 selection:bg-violet-500 selection:text-black">
+    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-slate-100 font-sans pb-24 sm:pb-12 selection:bg-violet-500 selection:text-black">
       {/* Navigation Header */}
       <div className="max-w-4xl mx-auto px-4 pt-6 pb-2">
         <Link href="/" className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-teal-400 transition-all group">
@@ -366,7 +366,7 @@ export default function DonatePage() {
         </Link>
       </div>
 
-      <div className="max-w-3xl mx-auto bg-slate-900/40 backdrop-blur-xl border border-slate-800 rounded-3xl p-8 shadow-2xl mt-4">
+      <div className="max-w-3xl mx-auto bg-slate-900/40 backdrop-blur-xl border border-slate-800 rounded-3xl p-4 sm:p-8 shadow-2xl mt-4">
 
         {/* ─── What are you sharing toggle ─── */}
         <div className="mb-8">
@@ -412,7 +412,7 @@ export default function DonatePage() {
 
         {/* ─── Page Title ─── */}
         <div className="mb-8 pb-6 border-b border-slate-800/80">
-          <h1 className={`text-3xl font-extrabold bg-gradient-to-r ${isSkill ? "from-violet-400 to-purple-400" : "from-teal-400 to-emerald-400"} bg-clip-text text-transparent`}>
+          <h1 className={`text-2xl sm:text-3xl font-extrabold bg-gradient-to-r ${isSkill ? "from-violet-400 to-purple-400" : "from-teal-400 to-emerald-400"} bg-clip-text text-transparent`}>
             {isSkill ? "Share a Skill" : "Donate an Item"}
           </h1>
           <p className="text-sm text-slate-400 mt-1">
@@ -503,7 +503,7 @@ export default function DonatePage() {
                         key={cat}
                         type="button"
                         onClick={() => setCategory(cat)}
-                        className={`flex items-center gap-2 p-2.5 rounded-xl border text-xs font-semibold transition-all ${
+                        className={`flex items-center gap-2 p-2.5 min-h-[44px] rounded-xl border text-xs font-semibold transition-all ${
                           selected
                             ? "border-violet-500/60 bg-violet-500/10 text-violet-300"
                             : "border-slate-800 bg-slate-950/30 text-slate-400 hover:border-slate-700 hover:text-slate-300"
@@ -541,7 +541,7 @@ export default function DonatePage() {
                       key={dur}
                       type="button"
                       onClick={() => setSkillDuration(dur)}
-                      className={`p-2.5 rounded-xl border text-xs font-bold transition-all ${
+                      className={`p-2.5 min-h-[44px] rounded-xl border text-xs font-bold transition-all ${
                         skillDuration === dur
                           ? "border-violet-500/60 bg-violet-500/10 text-violet-300"
                           : "border-slate-800 bg-slate-950/30 text-slate-400 hover:border-slate-700"
@@ -604,7 +604,7 @@ export default function DonatePage() {
                       <button
                         type="button"
                         onClick={() => setSkillTags((prev) => prev.filter((t) => t !== tag))}
-                        className="text-violet-400 hover:text-red-400 transition-colors ml-0.5"
+                        className="text-violet-400 hover:text-red-400 transition-colors ml-0.5 p-1.5 -m-1.5 rounded"
                       >
                         <X size={11} />
                       </button>

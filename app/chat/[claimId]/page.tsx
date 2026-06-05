@@ -330,12 +330,26 @@ export default function ChatRoomPage() {
 
       // 1. If image is selected, upload to Cloudflare R2 first
       if (imageFile) {
+        let fileToUpload = imageFile;
+        try {
+          const imageCompression = (await import("browser-image-compression")).default;
+          const options = {
+            maxSizeMB: 0.8,
+            maxWidthOrHeight: 1200,
+            useWebWorker: true,
+          };
+          const compressed = await imageCompression(imageFile, options);
+          fileToUpload = new File([compressed], imageFile.name, { type: imageFile.type });
+        } catch (compressErr) {
+          console.error("Chat image compression failed, uploading original:", compressErr);
+        }
+
         const presignRes = await fetch("/api/listings/presign", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            filename: imageFile.name,
-            fileType: imageFile.type,
+            filename: fileToUpload.name,
+            fileType: fileToUpload.type,
           }),
         });
 
@@ -344,8 +358,8 @@ export default function ChatRoomPage() {
 
         const uploadRes = await fetch(uploadUrl, {
           method: "PUT",
-          headers: { "Content-Type": imageFile.type },
-          body: imageFile,
+          headers: { "Content-Type": fileToUpload.type },
+          body: fileToUpload,
         });
 
         if (!uploadRes.ok) throw new Error("R2 direct upload failed");

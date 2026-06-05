@@ -147,12 +147,12 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-radial from-slate-900 to-slate-950 p-4 font-sans text-slate-100 selection:bg-teal-500 selection:text-black">
+    <div className="min-h-screen flex items-center justify-center bg-radial from-slate-900 to-slate-950 p-4 py-8 overflow-y-auto font-sans text-slate-100 selection:bg-teal-500 selection:text-black">
       {/* Background decoration elements */}
       <div className="absolute top-1/4 left-1/4 w-72 h-72 bg-teal-500/10 rounded-full blur-3xl -z-10 pointer-events-none" />
       <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-violet-500/10 rounded-full blur-3xl -z-10 pointer-events-none" />
 
-      <div className="w-full max-w-lg bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-3xl p-8 shadow-2xl shadow-black/50 transition-all duration-300 hover:border-slate-700/80">
+      <div className="w-full max-w-lg bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-3xl p-5 sm:p-8 shadow-2xl shadow-black/50 transition-all duration-300 hover:border-slate-700/80 mb-24 sm:mb-0">
         
         {success ? (
           /* Success Screen */
@@ -179,7 +179,7 @@ export default function RegisterPage() {
           /* Registration Form */
           <>
             <div className="text-center mb-6">
-              <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-teal-400 to-emerald-400 bg-clip-text text-transparent">
+              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight bg-gradient-to-r from-teal-400 to-emerald-400 bg-clip-text text-transparent">
                 Join FreeShare
               </h1>
               <p className="text-xs text-slate-400 mt-1">
@@ -209,7 +209,7 @@ export default function RegisterPage() {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="John Doe"
-                    className="w-full bg-slate-950/50 border border-slate-800 rounded-xl py-2.5 pl-9 pr-4 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-teal-500/80 focus:ring-1 focus:ring-teal-500/20 transition-all"
+                    className="w-full bg-slate-950/50 border border-slate-800 rounded-xl py-3 pl-9 pr-4 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-teal-500/80 focus:ring-1 focus:ring-teal-500/20 transition-all"
                   />
                 </div>
               </div>
@@ -229,7 +229,7 @@ export default function RegisterPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="you@domain.com"
-                    className="w-full bg-slate-950/50 border border-slate-800 rounded-xl py-2.5 pl-9 pr-4 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-teal-500/80 focus:ring-1 focus:ring-teal-500/20 transition-all"
+                    className="w-full bg-slate-950/50 border border-slate-800 rounded-xl py-3 pl-9 pr-4 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-teal-500/80 focus:ring-1 focus:ring-teal-500/20 transition-all"
                   />
                 </div>
               </div>
@@ -250,7 +250,7 @@ export default function RegisterPage() {
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Min 8 characters"
                     minLength={8}
-                    className="w-full bg-slate-950/50 border border-slate-800 rounded-xl py-2.5 pl-9 pr-4 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-teal-500/80 focus:ring-1 focus:ring-teal-500/20 transition-all"
+                    className="w-full bg-slate-950/50 border border-slate-800 rounded-xl py-3 pl-9 pr-4 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-teal-500/80 focus:ring-1 focus:ring-teal-500/20 transition-all"
                   />
                 </div>
               </div>
@@ -269,7 +269,7 @@ export default function RegisterPage() {
                     required
                     value={dob}
                     onChange={(e) => setDob(e.target.value)}
-                    className="w-full bg-slate-950/50 border border-slate-800 rounded-xl py-2.5 pl-9 pr-4 text-xs text-slate-100 focus:outline-none focus:border-teal-500/80 focus:ring-1 focus:ring-teal-500/20 transition-all [color-scheme:dark]"
+                    className="w-full bg-slate-950/50 border border-slate-800 rounded-xl py-3 pl-9 pr-4 text-sm text-slate-100 focus:outline-none focus:border-teal-500/80 focus:ring-1 focus:ring-teal-500/20 transition-all [color-scheme:dark]"
                   />
                 </div>
               </div>
@@ -283,13 +283,16 @@ export default function RegisterPage() {
                   required
                   value={gender}
                   onChange={(e) => setGender(e.target.value)}
-                  className="w-full bg-slate-950/50 border border-slate-800 rounded-xl py-2.5 px-4 text-xs text-slate-100 focus:outline-none focus:border-teal-500/80 focus:ring-1 focus:ring-teal-500/20 transition-all [color-scheme:dark]"
+                  className="w-full bg-slate-950/50 border border-slate-800 rounded-xl py-3 px-4 text-sm text-slate-100 focus:outline-none focus:border-teal-500/80 focus:ring-1 focus:ring-teal-500/20 transition-all [color-scheme:dark]"
                 >
                   <option value="Male">Male</option>
                   <option value="Female">Female</option>
                   <option value="Other">Other</option>
                 </select>
               </div>
+
+              {/* ── Visual separator: Account Info → Location ── */}
+              <div className="h-px bg-slate-800/60 my-1" />
 
               {/* Location (City, Area & Pincode) */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -406,7 +409,7 @@ export default function RegisterPage() {
                 Already have an account?{" "}
                 <Link
                   href="/login"
-                  className="text-teal-400 hover:text-teal-300 font-semibold hover:underline transition-all"
+                  className="text-teal-400 hover:text-teal-300 font-semibold hover:underline transition-all inline-block py-1 px-1"
                 >
                   Sign In
                 </Link>

@@ -36,8 +36,11 @@ self.addEventListener("activate", (event) => {
 
 // 3. Fetch event: Network-first falling back to cache
 self.addEventListener("fetch", (event) => {
-  // Only cache GET requests and bypass browser extensions or API routes
-  if (event.request.method !== "GET" || event.request.url.includes("/api/")) {
+  const isApiRoute = event.request.url.includes("/api/");
+  const isCacheableApi = event.request.url.includes("/api/listings") || event.request.url.includes("/api/events");
+
+  // Only cache GET requests and bypass browser extensions or non-cacheable API routes
+  if (event.request.method !== "GET" || (isApiRoute && !isCacheableApi)) {
     return;
   }
 

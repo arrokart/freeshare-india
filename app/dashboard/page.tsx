@@ -438,7 +438,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-slate-100 font-sans pb-16 selection:bg-teal-500 selection:text-black">
+    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-slate-100 font-sans pb-24 selection:bg-teal-500 selection:text-black">
       
       {/* Header back button */}
       <div className="max-w-6xl mx-auto px-4 pt-6 flex justify-between items-center relative">
@@ -545,7 +545,7 @@ export default function DashboardPage() {
           const acceptedRequests = myClaims.filter(c => c.status === "accepted").length;
 
           return (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3.5 sm:gap-4">
               {/* My Shares Card */}
               <button
                 onClick={() => setActiveTab("donations")}
@@ -582,14 +582,14 @@ export default function DashboardPage() {
                   <span className="text-xs text-slate-500 font-semibold">items shared</span>
                 </div>
 
-                <div className="mt-3 pt-3 border-t border-slate-900/80 flex items-center gap-3 text-[10px] font-bold text-slate-400">
+                <div className="mt-3 pt-3 border-t border-slate-900/80 flex flex-wrap items-center gap-2 text-[9.5px] font-bold text-slate-400">
                   <span className="flex items-center gap-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-teal-500/80" />
                     {availableShares} available
                   </span>
                   <span className="flex items-center gap-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-amber-500/80" />
-                    {reservedShares} reserved
+                    {myListings.filter(l => l.status === "reserved").length} reserved
                   </span>
                 </div>
               </button>
@@ -630,7 +630,7 @@ export default function DashboardPage() {
                   <span className="text-xs text-slate-500 font-semibold">claims made</span>
                 </div>
 
-                <div className="mt-3 pt-3 border-t border-slate-900/80 flex items-center gap-3 text-[10px] font-bold text-slate-400">
+                <div className="mt-3 pt-3 border-t border-slate-900/80 flex flex-wrap items-center gap-2 text-[9.5px] font-bold text-slate-400">
                   <span className="flex items-center gap-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-amber-500/80" />
                     {pendingRequests} pending
@@ -645,7 +645,7 @@ export default function DashboardPage() {
               {/* Event Inquiries Card */}
               <button
                 onClick={() => setActiveTab("event_chats")}
-                className={`relative overflow-hidden rounded-2xl p-5 text-left transition-all duration-300 backdrop-blur-md border cursor-pointer hover:scale-[1.02] hover:-translate-y-0.5 group ${
+                className={`col-span-2 sm:col-span-1 relative overflow-hidden rounded-2xl p-5 text-left transition-all duration-300 backdrop-blur-md border cursor-pointer hover:scale-[1.02] hover:-translate-y-0.5 group ${
                   activeTab === "event_chats"
                     ? "bg-slate-900/80 border-amber-500/40 shadow-[0_0_20px_-3px_rgba(245,158,11,0.15)]"
                     : "bg-slate-950/20 border-slate-900 hover:bg-slate-900/40 hover:border-slate-800"
@@ -678,7 +678,7 @@ export default function DashboardPage() {
                   <span className="text-xs text-slate-500 font-semibold">active chats</span>
                 </div>
 
-                <div className="mt-3 pt-3 border-t border-slate-900/80 flex items-center gap-1.5 text-[10px] font-bold text-slate-400">
+                <div className="mt-3 pt-3 border-t border-slate-900/80 flex flex-wrap items-center gap-1.5 text-[9.5px] font-bold text-slate-400">
                   <span className="flex items-center gap-1 truncate">
                     <span className="w-1.5 h-1.5 rounded-full bg-amber-500/80" />
                     Private messages & RSVPs

@@ -481,13 +481,15 @@ export default function HomeFeed() {
           </div>
 
           <div className="flex items-center gap-2 sm:gap-4">
-            <LanguageSelector />
+            <div className="hidden sm:block">
+              <LanguageSelector />
+            </div>
             {user ? (
               <>
                 {/* Donate Link Button */}
                 <Link
                   href="/donate"
-                  className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-400 hover:to-emerald-400 text-[10px] font-black text-slate-950 transition-all shadow-md shadow-teal-500/10 cursor-pointer uppercase tracking-wider shrink-0"
+                  className="hidden sm:flex items-center gap-1 px-3 py-1.5 rounded-full bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-400 hover:to-emerald-400 text-[10px] font-black text-slate-950 transition-all shadow-md shadow-teal-500/10 cursor-pointer uppercase tracking-wider shrink-0"
                 >
                   <Plus size={11} strokeWidth={3} />
                   <span>Donate</span>
@@ -497,7 +499,7 @@ export default function HomeFeed() {
                 <Link
                   href="/dashboard?tab=claims"
                   title="My Inbox & Chats"
-                  className="p-2 hover:bg-slate-900 rounded-full text-slate-400 hover:text-slate-200 transition-colors shrink-0"
+                  className="hidden sm:block p-2 hover:bg-slate-900 rounded-full text-slate-400 hover:text-slate-200 transition-colors shrink-0"
                 >
                   <MessageSquare size={17} />
                 </Link>
@@ -662,6 +664,14 @@ export default function HomeFeed() {
                             <span>View Profile</span>
                           </Link>
                           <Link
+                            href="/dashboard?tab=claims"
+                            onClick={() => setShowUserMenu(false)}
+                            className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs text-slate-200 hover:text-teal-600 hover:bg-slate-950 transition-all font-semibold"
+                          >
+                            <MessageSquare size={14} className="text-slate-400" />
+                            <span>Messages</span>
+                          </Link>
+                          <Link
                             href="/dashboard"
                             onClick={() => setShowUserMenu(false)}
                             className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs text-slate-200 hover:text-teal-600 hover:bg-slate-950 transition-all font-semibold"
@@ -728,6 +738,10 @@ export default function HomeFeed() {
 
                         {/* Logout Option */}
                         <div className="border-t border-slate-800 pt-2 pb-1">
+                          <div className="sm:hidden px-3 pb-2 border-b border-slate-800/50 mb-2">
+                            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Language</p>
+                            <LanguageSelector />
+                          </div>
                           <button
                             onClick={() => {
                               setShowUserMenu(false);
@@ -1118,6 +1132,7 @@ export default function HomeFeed() {
 }
 
 function LandingPageView({ listings, trendingListings, lang }: { listings: any[]; trendingListings: any[]; lang: Language }) {
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
   const t = (key: any) => getTranslation(key, lang);
   
   // Custom Smooth Scrolling helper
@@ -1212,8 +1227,57 @@ function LandingPageView({ listings, trendingListings, lang }: { listings: any[]
               Sign up
             </Link>
           </div>
+
+          {/* Mobile Hamburger — only shown on < sm */}
+          <button
+            onClick={() => setShowMobileMenu(true)}
+            className="sm:hidden flex flex-col justify-center items-center w-10 h-10 rounded-xl text-slate-300 hover:text-teal-400 hover:bg-slate-900 transition-all gap-1.5 active:scale-95"
+            aria-label="Open menu"
+          >
+            <span className="w-5 h-0.5 bg-current rounded-full" />
+            <span className="w-5 h-0.5 bg-current rounded-full" />
+            <span className="w-3.5 h-0.5 bg-current rounded-full self-start ml-[3px]" />
+          </button>
         </div>
       </nav>
+
+      {/* Mobile Bottom Sheet Menu Drawer */}
+      {showMobileMenu && (
+        <div className="fixed inset-0 z-[60] sm:hidden">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+            onClick={() => setShowMobileMenu(false)}
+          />
+          {/* Drawer */}
+          <div className="absolute bottom-0 left-0 right-0 bg-slate-950 border-t border-slate-800 rounded-t-3xl px-5 pt-5 pb-10 shadow-2xl animate-in slide-in-from-bottom duration-300" style={{ paddingBottom: 'calc(2.5rem + env(safe-area-inset-bottom, 0px))' }}>
+            {/* Pull handle */}
+            <div className="w-10 h-1 bg-slate-700 rounded-full mx-auto mb-6" />
+            <p className="text-[10px] font-extrabold text-slate-500 uppercase tracking-widest mb-4">FreeShare India</p>
+            <div className="space-y-3">
+              <Link
+                href="/login"
+                onClick={() => setShowMobileMenu(false)}
+                className="flex items-center justify-between w-full px-4 py-3.5 rounded-2xl bg-slate-900 border border-slate-800 text-sm font-bold text-slate-200 hover:border-teal-500/40 hover:text-teal-400 transition-all active:scale-[0.98]"
+              >
+                Log in
+                <ArrowRight size={16} className="text-slate-500" />
+              </Link>
+              <Link
+                href="/register"
+                onClick={() => setShowMobileMenu(false)}
+                className="flex items-center justify-center gap-2 w-full px-4 py-3.5 rounded-2xl bg-gradient-to-r from-teal-500 to-emerald-500 text-slate-950 text-sm font-black shadow-lg shadow-teal-500/10 active:scale-[0.98] transition-all"
+              >
+                Create Free Account
+                <ArrowRight size={16} />
+              </Link>
+              <div className="pt-2">
+                <LanguageSelector />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Hero Section */}
       <section className="relative max-w-7xl mx-auto px-4 pt-16 pb-12 overflow-hidden">

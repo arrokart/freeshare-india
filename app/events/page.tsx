@@ -125,7 +125,7 @@ export default function EventsFeedPage() {
   });
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans pb-16 selection:bg-amber-500 selection:text-black">
+    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans pb-24 selection:bg-amber-500 selection:text-black">
       
       {/* Header Bar */}
       <nav className="border-b border-slate-900 bg-slate-950/80 backdrop-blur-md sticky top-0 z-50">
@@ -142,7 +142,7 @@ export default function EventsFeedPage() {
           {user && (
             <Link
               href="/events/new"
-              className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-450 hover:to-orange-450 text-xs font-bold text-slate-950 transition-all shadow-lg shadow-amber-500/10 cursor-pointer uppercase tracking-wider"
+              className="flex items-center gap-1.5 px-4 py-3 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-450 hover:to-orange-450 text-xs font-bold text-slate-950 transition-all shadow-lg shadow-amber-500/10 cursor-pointer uppercase tracking-wider"
             >
               <Plus size={14} strokeWidth={3} />
               <span>Create Event</span>
@@ -165,7 +165,7 @@ export default function EventsFeedPage() {
           {!user && (
             <Link
               href="/login?next=/events/new"
-              className="inline-block mt-4 md:mt-0 px-5 py-2.5 rounded-xl border border-amber-500/30 hover:border-amber-500/50 bg-amber-500/5 hover:bg-amber-500/10 text-xs font-bold text-amber-400 transition-all"
+              className="inline-block mt-4 md:mt-0 px-6 py-3 rounded-xl border border-amber-500/30 hover:border-amber-500/50 bg-amber-500/5 hover:bg-amber-500/10 text-xs font-bold text-amber-400 transition-all w-full text-center sm:w-auto"
             >
               Log in to Post Events
             </Link>
@@ -173,7 +173,7 @@ export default function EventsFeedPage() {
         </div>
 
         {/* Filter Controls Bar */}
-        <div className="bg-slate-900/40 backdrop-blur-xl border border-slate-900 rounded-3xl p-5 shadow-xl space-y-4">
+        <div className="bg-slate-900/40 backdrop-blur-xl border border-slate-900 rounded-3xl p-4 shadow-xl space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             
             {/* Search Input */}
@@ -186,7 +186,7 @@ export default function EventsFeedPage() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search events, topics, or venues..."
-                className="w-full bg-slate-950/40 border border-slate-800 rounded-2xl py-2.5 pl-10 pr-4 text-xs text-slate-200 focus:outline-none focus:border-amber-500/80 transition-all"
+                className="w-full bg-slate-950/40 border border-slate-800 rounded-2xl py-3 pl-10 pr-4 text-xs text-slate-200 focus:outline-none focus:border-amber-500/80 transition-all"
               />
             </div>
 
@@ -207,7 +207,7 @@ export default function EventsFeedPage() {
                 value={area}
                 onChange={(e) => setArea(e.target.value)}
                 placeholder="Filter by Area (e.g. Connaught Place)"
-                className="w-full bg-slate-950/40 border border-slate-800 rounded-2xl py-2.5 px-4 text-xs text-slate-200 focus:outline-none focus:border-amber-500/80 transition-all"
+                className="w-full bg-slate-950/40 border border-slate-800 rounded-2xl py-3 px-4 text-xs text-slate-200 focus:outline-none focus:border-amber-500/80 transition-all"
               />
             </div>
 
@@ -335,7 +335,7 @@ export default function EventsFeedPage() {
                           handleRsvpToggle(event.id);
                         }}
                         disabled={rsvpLoadingId === event.id || (!isGoing && isFull)}
-                        className={`w-full px-4 py-2 text-xs font-black rounded-xl transition-all cursor-pointer select-none text-center ${
+                        className={`w-full px-5 py-3 text-xs font-black rounded-xl transition-all cursor-pointer select-none text-center ${
                           isGoing
                             ? "bg-slate-850 hover:bg-red-500/10 border border-slate-850 hover:border-red-500/20 text-slate-400 hover:text-red-400"
                             : isFull

@@ -306,7 +306,7 @@ export default function UserProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-slate-100 font-sans pb-16 selection:bg-teal-500 selection:text-black">
+    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-slate-100 font-sans pb-24 selection:bg-teal-500 selection:text-black">
       {/* Header Back Button */}
       <div className="max-w-4xl mx-auto px-4 pt-6">
         <Link href="/" className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-teal-400 transition-all group">
@@ -340,7 +340,7 @@ export default function UserProfilePage() {
                     required
                     value={editName}
                     onChange={(e) => setEditName(e.target.value)}
-                    className="w-full bg-slate-950/40 border border-slate-800/80 rounded-xl py-2 px-3 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-teal-500/80 focus:ring-1 focus:ring-teal-500/10 transition-all"
+                    className="w-full bg-slate-950/40 border border-slate-800/80 rounded-xl py-3 px-3 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-teal-500/80 focus:ring-1 focus:ring-teal-500/10 transition-all"
                   />
                 </div>
 
@@ -352,7 +352,7 @@ export default function UserProfilePage() {
                     placeholder="+91 XXXXX XXXXX"
                     value={editPhone}
                     onChange={(e) => setEditPhone(e.target.value)}
-                    className="w-full bg-slate-950/40 border border-slate-800/80 rounded-xl py-2 px-3 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-teal-500/80 focus:ring-1 focus:ring-teal-500/10 transition-all"
+                    className="w-full bg-slate-950/40 border border-slate-800/80 rounded-xl py-3 px-3 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-teal-500/80 focus:ring-1 focus:ring-teal-500/10 transition-all"
                   />
                 </div>
 
@@ -441,7 +441,7 @@ export default function UserProfilePage() {
                   type="button"
                   onClick={() => setIsEditing(false)}
                   disabled={saveLoading}
-                  className="px-4 py-2 text-xs font-bold rounded-xl bg-slate-850 hover:bg-slate-800 text-slate-300 transition-all"
+                  className="px-4 py-3 text-xs font-bold rounded-xl bg-slate-850 hover:bg-slate-800 text-slate-300 transition-all min-h-[44px]"
                 >
                   Cancel
                 </button>
@@ -449,7 +449,7 @@ export default function UserProfilePage() {
                   type="button"
                   onClick={handleSave}
                   disabled={saveLoading}
-                  className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold rounded-xl bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-400 hover:to-emerald-400 text-slate-950 transition-all disabled:opacity-50"
+                  className="flex items-center gap-1.5 px-4 py-3 text-xs font-bold rounded-xl bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-400 hover:to-emerald-400 text-slate-950 transition-all disabled:opacity-50 min-h-[44px]"
                 >
                   {saveLoading ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />}
                   Save Changes
@@ -488,7 +488,7 @@ export default function UserProfilePage() {
                       {isOwner && (
                         <button
                           onClick={handleStartEdit}
-                          className="flex items-center gap-1 text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-xl bg-slate-850 hover:bg-slate-800 text-slate-300 border border-slate-800 hover:border-slate-750 transition-all ml-auto sm:ml-0 active:scale-[0.98]"
+                          className="flex items-center gap-1 text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-xl bg-slate-850 hover:bg-slate-800 text-slate-300 border border-slate-800 hover:border-slate-750 transition-all active:scale-[0.98]"
                         >
                           <Edit size={11} /> Edit Details
                         </button>
@@ -496,7 +496,7 @@ export default function UserProfilePage() {
                       {!isOwner && currentUser && (
                         <button
                           onClick={() => setShowReportModal(true)}
-                          className="flex items-center gap-1.5 text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-xl bg-slate-900 hover:bg-slate-850 hover:text-red-400 text-slate-400 border border-slate-800 transition-all ml-auto cursor-pointer"
+                          className="flex items-center gap-1.5 text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-xl bg-slate-900 hover:bg-slate-850 hover:text-red-400 text-slate-400 border border-slate-800 transition-all cursor-pointer"
                           title="Report User Profile"
                         >
                           <Flag size={11} /> Report
@@ -578,15 +578,15 @@ export default function UserProfilePage() {
               {/* Stats Bar Counters */}
               <div className="grid grid-cols-3 gap-4 border-t border-slate-900/80 pt-6 text-center">
                 <div className="space-y-1">
-                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block">Items Donated</span>
+                  <span className="text-xs font-bold text-slate-500 uppercase tracking-wide block">Items Donated</span>
                   <span className="text-lg font-black text-teal-400">{profile.total_donated || 0}</span>
                 </div>
                 <div className="space-y-1">
-                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block">Items Received</span>
+                  <span className="text-xs font-bold text-slate-500 uppercase tracking-wide block">Items Received</span>
                   <span className="text-lg font-black text-slate-100">{profile.total_received || 0}</span>
                 </div>
                 <div className="space-y-1">
-                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block">Warning Strikes</span>
+                  <span className="text-xs font-bold text-slate-500 uppercase tracking-wide block">Warning Strikes</span>
                   <span className={`text-lg font-black ${profile.strike_count > 0 ? "text-amber-500" : "text-slate-500"}`}>
                     {profile.strike_count || 0}
                   </span>
@@ -598,10 +598,10 @@ export default function UserProfilePage() {
         </div>
 
         {/* Tab Controls Switches */}
-        <div className="flex gap-2 border-b border-slate-900 pb-2">
+        <div className="flex gap-1 border-b border-slate-900 pb-0 overflow-x-auto no-scrollbar -mx-4 px-4">
           <button
             onClick={() => setActiveTab("listings")}
-            className={`flex items-center gap-2 px-5 py-3 text-sm font-bold border-b-2 transition-all ${
+            className={`flex items-center gap-2 px-4 py-3 text-sm font-bold border-b-2 transition-all shrink-0 whitespace-nowrap ${
               activeTab === "listings"
                 ? "border-teal-500 text-teal-400"
                 : "border-transparent text-slate-400 hover:text-slate-200"
@@ -613,7 +613,7 @@ export default function UserProfilePage() {
 
           <button
             onClick={() => setActiveTab("events")}
-            className={`flex items-center gap-2 px-5 py-3 text-sm font-bold border-b-2 transition-all ${
+            className={`flex items-center gap-2 px-4 py-3 text-sm font-bold border-b-2 transition-all shrink-0 whitespace-nowrap ${
               activeTab === "events"
                 ? "border-amber-500 text-amber-400"
                 : "border-transparent text-slate-400 hover:text-slate-200"
@@ -625,7 +625,7 @@ export default function UserProfilePage() {
           
           <button
             onClick={() => setActiveTab("reviews")}
-            className={`flex items-center gap-2 px-5 py-3 text-sm font-bold border-b-2 transition-all ${
+            className={`flex items-center gap-2 px-4 py-3 text-sm font-bold border-b-2 transition-all shrink-0 whitespace-nowrap ${
               activeTab === "reviews"
                 ? "border-teal-500 text-teal-400"
                 : "border-transparent text-slate-400 hover:text-slate-200"
@@ -646,7 +646,7 @@ export default function UserProfilePage() {
                 <p className="text-sm text-slate-500">No active listings available from this donor.</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-3.5 sm:gap-6">
                 {listings.map((item) => (
                   <Link
                     key={item.id}
@@ -659,7 +659,7 @@ export default function UserProfilePage() {
                         {item.condition}
                       </span>
                     </div>
-                    <div className="p-4 space-y-1">
+                    <div className="p-3 sm:p-4 space-y-1">
                       <h4 className="font-bold text-xs text-slate-100 group-hover:text-teal-400 transition-colors line-clamp-1">{item.title}</h4>
                       <p className="text-[10px] text-slate-500 truncate">{item.area}</p>
                     </div>
@@ -677,7 +677,7 @@ export default function UserProfilePage() {
                 <p className="text-sm text-slate-500">No events organised by this user yet.</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-3.5 sm:gap-6">
                 {events.map((event) => {
                   const rsvpCount = event.rsvps?.length || 0;
                   const isPast = new Date(event.end_date) < new Date();
@@ -706,7 +706,7 @@ export default function UserProfilePage() {
                           {isPast ? "Ended" : "Upcoming"}
                         </span>
                       </div>
-                      <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
+                      <div className="p-3 sm:p-4 flex-1 flex flex-col justify-between space-y-3">
                         <div className="space-y-1">
                           <h4 className="font-bold text-xs text-slate-100 group-hover:text-amber-400 transition-colors line-clamp-1">
                             {event.title}
@@ -844,14 +844,14 @@ export default function UserProfilePage() {
                   <button
                     type="button"
                     onClick={() => setShowDirectDonationModal(false)}
-                    className="px-4 py-2 text-xs font-bold rounded-xl bg-slate-850 hover:bg-slate-800 text-slate-350 transition-all"
+                    className="px-4 py-3 text-xs font-bold rounded-xl bg-slate-850 hover:bg-slate-800 text-slate-350 transition-all"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={donationSubmitting}
-                    className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold rounded-xl bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-400 hover:to-emerald-400 text-slate-950 transition-all disabled:opacity-50 cursor-pointer"
+                    className="flex items-center gap-1.5 px-4 py-3 text-xs font-bold rounded-xl bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-400 hover:to-emerald-400 text-slate-950 transition-all disabled:opacity-50 cursor-pointer"
                   >
                     {donationSubmitting ? (
                       <Loader2 size={13} className="animate-spin" />

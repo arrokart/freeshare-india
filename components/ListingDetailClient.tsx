@@ -321,12 +321,26 @@ export default function ListingDetailClient({ initialListing }: { initialListing
         if (typeof item === "string") {
           uploadedUrls.push(item);
         } else {
+          let fileToUpload = item;
+          try {
+            const imageCompression = (await import("browser-image-compression")).default;
+            const options = {
+              maxSizeMB: 0.8,
+              maxWidthOrHeight: 1200,
+              useWebWorker: true,
+            };
+            const compressed = await imageCompression(item, options);
+            fileToUpload = new File([compressed], item.name, { type: item.type });
+          } catch (compressErr) {
+            console.error("Listing edit image compression failed, uploading original:", compressErr);
+          }
+
           const presignRes = await fetch("/api/listings/presign", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              filename: item.name,
-              fileType: item.type,
+              filename: fileToUpload.name,
+              fileType: fileToUpload.type,
             }),
           });
 
@@ -337,8 +351,8 @@ export default function ListingDetailClient({ initialListing }: { initialListing
 
           const uploadRes = await fetch(uploadUrl, {
             method: "PUT",
-            headers: { "Content-Type": item.type },
-            body: item,
+            headers: { "Content-Type": fileToUpload.type },
+            body: fileToUpload,
           });
 
           if (!uploadRes.ok) {

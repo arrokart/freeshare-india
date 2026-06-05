@@ -67,11 +67,11 @@ function LoginForm() {
   };
 
   return (
-    <div className="w-full max-w-md bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-3xl p-8 shadow-2xl shadow-black/50 transition-all duration-300 hover:border-slate-700/80">
+    <div className="w-full max-w-md bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl shadow-black/50 transition-all duration-300 hover:border-slate-700/80">
       
       {/* Branding header */}
       <div className="text-center mb-8">
-        <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-teal-400 to-emerald-400 bg-clip-text text-transparent">
+        <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight bg-gradient-to-r from-teal-400 to-emerald-400 bg-clip-text text-transparent">
           FreeShare India
         </h1>
         <p className="text-sm text-slate-400 mt-2">
@@ -120,7 +120,7 @@ function LoginForm() {
             </label>
             <Link
               href="/forgot-password"
-              className="text-xs text-teal-400 hover:text-teal-300 hover:underline transition-all"
+              className="text-xs text-teal-400 hover:text-teal-300 hover:underline transition-all px-2 py-1 -mx-2 -my-1 rounded inline-block"
             >
               Forgot?
             </Link>
@@ -168,7 +168,7 @@ function LoginForm() {
           type="button"
           onClick={handleGoogleLogin}
           disabled={loading}
-          className="w-full relative overflow-hidden group bg-slate-900 border border-slate-800 hover:bg-slate-850 text-slate-100 font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2.5 transition-all active:scale-[0.99] disabled:opacity-50 cursor-pointer"
+          className="w-full relative overflow-hidden group bg-slate-900 border border-slate-800 hover:bg-slate-850 text-slate-100 font-bold py-3.5 px-4 rounded-xl flex items-center justify-center gap-2.5 transition-all active:scale-[0.99] disabled:opacity-50 cursor-pointer"
         >
           <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
             <path fill="#EA4335" d="M12 5.04c1.66 0 3.2.57 4.38 1.69l3.27-3.27C17.67 1.54 14.98 1 12 1 7.35 1 3.37 3.67 1.39 7.56l3.87 3C6.18 7.39 8.87 5.04 12 5.04z"/>
@@ -186,7 +186,7 @@ function LoginForm() {
           Don't have an account?{" "}
           <Link
             href="/register"
-            className="text-teal-400 hover:text-teal-300 font-semibold hover:underline transition-all"
+            className="text-teal-400 hover:text-teal-300 font-semibold hover:underline transition-all inline-block py-1 px-1"
           >
             Sign Up (18+)
           </Link>
@@ -209,7 +209,7 @@ function LoginFormFallback() {
 
 export default function LoginPage() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-radial from-slate-900 to-slate-950 p-4 font-sans text-slate-100 selection:bg-teal-500 selection:text-black">
+    <div className="min-h-screen flex items-center justify-center bg-radial from-slate-900 to-slate-950 p-4 py-8 overflow-y-auto font-sans text-slate-100 selection:bg-teal-500 selection:text-black">
       {/* Background visual circles */}
       <div className="absolute top-1/4 left-1/4 w-72 h-72 bg-teal-500/10 rounded-full blur-3xl -z-10 pointer-events-none" />
       <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-violet-500/10 rounded-full blur-3xl -z-10 pointer-events-none" />

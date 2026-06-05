@@ -36,6 +36,11 @@ body {
   padding-bottom: env(safe-area-inset-bottom);
 }
 
+html, body {
+  /* Prevent iOS rubber-band scroll from showing white background */
+  overscroll-behavior-y: contain;
+}
+
 /* Touch Targets Optimization & Hide Scrollbars */
 .no-scrollbar::-webkit-scrollbar {
   display: none;
