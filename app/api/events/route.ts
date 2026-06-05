@@ -74,6 +74,50 @@ export async function POST(request: Request) {
       );
     }
 
+    // Check user permission (trust score and admin suspension lock)
+    let canCreateEvents = true;
+    let trustScore = 5.0;
+
+    const { data: userProfile, error: userErr } = await supabaseAdmin
+      .from("users")
+      .select("trust_score, can_create_events")
+      .eq("id", organizer_id)
+      .single();
+
+    if (userErr) {
+      // Fallback: if can_create_events column is missing, query only trust_score
+      const { data: fallbackProfile, error: fallbackErr } = await supabaseAdmin
+        .from("users")
+        .select("trust_score")
+        .eq("id", organizer_id)
+        .single();
+
+      if (fallbackErr || !fallbackProfile) {
+        return NextResponse.json(
+          { error: "User profile not found" },
+          { status: 404 }
+        );
+      }
+      trustScore = fallbackProfile.trust_score !== null ? Number(fallbackProfile.trust_score) : 5.0;
+    } else if (userProfile) {
+      trustScore = userProfile.trust_score !== null ? Number(userProfile.trust_score) : 5.0;
+      canCreateEvents = userProfile.can_create_events !== false;
+    }
+
+    if (!canCreateEvents) {
+      return NextResponse.json(
+        { error: "Your event creation privileges have been suspended by an administrator." },
+        { status: 403 }
+      );
+    }
+
+    if (trustScore < 3.50) {
+      return NextResponse.json(
+        { error: `Your trust score is too low (${trustScore.toFixed(2)} / 5.00). Event creation requires a minimum score of 3.50.` },
+        { status: 403 }
+      );
+    }
+
     if (title.length < 10 || title.length > 100) {
       return NextResponse.json(
         { error: "Title must be between 10 and 100 characters" },

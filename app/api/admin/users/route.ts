@@ -59,8 +59,51 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Access Denied: Administrator privileges required." }, { status: 403 });
     }
 
-    if (!targetUserId || action !== "set_limit") {
+    if (!targetUserId || (action !== "set_limit" && action !== "toggle_event_creation")) {
       return NextResponse.json({ error: "Invalid action or missing parameters." }, { status: 400 });
+    }
+
+    if (action === "toggle_event_creation") {
+      // Fetch current status
+      let currentStatus = true;
+      let hasColumn = true;
+
+      const { data: userProfile, error: fetchErr } = await supabase
+        .from("users")
+        .select("can_create_events")
+        .eq("id", targetUserId)
+        .single();
+
+      if (fetchErr) {
+        const errMsg = fetchErr.message || "";
+        if (errMsg.includes("column") || errMsg.includes("does not exist") || fetchErr.code === "PGRST204" || fetchErr.code === "42703") {
+          hasColumn = false;
+        } else {
+          return NextResponse.json({ error: "Target user not found or database query failed." }, { status: 404 });
+        }
+      } else if (userProfile) {
+        currentStatus = userProfile.can_create_events !== false;
+      }
+
+      if (!hasColumn) {
+        return NextResponse.json({ 
+          error: "Database migration pending: Please execute the following SQL in your Supabase SQL Editor first:\n\nALTER TABLE public.users ADD COLUMN IF NOT EXISTS can_create_events BOOLEAN DEFAULT TRUE;" 
+        }, { status: 400 });
+      }
+
+      const nextState = !currentStatus;
+
+      const { error: updateErr } = await supabase
+        .from("users")
+        .update({ can_create_events: nextState })
+        .eq("id", targetUserId);
+
+      if (updateErr) throw updateErr;
+
+      return NextResponse.json({ 
+        success: true, 
+        message: `Event creation privilege has been ${nextState ? "enabled" : "suspended"} for this user.` 
+      });
     }
 
     // 1. Fetch target user bio

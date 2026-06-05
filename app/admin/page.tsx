@@ -1148,10 +1148,48 @@ export default function AdminPage() {
                                     ♥ Verified NGO
                                   </span>
                                 )}
+                                {u.can_create_events === false && (
+                                  <span className="inline-flex items-center gap-0.5 text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-red-500/10 text-red-400 border border-red-500/20">
+                                    ⚠️ Event Locked
+                                  </span>
+                                )}
                               </div>
                             </td>
                             <td className="p-4 text-right">
                               <div className="flex items-center justify-end gap-2">
+                                <button
+                                  onClick={async () => {
+                                    if (!userId) return;
+                                    setErrorMsg("");
+                                    setSuccessMsg("");
+                                    try {
+                                      const res = await fetch("/api/admin/users", {
+                                        method: "POST",
+                                        headers: { "Content-Type": "application/json" },
+                                        body: JSON.stringify({
+                                          adminId: userId,
+                                          targetUserId: u.id,
+                                          action: "toggle_event_creation"
+                                        })
+                                      });
+                                      const data = await res.json();
+                                      if (!res.ok) throw new Error(data.error || "Failed to toggle event privilege");
+                                      setSuccessMsg(data.message);
+                                      await loadUsersDirectory();
+                                    } catch (err: any) {
+                                      setErrorMsg(err.message || "Failed to toggle privilege.");
+                                    }
+                                  }}
+                                  className={`text-[10px] font-bold px-2.5 py-1 rounded-lg transition-colors border ${
+                                    u.can_create_events !== false 
+                                      ? "bg-slate-900 border-slate-800 text-red-400 hover:bg-red-500/10" 
+                                      : "bg-teal-500 border-teal-500 text-slate-950 hover:bg-teal-400"
+                                  }`}
+                                  title={u.can_create_events !== false ? "Suspend event creation" : "Restore event creation"}
+                                >
+                                  {u.can_create_events !== false ? "Lock Events" : "Unlock Events"}
+                                </button>
+
                                 {u.is_premium ? (
                                   <button
                                     onClick={() => handleModerationAction(undefined, "revoke_premium", u.id)}

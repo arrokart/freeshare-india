@@ -5,13 +5,14 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
 import { getR2PublicUrl } from "@/lib/r2";
-import { ArrowLeft, Loader2, Calendar, MapPin, AlignLeft, Users, Send, Upload, X } from "lucide-react";
+import { ArrowLeft, Loader2, Calendar, MapPin, AlignLeft, Users, Send, Upload, X, ShieldAlert, Award } from "lucide-react";
 import CityAutocomplete from "@/components/CityAutocomplete";
 import { normalizeCityName } from "@/lib/cities";
 
 export default function CreateEventPage() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
+  const [profile, setProfile] = useState<any>(null);
   const [authLoading, setAuthLoading] = useState(true);
 
   // Form Fields
@@ -43,6 +44,30 @@ export default function CreateEventPage() {
       } else {
         setUser(data.user);
         
+        // Fetch user trust_score and can_create_events from the users table with fallback if column is missing
+        const { data: userProfile, error: profileErr } = await supabase
+          .from("users")
+          .select("trust_score, can_create_events")
+          .eq("id", data.user.id)
+          .single();
+        
+        if (profileErr) {
+          // Fallback if column does not exist
+          const { data: fallbackProfile } = await supabase
+            .from("users")
+            .select("trust_score")
+            .eq("id", data.user.id)
+            .single();
+          if (fallbackProfile) {
+            setProfile({
+              trust_score: fallbackProfile.trust_score,
+              can_create_events: true // Default to true if migration is pending
+            });
+          }
+        } else if (userProfile) {
+          setProfile(userProfile);
+        }
+
         // Load location defaults if they exist on user metadata
         setCity(data.user.user_metadata?.city || "");
         setArea(data.user.user_metadata?.area || "");
@@ -190,6 +215,77 @@ export default function CreateEventPage() {
       <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center gap-3">
         <Loader2 className="animate-spin text-amber-500" size={28} />
         <p className="text-xs text-slate-500">Checking credentials...</p>
+      </div>
+    );
+  }
+
+  // Permission Guard / Premium Dark Lock Screen
+  const isSuspendedByAdmin = profile?.can_create_events === false;
+  const isSuspendedByTrust = profile?.trust_score !== null && profile?.trust_score < 3.50;
+  
+  if (isSuspendedByAdmin || isSuspendedByTrust) {
+    return (
+      <div className="min-h-screen bg-slate-950 text-slate-100 font-sans pb-16 selection:bg-amber-500 selection:text-black">
+        {/* Header navbar */}
+        <nav className="border-b border-slate-900 bg-slate-950/80 backdrop-blur-md sticky top-0 z-50">
+          <div className="max-w-4xl mx-auto px-4 h-16 flex items-center gap-3">
+            <Link href="/events" className="text-slate-400 hover:text-slate-200 transition-colors p-1.5 rounded-lg hover:bg-slate-900">
+              <ArrowLeft size={20} />
+            </Link>
+            <span className="text-xl font-black bg-gradient-to-r from-amber-400 to-orange-500 bg-clip-text text-transparent select-none">
+              Post New Event
+            </span>
+          </div>
+        </nav>
+
+        {/* Lock Screen UI Container */}
+        <main className="max-w-md mx-auto px-4 pt-16 flex flex-col items-center text-center">
+          <div className="relative mb-6">
+            <div className="absolute inset-0 bg-red-500/10 blur-2xl rounded-full scale-150 animate-pulse"></div>
+            <div className="relative w-20 h-20 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center text-red-500 shadow-2xl shadow-red-500/5">
+              <ShieldAlert size={36} />
+            </div>
+          </div>
+
+          <h2 className="text-2xl font-black tracking-tight bg-gradient-to-b from-white to-slate-450 bg-clip-text text-transparent">
+            {isSuspendedByAdmin ? "Event Creation Suspended" : "Insufficient Trust Score"}
+          </h2>
+          
+          <p className="text-xs text-slate-400 mt-3 leading-relaxed max-w-sm">
+            {isSuspendedByAdmin 
+              ? "Your access to create community events has been restricted by an administrator. Please reach out to support if you believe this is in error."
+              : `Your trust score of ${Number(profile?.trust_score).toFixed(2)} is below the required 3.50 threshold. Participate in standard claims and maintain positive reviews to restore your standing.`
+            }
+          </p>
+
+          <div className="w-full mt-8 bg-slate-900/20 border border-slate-900 rounded-3xl p-5 space-y-4 text-left">
+            <div className="flex justify-between items-center text-xs py-1 border-b border-slate-900/60">
+              <span className="text-slate-500 font-bold">Policy Status</span>
+              <span className="font-extrabold text-red-400 uppercase tracking-widest text-[9px] bg-red-500/10 border border-red-500/20 px-2.5 py-0.5 rounded">
+                RESTRICTED
+              </span>
+            </div>
+            
+            <div className="flex justify-between items-center text-xs py-1 border-b border-slate-900/60">
+              <span className="text-slate-500 font-bold">Your Trust Score</span>
+              <span className={`font-mono font-bold ${isSuspendedByTrust ? "text-red-400" : "text-slate-300"}`}>
+                ★ {Number(profile?.trust_score ?? 5.0).toFixed(2)}
+              </span>
+            </div>
+
+            <div className="flex justify-between items-center text-xs py-1">
+              <span className="text-slate-500 font-bold">Admin Override Status</span>
+              <span className={`font-mono font-bold ${isSuspendedByAdmin ? "text-red-400" : "text-emerald-400"}`}>
+                {isSuspendedByAdmin ? "Suspended" : "Active"}
+              </span>
+            </div>
+          </div>
+
+          <Link href="/events" className="mt-8 inline-flex items-center gap-1.5 text-xs text-amber-500 hover:text-amber-400 font-black uppercase tracking-wider transition-colors">
+            <ArrowLeft size={16} />
+            Back to Events Feed
+          </Link>
+        </main>
       </div>
     );
   }
