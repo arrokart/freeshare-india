@@ -1189,7 +1189,7 @@ function LandingPageView({ listings, trendingListings, lang }: { listings: any[]
               </svg>
               {t("app_title")}
             </span>
-            <div className="flex items-center gap-1 bg-slate-900 border border-slate-800 rounded-full px-3 py-1 text-[10px] font-bold text-slate-400 shadow-inner">
+            <div className="hidden sm:flex items-center gap-1 bg-slate-900 border border-slate-800 rounded-full px-3 py-1 text-[10px] font-bold text-slate-400 shadow-inner">
               <MapPin size={10} className="text-teal-400" />
               <span>Delhi</span>
               <span className="text-[7px]">▼</span>
@@ -1203,7 +1203,7 @@ function LandingPageView({ listings, trendingListings, lang }: { listings: any[]
             <button onClick={() => scrollToSection("community-stories")} className="hover:text-teal-400 transition-colors cursor-pointer">Community</button>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="hidden sm:flex items-center gap-3">
             <LanguageSelector />
             <Link href="/login" className="text-xs font-bold text-slate-350 hover:text-teal-400 transition-colors px-3 py-2">
               Log in
