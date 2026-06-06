@@ -53,7 +53,11 @@ export async function GET(request: Request) {
       .single();
 
     if (error || !adminProfile || !adminProfile.bio) {
-      return NextResponse.json(DEFAULT_SETTINGS);
+      return NextResponse.json(DEFAULT_SETTINGS, {
+        headers: {
+          "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate"
+        }
+      });
     }
 
     try {
@@ -77,13 +81,25 @@ export async function GET(request: Request) {
         skill_categories: parsed.skill_categories ?? DEFAULT_SETTINGS.skill_categories,
         brand_logo_url: parsed.brand_logo_url ?? DEFAULT_SETTINGS.brand_logo_url,
         logo_display_mode: parsed.logo_display_mode ?? DEFAULT_SETTINGS.logo_display_mode
+      }, {
+        headers: {
+          "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate"
+        }
       });
     } catch {
-      return NextResponse.json(DEFAULT_SETTINGS);
+      return NextResponse.json(DEFAULT_SETTINGS, {
+        headers: {
+          "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate"
+        }
+      });
     }
   } catch (error: any) {
     console.error("Fetch settings error:", error);
-    return NextResponse.json(DEFAULT_SETTINGS);
+    return NextResponse.json(DEFAULT_SETTINGS, {
+      headers: {
+        "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate"
+      }
+    });
   }
 }
 
