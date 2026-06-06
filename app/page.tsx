@@ -1216,6 +1216,18 @@ export default function HomeFeed() {
         )}
       </div>
 
+      {/* Footer Section */}
+      <footer className="border-t border-slate-900/60 bg-slate-950/20 py-8 px-4 text-center mt-12 mb-4">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-[10px] sm:text-xs text-slate-500 font-medium">
+          <p>© {new Date().getFullYear()} {displayAppName}. All rights reserved.</p>
+          <div className="flex flex-wrap justify-center gap-6 font-semibold uppercase tracking-wider text-[9px] sm:text-[10px]">
+            <Link href="/terms" className="hover:text-teal-400 transition-colors">Terms of Service</Link>
+            <Link href="/privacy" className="hover:text-teal-400 transition-colors">Privacy Policy</Link>
+            <a href={`mailto:${supportEmail}`} className="hover:text-teal-400 transition-colors">Grievance Desk</a>
+          </div>
+        </div>
+      </footer>
+
       {/* Location Picker Overlay Dialog */}
       <LocationPickerModal
         isOpen={showLocationPicker}
