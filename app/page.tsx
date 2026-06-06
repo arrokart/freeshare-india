@@ -8,6 +8,8 @@ import dynamic from "next/dynamic";
 import LocationPickerModal from "@/components/LocationPickerModal";
 import { getTranslation, Language } from "@/lib/i18n";
 import LanguageSelector from "@/components/LanguageSelector";
+import { useBranding } from "@/components/BrandingContext";
+import { parseCategory } from "@/lib/branding";
 
 const ProximityMap = dynamic(() => import("@/components/ProximityMap"), {
   ssr: false,
@@ -59,6 +61,7 @@ const getNotificationIcon = (type: string) => {
 
 
 export default function HomeFeed() {
+  const { appName, appShortName, appDescription, supportEmail, appDomain, itemCategories } = useBranding();
   const [user, setUser] = useState<any>(null);
   const [listings, setListings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -116,6 +119,7 @@ export default function HomeFeed() {
   }, []);
 
   const t = (key: any) => getTranslation(key, lang);
+  const displayAppName = appName === "FreeShare India" ? t("app_title") : appName;
 
   // Campaign & Limit States
   const [activeCampaign, setActiveCampaign] = useState<any>(null);
@@ -439,7 +443,7 @@ export default function HomeFeed() {
     return (
       <div className="min-h-screen bg-slate-950 text-slate-150 flex flex-col items-center justify-center gap-4">
         <Loader2 className="animate-spin text-teal-400" size={36} />
-        <p className="text-sm text-slate-500">Initializing FreeShare India...</p>
+        <p className="text-sm text-slate-500">Initializing {displayAppName}...</p>
       </div>
     );
   }
@@ -456,7 +460,7 @@ export default function HomeFeed() {
         <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-5">
             <span className="text-xl font-black bg-gradient-to-r from-teal-400 to-emerald-400 bg-clip-text text-transparent select-none">
-              {t("app_title")}
+              {displayAppName}
             </span>
             
             <Link
@@ -725,7 +729,7 @@ export default function HomeFeed() {
                             
                             <a
                               href={`https://api.whatsapp.com/send?text=${encodeURIComponent(
-                                `Hey! Check out FreeShare India to claim free pre-loved goods in your city! Sign up using my link: ${refLink} or use referral code ${refCode}`
+                                `Hey! Check out ${displayAppName} to claim free pre-loved goods in your city! Sign up using my link: ${refLink} or use referral code ${refCode}`
                               )}`}
                               target="_blank"
                               rel="noopener noreferrer"
@@ -884,21 +888,31 @@ export default function HomeFeed() {
 
         {/* Category horizontal scrolling bar — hidden when Skills only selected */}
         {selectedListingType !== "skill" && (
-        <div className="flex items-center gap-2 overflow-x-auto py-2 no-scrollbar scroll-smooth">
-          {CATEGORIES.map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setSelectedCategory(cat)}
-              className={`px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all border ${
-                selectedCategory === cat
-                  ? "bg-teal-500/10 border-teal-500/40 text-teal-400"
-                  : "bg-slate-900/60 border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700"
-              }`}
-            >
-              {cat}
-            </button>
-          ))}
-        </div>
+          <div className="relative w-full">
+            {/* Visual fade overlays to indicate scrollability */}
+            <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-slate-950 to-transparent pointer-events-none z-10" />
+            <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-slate-950 to-transparent pointer-events-none z-10" />
+            
+            <div className="flex items-center gap-2 overflow-x-auto py-2 px-1 no-scrollbar scroll-smooth">
+              {["All", ...itemCategories].map((cat) => {
+                const { emoji, name } = cat === "All" ? { emoji: "🌐", name: "All" } : parseCategory(cat);
+                return (
+                  <button
+                    key={cat}
+                    onClick={() => setSelectedCategory(cat)}
+                    className={`px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all border flex items-center gap-1.5 cursor-pointer ${
+                      selectedCategory === cat
+                        ? "bg-teal-500/10 border-teal-500/40 text-teal-400"
+                        : "bg-slate-900/60 border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700"
+                    }`}
+                  >
+                    <span>{emoji}</span>
+                    <span>{name}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         )}
       </div>
       {/* Proximity Map Section */}
@@ -1132,8 +1146,10 @@ export default function HomeFeed() {
 }
 
 function LandingPageView({ listings, trendingListings, lang }: { listings: any[]; trendingListings: any[]; lang: Language }) {
+  const { appName, appShortName, appDescription, supportEmail, appDomain } = useBranding();
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const t = (key: any) => getTranslation(key, lang);
+  const displayAppName = appName === "FreeShare India" ? t("app_title") : appName;
   
   // Custom Smooth Scrolling helper
   const scrollToSection = (id: string) => {
@@ -1202,7 +1218,7 @@ function LandingPageView({ listings, trendingListings, lang }: { listings: any[]
               <svg className="w-6 h-6 text-teal-400 fill-current" viewBox="0 0 24 24">
                 <path d="M12 2a10 10 0 00-7.07 17.07L12 22l7.07-2.93A10 10 0 0012 2zm-1 14.5V13H8v-2h3V8.5a2.5 2.5 0 015 0V11h-2V8.5a.5.5 0 00-1 0V13h3v2h-3v1.5a.5.5 0 001 0v.5a1.5 1.5 0 01-3 0z" />
               </svg>
-              {t("app_title")}
+              {displayAppName}
             </span>
             <div className="hidden sm:flex items-center gap-1 bg-slate-900 border border-slate-800 rounded-full px-3 py-1 text-[10px] font-bold text-slate-400 shadow-inner">
               <MapPin size={10} className="text-teal-400" />
@@ -1253,7 +1269,7 @@ function LandingPageView({ listings, trendingListings, lang }: { listings: any[]
           <div className="absolute bottom-0 left-0 right-0 bg-slate-950 border-t border-slate-800 rounded-t-3xl px-5 pt-5 pb-10 shadow-2xl animate-in slide-in-from-bottom duration-300" style={{ paddingBottom: 'calc(2.5rem + env(safe-area-inset-bottom, 0px))' }}>
             {/* Pull handle */}
             <div className="w-10 h-1 bg-slate-700 rounded-full mx-auto mb-6" />
-            <p className="text-[10px] font-extrabold text-slate-500 uppercase tracking-widest mb-4">FreeShare India</p>
+            <p className="text-[10px] font-extrabold text-slate-500 uppercase tracking-widest mb-4">{displayAppName}</p>
             <div className="space-y-3">
               <Link
                 href="/login"
@@ -1423,7 +1439,7 @@ function LandingPageView({ listings, trendingListings, lang }: { listings: any[]
       {/* How it Works Section */}
       <section id="how-it-works" className="max-w-7xl mx-auto px-4 py-16 text-center scroll-mt-20">
         <h2 className="text-2xl sm:text-3xl font-black tracking-tight">
-          How <span className="bg-gradient-to-r from-teal-400 to-emerald-400 bg-clip-text text-transparent">FreeShare</span> Works?
+          How <span className="bg-gradient-to-r from-teal-400 to-emerald-400 bg-clip-text text-transparent">{appShortName}</span> Works?
         </h2>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-12">
@@ -1612,7 +1628,7 @@ function LandingPageView({ listings, trendingListings, lang }: { listings: any[]
 
               <div className="bg-slate-900 border border-slate-850 p-5 rounded-3xl space-y-3.5 shadow-lg relative">
                 <p className="text-xs text-slate-350 leading-relaxed italic">
-                  "When moving out, I didn't want my kitchen appliances to end up in the dump. I posted my old rice cooker and blender on FreeShare. Within 30 minutes, they were matched to someone who had just moved to town!"
+                  `When moving out, I didn't want my kitchen appliances to end up in the dump. I posted my old rice cooker and blender on ${appShortName}. Within 30 minutes, they were matched to someone who had just moved to town!`
                 </p>
                 <div className="flex items-center gap-3">
                   <img className="w-8 h-8 rounded-full object-cover border border-slate-800" src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&q=80&w=100" alt="Arjun" />
@@ -1728,11 +1744,11 @@ function LandingPageView({ listings, trendingListings, lang }: { listings: any[]
       {/* Footer Section */}
       <footer className="border-t border-slate-900/60 bg-slate-950/20 py-8 px-4 text-center mt-12">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-[10px] sm:text-xs text-slate-500 font-medium">
-          <p>© {new Date().getFullYear()} FreeShare India. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} {displayAppName}. All rights reserved.</p>
           <div className="flex flex-wrap justify-center gap-6 font-semibold uppercase tracking-wider text-[9px] sm:text-[10px]">
             <Link href="/terms" className="hover:text-teal-400 transition-colors">Terms of Service</Link>
             <Link href="/privacy" className="hover:text-teal-400 transition-colors">Privacy Policy</Link>
-            <a href="mailto:legal@freeshare.in" className="hover:text-teal-400 transition-colors">Grievance Desk</a>
+            <a href={`mailto:${supportEmail}`} className="hover:text-teal-400 transition-colors">Grievance Desk</a>
           </div>
         </div>
       </footer>

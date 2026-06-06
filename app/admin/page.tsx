@@ -8,7 +8,7 @@ import {
   Loader2, ArrowLeft, ShieldAlert, Flag, UserMinus, FileMinus, 
   CheckCircle2, ShieldCheck, Search, SlidersHorizontal, Users, 
   Settings, Check, X, ShieldX, ToggleLeft, ToggleRight, RotateCcw,
-  Edit2, Heart, FileText, BarChart3, Send
+  Edit2, Heart, FileText, BarChart3, Send, Palette, Megaphone
 } from "lucide-react";
 
 type TabState = "queue" | "users" | "listings" | "settings" | "ngos" | "analytics" | "broadcast";
@@ -72,8 +72,19 @@ export default function AdminPage() {
   const [welcomeTrialEnabled, setWelcomeTrialEnabled] = useState(true);
   const [gaMeasurementId, setGaMeasurementId] = useState("");
   const [adsenseClientId, setAdsenseClientId] = useState("");
+  const [appName, setAppName] = useState("");
+  const [appDescription, setAppDescription] = useState("");
+  const [supportEmail, setSupportEmail] = useState("");
+  const [appLogoUrl, setAppLogoUrl] = useState("");
+  const [appDomain, setAppDomain] = useState("");
+  const [uploadingLogo, setUploadingLogo] = useState(false);
   const [loadingSettings, setLoadingSettings] = useState(false);
   const [savingSettings, setSavingSettings] = useState(false);
+  const [configSubTab, setConfigSubTab] = useState<"rules" | "branding" | "categories" | "analytics" | "campaigns">("rules");
+  const [itemCategoriesList, setItemCategoriesList] = useState<string[]>([]);
+  const [skillCategoriesList, setSkillCategoriesList] = useState<string[]>([]);
+  const [newItemCategoryInput, setNewItemCategoryInput] = useState("");
+  const [newSkillCategoryInput, setNewSkillCategoryInput] = useState("");
 
   // Broadcast Panel States
   const [broadcastTitle, setBroadcastTitle] = useState("");
@@ -240,6 +251,13 @@ export default function AdminPage() {
         setWelcomeTrialEnabled(data.welcome_trial_enabled ?? true);
         setGaMeasurementId(data.ga_measurement_id ?? "");
         setAdsenseClientId(data.adsense_client_id ?? "");
+        setAppName(data.app_name ?? "");
+        setAppDescription(data.app_description ?? "");
+        setSupportEmail(data.support_email ?? "");
+        setAppLogoUrl(data.app_logo_url ?? "");
+        setAppDomain(data.app_domain ?? "");
+        setItemCategoriesList(data.item_categories ?? []);
+        setSkillCategoriesList(data.skill_categories ?? []);
       }
     } catch (err: any) {
       console.error("Failed to load settings:", err);
@@ -425,7 +443,14 @@ export default function AdminPage() {
           campaign_name: campaignName,
           welcome_trial_enabled: welcomeTrialEnabled,
           ga_measurement_id: gaMeasurementId,
-          adsense_client_id: adsenseClientId
+          adsense_client_id: adsenseClientId,
+          app_name: appName,
+          app_description: appDescription,
+          support_email: supportEmail,
+          app_logo_url: appLogoUrl,
+          app_domain: appDomain,
+          item_categories: itemCategoriesList,
+          skill_categories: skillCategoriesList
         })
       });
 
@@ -1494,190 +1519,563 @@ export default function AdminPage() {
             TAB 4: CONFIGURATION SETTINGS
             ===================================================================== */}
         {activeTab === "settings" && (
-          <div className="max-w-xl bg-slate-900/30 border border-slate-900 rounded-3xl p-6 space-y-6 animate-in fade-in duration-200">
-            <div>
-              <h2 className="text-xl font-black text-slate-100">System Configurations</h2>
-              <p className="text-xs text-slate-500 mt-1 font-sans">Modify default rules, limitations, and threshold limits dynamically.</p>
-            </div>
-
+          <div className="max-w-4xl w-full animate-in fade-in duration-200">
             {loadingSettings ? (
-              <div className="py-10 text-center flex justify-center items-center gap-2">
+              <div className="py-10 text-center flex justify-center items-center gap-2 bg-slate-900/30 border border-slate-900 rounded-3xl">
                 <Loader2 className="animate-spin text-teal-400" size={20} />
                 <span className="text-xs text-slate-500">Loading configurations...</span>
               </div>
             ) : (
-              <form onSubmit={handleSaveSettings} className="space-y-5">
-                {/* Monthly Claim Limit */}
-                <div className="space-y-1.5">
-                  <label className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider block">
-                    Monthly Claim Limit
-                  </label>
-                  <input
-                    type="number"
-                    value={monthlyLimit}
-                    onChange={(e) => setMonthlyLimit(e.target.value)}
-                    required
-                    className="w-full bg-slate-950/60 border border-slate-800 rounded-xl p-3 text-xs text-slate-100 focus:outline-none focus:border-teal-500 font-mono"
-                  />
-                  <p className="text-[10px] text-slate-500">The total number of free listings a regular account can claim each month.</p>
-                </div>
-
-                {/* Grace Period Hours */}
-                <div className="space-y-1.5">
-                  <label className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider block">
-                    Grace Warning Period (Hours)
-                  </label>
-                  <input
-                    type="number"
-                    value={gracePeriod}
-                    onChange={(e) => setGracePeriod(e.target.value)}
-                    required
-                    className="w-full bg-slate-950/60 border border-slate-800 rounded-xl p-3 text-xs text-slate-100 focus:outline-none focus:border-teal-500 font-mono"
-                  />
-                  <p className="text-[10px] text-slate-500">The time in hours allowed to edit mild-flagged items before automatic removal.</p>
-                </div>
-
-                {/* Auto Appeal Trust Threshold */}
-                <div className="space-y-1.5">
-                  <label className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider block">
-                    Auto-Appeal Trust Score Threshold
-                  </label>
-                  <input
-                    type="number"
-                    step="0.1"
-                    min="1.0"
-                    max="5.0"
-                    value={trustThreshold}
-                    onChange={(e) => setTrustThreshold(e.target.value)}
-                    required
-                    className="w-full bg-slate-950/60 border border-slate-800 rounded-xl p-3 text-xs text-slate-100 focus:outline-none focus:border-teal-500 font-mono"
-                  />
-                  <p className="text-[10px] text-slate-500">Minimum user trust score (★) needed to support instant listing auto-restores during appeal.</p>
-                </div>
-
-                {/* 30-Day Welcome Trial Enable/Disable Toggle */}
-                <div className="flex items-center justify-between p-3.5 bg-slate-950/40 border border-slate-800 rounded-2xl">
-                  <div className="space-y-0.5 max-w-[80%]">
-                    <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider block">
-                      30-Day Welcome Trial Pass
-                    </span>
-                    <span className="text-[10px] text-slate-500 block leading-relaxed">
-                      Enable 30 days of unlimited claims for newly registered neighbor profiles automatically.
-                    </span>
-                  </div>
+              <form onSubmit={handleSaveSettings} className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                
+                {/* Left Navigation Sidebar */}
+                <div className="md:col-span-1 flex flex-row md:flex-col overflow-x-auto md:overflow-x-visible gap-1.5 pb-2 md:pb-0 scrollbar-none">
                   <button
                     type="button"
-                    onClick={() => setWelcomeTrialEnabled(!welcomeTrialEnabled)}
-                    className="text-teal-450 hover:text-teal-350 transition-colors shrink-0"
+                    onClick={() => setConfigSubTab("rules")}
+                    className={`flex items-center gap-2.5 px-4 py-3 rounded-2xl text-left text-xs font-black transition-all shrink-0 cursor-pointer w-full border ${
+                      configSubTab === "rules"
+                        ? "bg-teal-500/10 border-teal-500/30 text-teal-400"
+                        : "bg-slate-900/40 border-slate-900 text-slate-400 hover:text-slate-200 hover:bg-slate-900/60"
+                    }`}
                   >
-                    {welcomeTrialEnabled ? (
-                      <ToggleRight size={36} strokeWidth={1.5} />
-                    ) : (
-                      <ToggleLeft size={36} strokeWidth={1.5} className="text-slate-600" />
-                    )}
+                    <Settings size={14} />
+                    <span>Core Rules</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setConfigSubTab("branding")}
+                    className={`flex items-center gap-2.5 px-4 py-3 rounded-2xl text-left text-xs font-black transition-all shrink-0 cursor-pointer w-full border ${
+                      configSubTab === "branding"
+                        ? "bg-teal-500/10 border-teal-500/30 text-teal-400"
+                        : "bg-slate-900/40 border-slate-900 text-slate-400 hover:text-slate-200 hover:bg-slate-900/60"
+                    }`}
+                  >
+                    <Palette size={14} />
+                    <span>Branding & Assets</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setConfigSubTab("categories")}
+                    className={`flex items-center gap-2.5 px-4 py-3 rounded-2xl text-left text-xs font-black transition-all shrink-0 cursor-pointer w-full border ${
+                      configSubTab === "categories"
+                        ? "bg-teal-500/10 border-teal-500/30 text-teal-400"
+                        : "bg-slate-900/40 border-slate-900 text-slate-400 hover:text-slate-200 hover:bg-slate-900/60"
+                    }`}
+                  >
+                    <SlidersHorizontal size={14} />
+                    <span>Categories & Tags</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setConfigSubTab("analytics")}
+                    className={`flex items-center gap-2.5 px-4 py-3 rounded-2xl text-left text-xs font-black transition-all shrink-0 cursor-pointer w-full border ${
+                      configSubTab === "analytics"
+                        ? "bg-teal-500/10 border-teal-500/30 text-teal-400"
+                        : "bg-slate-900/40 border-slate-900 text-slate-400 hover:text-slate-200 hover:bg-slate-900/60"
+                    }`}
+                  >
+                    <BarChart3 size={14} />
+                    <span>Analytics & Ads</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setConfigSubTab("campaigns")}
+                    className={`flex items-center gap-2.5 px-4 py-3 rounded-2xl text-left text-xs font-black transition-all shrink-0 cursor-pointer w-full border ${
+                      configSubTab === "campaigns"
+                        ? "bg-teal-500/10 border-teal-500/30 text-teal-400"
+                        : "bg-slate-900/40 border-slate-900 text-slate-400 hover:text-slate-200 hover:bg-slate-900/60"
+                    }`}
+                  >
+                    <Megaphone size={14} />
+                    <span>Campaign Settings</span>
                   </button>
                 </div>
 
-                {/* Analytics & Monetization Header */}
-                <div className="pt-4 border-t border-slate-900">
-                  <h3 className="text-xs font-black text-slate-200 uppercase tracking-wider mb-3">Analytics & Ads Integrations</h3>
-                </div>
+                {/* Right Form Fields Panel */}
+                <div className="md:col-span-3 bg-slate-900/30 border border-slate-900 rounded-3xl p-6 space-y-6">
+                  
+                  {/* SUB-TAB 1: CORE RULES */}
+                  {configSubTab === "rules" && (
+                    <div className="space-y-5 animate-in fade-in duration-150">
+                      <div>
+                        <h3 className="text-sm font-black text-slate-200 uppercase tracking-wider">Core Platform Rules</h3>
+                        <p className="text-[10px] text-slate-500 mt-0.5 font-sans">Control claim limits, auto-moderation thresholds, and grace periods.</p>
+                      </div>
 
-                {/* Google Analytics ID */}
-                <div className="space-y-1.5">
-                  <label className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider block">
-                    Google Analytics ID (GTAG)
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="e.g. G-XXXXXXXXXX"
-                    value={gaMeasurementId}
-                    onChange={(e) => setGaMeasurementId(e.target.value)}
-                    className="w-full bg-slate-950/60 border border-slate-800 rounded-xl p-3 text-xs text-slate-100 focus:outline-none focus:border-teal-500 font-mono"
-                  />
-                  <p className="text-[10px] text-slate-500">Google Analytics Measurement ID to track site visits and engagement behavior dynamically.</p>
-                </div>
+                      {/* Monthly Claim Limit */}
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider block">
+                          Monthly Claim Limit
+                        </label>
+                        <input
+                          type="number"
+                          value={monthlyLimit}
+                          onChange={(e) => setMonthlyLimit(e.target.value)}
+                          required
+                          className="w-full bg-slate-950/60 border border-slate-800 rounded-xl p-3 text-xs text-slate-100 focus:outline-none focus:border-teal-500 font-mono"
+                        />
+                        <p className="text-[10px] text-slate-500">The total number of free listings a regular account can claim each month.</p>
+                      </div>
 
-                {/* Google AdSense ID */}
-                <div className="space-y-1.5">
-                  <label className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider block">
-                    Google AdSense Client ID
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="e.g. ca-pub-XXXXXXXXXXXXXXXX"
-                    value={adsenseClientId}
-                    onChange={(e) => setAdsenseClientId(e.target.value)}
-                    className="w-full bg-slate-950/60 border border-slate-800 rounded-xl p-3 text-xs text-slate-100 focus:outline-none focus:border-teal-500 font-mono"
-                  />
-                  <p className="text-[10px] text-slate-500">Google AdSense Publisher/Client ID to load third-party display advertisements dynamically.</p>
-                </div>
+                      {/* Grace Period Hours */}
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider block">
+                          Grace Warning Period (Hours)
+                        </label>
+                        <input
+                          type="number"
+                          value={gracePeriod}
+                          onChange={(e) => setGracePeriod(e.target.value)}
+                          required
+                          className="w-full bg-slate-950/60 border border-slate-800 rounded-xl p-3 text-xs text-slate-100 focus:outline-none focus:border-teal-500 font-mono"
+                        />
+                        <p className="text-[10px] text-slate-500">The time in hours allowed to edit mild-flagged items before automatic removal.</p>
+                      </div>
 
-                {/* Campaign Settings Header */}
-                <div className="pt-4 border-t border-slate-900">
-                  <h3 className="text-xs font-black text-slate-200 uppercase tracking-wider mb-3">Promotional Campaign Settings</h3>
-                </div>
+                      {/* Auto Appeal Trust Threshold */}
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider block">
+                          Auto-Appeal Trust Score Threshold
+                        </label>
+                        <input
+                          type="number"
+                          step="0.1"
+                          min="1.0"
+                          max="5.0"
+                          value={trustThreshold}
+                          onChange={(e) => setTrustThreshold(e.target.value)}
+                          required
+                          className="w-full bg-slate-950/60 border border-slate-800 rounded-xl p-3 text-xs text-slate-100 focus:outline-none focus:border-teal-500 font-mono"
+                        />
+                        <p className="text-[10px] text-slate-500">Minimum user trust score (★) needed to support instant listing auto-restores during appeal.</p>
+                      </div>
+                    </div>
+                  )}
 
-                {/* Campaign Type */}
-                <div className="space-y-1.5">
-                  <label className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider block">
-                    Campaign Type
-                  </label>
-                  <select
-                    value={campaignType}
-                    onChange={(e) => setCampaignType(e.target.value)}
-                    className="w-full bg-slate-950/60 border border-slate-800 rounded-xl p-3 text-xs text-slate-100 focus:outline-none focus:border-teal-500"
-                  >
-                    <option value="none">None (Regular Claims Cap)</option>
-                    <option value="unlimited">Unlimited (Free for All)</option>
-                    <option value="custom">Custom Limit (Override Monthly Limit)</option>
-                  </select>
-                  <p className="text-[10px] text-slate-500">Select standard default, unlimited free claims, or a custom monthly promotion cap.</p>
-                </div>
+                  {/* SUB-TAB 2: BRANDING & ASSETS */}
+                  {configSubTab === "branding" && (
+                    <div className="space-y-5 animate-in fade-in duration-150">
+                      <div>
+                        <h3 className="text-sm font-black text-slate-200 uppercase tracking-wider">Branding & Identity</h3>
+                        <p className="text-[10px] text-slate-500 mt-0.5 font-sans">Customize your app name, description, support contact, and logo icon.</p>
+                      </div>
 
-                {/* Campaign Name */}
-                {campaignType !== "none" && (
-                  <div className="space-y-1.5 animate-in slide-in-from-top-1 duration-150">
-                    <label className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider block">
-                      Campaign Name
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="e.g. Joy of Giving Week"
-                      value={campaignName}
-                      onChange={(e) => setCampaignName(e.target.value)}
-                      required={campaignType !== "none"}
-                      className="w-full bg-slate-950/60 border border-slate-800 rounded-xl p-3 text-xs text-slate-100 focus:outline-none focus:border-teal-500"
-                    />
-                    <p className="text-[10px] text-slate-500">The promotional campaign banner text displayed to users on the feed.</p>
+                      {/* Application Name */}
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider block">
+                          Application Name
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={appName}
+                          onChange={(e) => setAppName(e.target.value)}
+                          className="w-full bg-slate-950/60 border border-slate-800 rounded-xl p-3 text-xs text-slate-100 focus:outline-none focus:border-teal-500"
+                        />
+                        <p className="text-[10px] text-slate-500">The title of your application used in headers, titles, and SEO metadata.</p>
+                      </div>
+
+                      {/* Application Description */}
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider block">
+                          Application Description / Tagline
+                        </label>
+                        <textarea
+                          required
+                          value={appDescription}
+                          onChange={(e) => setAppDescription(e.target.value)}
+                          rows={3}
+                          className="w-full bg-slate-950/60 border border-slate-800 rounded-xl p-3 text-xs text-slate-100 focus:outline-none focus:border-teal-500 resize-none"
+                        />
+                        <p className="text-[10px] text-slate-500">The default tagline and description metadata for search engine indexing.</p>
+                      </div>
+
+                      {/* Support Email */}
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider block">
+                          Support Email Address
+                        </label>
+                        <input
+                          type="email"
+                          required
+                          value={supportEmail}
+                          onChange={(e) => setSupportEmail(e.target.value)}
+                          className="w-full bg-slate-950/60 border border-slate-800 rounded-xl p-3 text-xs text-slate-100 focus:outline-none focus:border-teal-500"
+                        />
+                        <p className="text-[10px] text-slate-500">The primary support contact address displayed across the platform.</p>
+                      </div>
+
+                      {/* App Domain */}
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider block">
+                          Custom Application Domain / URL
+                        </label>
+                        <input
+                          type="url"
+                          required
+                          value={appDomain}
+                          onChange={(e) => setAppDomain(e.target.value)}
+                          className="w-full bg-slate-950/60 border border-slate-800 rounded-xl p-3 text-xs text-slate-100 focus:outline-none focus:border-teal-500 font-mono"
+                        />
+                        <p className="text-[10px] text-slate-500">Used to build canonical URLs and links dynamically (e.g. https://yourdomain.com).</p>
+                      </div>
+
+                      {/* App Logo / Uploader */}
+                      <div className="space-y-2">
+                        <label className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider block">
+                          Platform Logo / Icon
+                        </label>
+                        
+                        {appLogoUrl ? (
+                          <div className="flex items-center gap-4 p-3 bg-slate-950/40 border border-slate-850 rounded-2xl">
+                            <div className="w-12 h-12 rounded-xl overflow-hidden bg-slate-900 border border-slate-800 flex items-center justify-center shrink-0">
+                              <img src={appLogoUrl} alt="Logo Preview" className="w-full h-full object-cover" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <span className="text-[10px] text-slate-500 font-bold block truncate">{appLogoUrl}</span>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => setAppLogoUrl("")}
+                              className="text-red-400 hover:text-red-350 text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded border border-red-500/20 bg-red-500/5 hover:bg-red-500/10 transition-colors"
+                            >
+                              Reset Logo
+                            </button>
+                          </div>
+                        ) : (
+                          <label className="flex flex-col items-center justify-center w-full h-24 rounded-2xl border border-dashed border-slate-800 hover:border-teal-500/50 bg-slate-950/20 hover:bg-slate-950/40 transition-all cursor-pointer group">
+                            <Loader2 size={16} className={`text-slate-650 animate-spin mb-1 ${uploadingLogo ? "block" : "hidden"}`} />
+                            <span className={`text-[10px] font-bold text-slate-500 group-hover:text-slate-450 ${uploadingLogo ? "hidden" : "block"}`}>
+                              Click to upload branding logo
+                            </span>
+                            <span className="text-[9px] text-slate-650 mt-1">PNG or JPEG up to 2MB</span>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              disabled={uploadingLogo}
+                              onChange={async (e) => {
+                                if (e.target.files && e.target.files[0]) {
+                                  const file = e.target.files[0];
+                                  setUploadingLogo(true);
+                                  try {
+                                    const presignRes = await fetch("/api/listings/presign", {
+                                      method: "POST",
+                                      headers: { "Content-Type": "application/json" },
+                                      body: JSON.stringify({ filename: file.name, fileType: file.type }),
+                                    });
+                                    const { uploadUrl, fileKey } = await presignRes.json();
+                                    if (!uploadUrl) throw new Error("Failed to get upload url");
+
+                                    const uploadRes = await fetch(uploadUrl, {
+                                      method: "PUT",
+                                      headers: { "Content-Type": file.type },
+                                      body: file,
+                                    });
+                                    if (!uploadRes.ok) throw new Error("Upload failed");
+
+                                    const finalUrl = `https://pub-36f72b3e2769432e86d9d8f0b3abed58.r2.dev/${fileKey}`;
+                                    setAppLogoUrl(finalUrl);
+                                  } catch (err: any) {
+                                    setErrorMsg(err.message || "Failed to upload branding image.");
+                                  } finally {
+                                    setUploadingLogo(false);
+                                  }
+                                }
+                              }}
+                              className="hidden"
+                            />
+                          </label>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* SUB-TAB 3: ANALYTICS & ADS */}
+                  {configSubTab === "analytics" && (
+                    <div className="space-y-5 animate-in fade-in duration-150">
+                      <div>
+                        <h3 className="text-sm font-black text-slate-200 uppercase tracking-wider">Analytics & Monetization</h3>
+                        <p className="text-[10px] text-slate-500 mt-0.5 font-sans">Integrate tracking analytics and display advertisements.</p>
+                      </div>
+
+                      {/* Google Analytics ID */}
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider block">
+                          Google Analytics ID (GTAG)
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="e.g. G-XXXXXXXXXX"
+                          value={gaMeasurementId}
+                          onChange={(e) => setGaMeasurementId(e.target.value)}
+                          className="w-full bg-slate-950/60 border border-slate-800 rounded-xl p-3 text-xs text-slate-100 focus:outline-none focus:border-teal-500 font-mono"
+                        />
+                        <p className="text-[10px] text-slate-500">Google Analytics Measurement ID to track site visits and engagement behavior dynamically.</p>
+                      </div>
+
+                      {/* Google AdSense ID */}
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider block">
+                          Google AdSense Client ID
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="e.g. ca-pub-XXXXXXXXXXXXXXXX"
+                          value={adsenseClientId}
+                          onChange={(e) => setAdsenseClientId(e.target.value)}
+                          className="w-full bg-slate-950/60 border border-slate-800 rounded-xl p-3 text-xs text-slate-100 focus:outline-none focus:border-teal-500 font-mono"
+                        />
+                        <p className="text-[10px] text-slate-500">Google AdSense Publisher/Client ID to load third-party display advertisements dynamically.</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* SUB-TAB 5: CATEGORIES & TAGS */}
+                  {configSubTab === "categories" && (
+                    <div className="space-y-6 animate-in fade-in duration-150">
+                      <div>
+                        <h3 className="text-sm font-black text-slate-200 uppercase tracking-wider">Dynamic Category & Tag Manager</h3>
+                        <p className="text-[10px] text-slate-500 mt-0.5 font-sans">Add, remove, or customize item categories and skill types dynamically.</p>
+                      </div>
+
+                      {/* Item Categories Section */}
+                      <div className="space-y-3 bg-slate-950/40 p-4 border border-slate-850 rounded-2xl">
+                        <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider block">
+                          📦 Item Categories
+                        </span>
+
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            maxLength={2}
+                            placeholder="🍕"
+                            id="item-cat-emoji"
+                            className="w-12 bg-slate-900 border border-slate-800 rounded-xl px-2.5 py-2 text-center text-xs text-slate-100 focus:outline-none focus:border-teal-500"
+                          />
+                          <input
+                            type="text"
+                            placeholder="Add new category (e.g. Baby Care)"
+                            value={newItemCategoryInput}
+                            onChange={(e) => setNewItemCategoryInput(e.target.value)}
+                            className="flex-1 bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-teal-500"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const cleanedName = newItemCategoryInput.trim();
+                              const emojiEl = document.getElementById("item-cat-emoji") as HTMLInputElement;
+                              const emoji = emojiEl?.value.trim() || "✨";
+                              if (cleanedName) {
+                                const fullCatStr = `${emoji} ${cleanedName}`;
+                                if (!itemCategoriesList.includes(fullCatStr)) {
+                                  setItemCategoriesList([...itemCategoriesList, fullCatStr]);
+                                  setNewItemCategoryInput("");
+                                  if (emojiEl) emojiEl.value = "";
+                                }
+                              }
+                            }}
+                            className="bg-teal-500 hover:bg-teal-400 text-slate-950 px-4 py-2 rounded-xl text-xs font-black transition-colors shrink-0"
+                          >
+                            Add
+                          </button>
+                        </div>
+
+                        <div className="flex flex-wrap gap-1.5 pt-2 max-h-40 overflow-y-auto pr-1">
+                          {itemCategoriesList.length === 0 ? (
+                            <span className="text-[10px] text-slate-600 italic">No categories created yet.</span>
+                          ) : (
+                            itemCategoriesList.map((cat, idx) => (
+                              <div
+                                key={idx}
+                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-900 border border-slate-800 text-[10px] text-slate-350 font-semibold"
+                              >
+                                <span>{cat}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setItemCategoriesList(itemCategoriesList.filter(c => c !== cat));
+                                  }}
+                                  className="text-red-400 hover:text-red-350 font-black cursor-pointer text-xs"
+                                >
+                                  ×
+                                </button>
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Skill Categories Section */}
+                      <div className="space-y-3 bg-slate-950/40 p-4 border border-slate-850 rounded-2xl">
+                        <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider block">
+                          🛠️ Skill Categories
+                        </span>
+
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            maxLength={2}
+                            placeholder="🔧"
+                            id="skill-cat-emoji"
+                            className="w-12 bg-slate-900 border border-slate-800 rounded-xl px-2.5 py-2 text-center text-xs text-slate-100 focus:outline-none focus:border-teal-500"
+                          />
+                          <input
+                            type="text"
+                            placeholder="Add new skill (e.g. Yoga Training)"
+                            value={newSkillCategoryInput}
+                            onChange={(e) => setNewSkillCategoryInput(e.target.value)}
+                            className="flex-1 bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-teal-500"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const cleanedName = newSkillCategoryInput.trim();
+                              const emojiEl = document.getElementById("skill-cat-emoji") as HTMLInputElement;
+                              const emoji = emojiEl?.value.trim() || "✨";
+                              if (cleanedName) {
+                                const fullSkillStr = `${emoji} ${cleanedName}`;
+                                if (!skillCategoriesList.includes(fullSkillStr)) {
+                                  setSkillCategoriesList([...skillCategoriesList, fullSkillStr]);
+                                  setNewSkillCategoryInput("");
+                                  if (emojiEl) emojiEl.value = "";
+                                }
+                              }
+                            }}
+                            className="bg-teal-500 hover:bg-teal-400 text-slate-950 px-4 py-2 rounded-xl text-xs font-black transition-colors shrink-0"
+                          >
+                            Add
+                          </button>
+                        </div>
+
+                        <div className="flex flex-wrap gap-1.5 pt-2 max-h-40 overflow-y-auto pr-1">
+                          {skillCategoriesList.length === 0 ? (
+                            <span className="text-[10px] text-slate-600 italic">No skill tags created yet.</span>
+                          ) : (
+                            skillCategoriesList.map((skill, idx) => (
+                              <div
+                                key={idx}
+                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-900 border border-slate-800 text-[10px] text-slate-350 font-semibold"
+                              >
+                                <span>{skill}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setSkillCategoriesList(skillCategoriesList.filter(s => s !== skill));
+                                  }}
+                                  className="text-red-400 hover:text-red-350 font-black cursor-pointer text-xs"
+                                >
+                                  ×
+                                </button>
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* SUB-TAB 4: PROMOTIONAL CAMPAIGNS */}
+                  {configSubTab === "campaigns" && (
+                    <div className="space-y-5 animate-in fade-in duration-150">
+                      <div>
+                        <h3 className="text-sm font-black text-slate-200 uppercase tracking-wider">Promotional Campaigns</h3>
+                        <p className="text-[10px] text-slate-500 mt-0.5 font-sans">Manage temporary monthly limit increases, welcome passes, or campaigns.</p>
+                      </div>
+
+                      {/* 30-Day Welcome Trial Enable/Disable Toggle */}
+                      <div className="flex items-center justify-between p-3.5 bg-slate-950/40 border border-slate-800 rounded-2xl">
+                        <div className="space-y-0.5 max-w-[80%]">
+                          <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider block">
+                            30-Day Welcome Trial Pass
+                          </span>
+                          <span className="text-[10px] text-slate-500 block leading-relaxed font-sans">
+                            Enable 30 days of unlimited claims for newly registered neighbor profiles automatically.
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setWelcomeTrialEnabled(!welcomeTrialEnabled)}
+                          className="text-teal-450 hover:text-teal-355 transition-colors shrink-0"
+                        >
+                          {welcomeTrialEnabled ? (
+                            <ToggleRight size={36} strokeWidth={1.5} />
+                          ) : (
+                            <ToggleLeft size={36} strokeWidth={1.5} className="text-slate-600" />
+                          )}
+                        </button>
+                      </div>
+
+                      {/* Campaign Type */}
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider block">
+                          Campaign Type
+                        </label>
+                        <select
+                          value={campaignType}
+                          onChange={(e) => setCampaignType(e.target.value)}
+                          className="w-full bg-slate-950/60 border border-slate-800 rounded-xl p-3 text-xs text-slate-100 focus:outline-none focus:border-teal-500"
+                        >
+                          <option value="none">None (Regular Claims Cap)</option>
+                          <option value="unlimited">Unlimited (Free for All)</option>
+                          <option value="custom">Custom Limit (Override Monthly Limit)</option>
+                        </select>
+                        <p className="text-[10px] text-slate-500">Select standard default, unlimited free claims, or a custom monthly promotion cap.</p>
+                      </div>
+
+                      {/* Campaign Name */}
+                      {campaignType !== "none" && (
+                        <div className="space-y-1.5 animate-in slide-in-from-top-1 duration-150">
+                          <label className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider block">
+                            Campaign Name
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="e.g. Joy of Giving Week"
+                            value={campaignName}
+                            onChange={(e) => setCampaignName(e.target.value)}
+                            required={campaignType !== "none"}
+                            className="w-full bg-slate-950/60 border border-slate-800 rounded-xl p-3 text-xs text-slate-100 focus:outline-none focus:border-teal-500"
+                          />
+                          <p className="text-[10px] text-slate-500">The promotional campaign banner text displayed to users on the feed.</p>
+                        </div>
+                      )}
+
+                      {/* Campaign Limit */}
+                      {campaignType === "custom" && (
+                        <div className="space-y-1.5 animate-in slide-in-from-top-1 duration-150">
+                          <label className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider block">
+                            Campaign Limit
+                          </label>
+                          <input
+                            type="number"
+                            value={campaignLimit}
+                            onChange={(e) => setCampaignLimit(e.target.value)}
+                            required={campaignType === "custom"}
+                            className="w-full bg-slate-950/60 border border-slate-800 rounded-xl p-3 text-xs text-slate-100 focus:outline-none focus:border-teal-500 font-mono"
+                          />
+                          <p className="text-[10px] text-slate-500">The customized maximum claims count limit applied to all users during campaign active period.</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Submit button */}
+                  <div className="pt-4 border-t border-slate-900/60">
+                    <button
+                      type="submit"
+                      disabled={savingSettings}
+                      className="w-full bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-400 hover:to-emerald-400 text-slate-950 font-bold text-xs py-3.5 rounded-xl shadow-lg transition-all active:scale-[0.99] disabled:opacity-50"
+                    >
+                      {savingSettings ? "Saving Settings..." : "Save System Configs"}
+                    </button>
                   </div>
-                )}
 
-                {/* Campaign Limit */}
-                {campaignType === "custom" && (
-                  <div className="space-y-1.5 animate-in slide-in-from-top-1 duration-150">
-                    <label className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider block">
-                      Campaign Limit
-                    </label>
-                    <input
-                      type="number"
-                      value={campaignLimit}
-                      onChange={(e) => setCampaignLimit(e.target.value)}
-                      required={campaignType === "custom"}
-                      className="w-full bg-slate-950/60 border border-slate-800 rounded-xl p-3 text-xs text-slate-100 focus:outline-none focus:border-teal-500 font-mono"
-                    />
-                    <p className="text-[10px] text-slate-500">The customized maximum claims count limit applied to all users during campaign active period.</p>
-                  </div>
-                )}
-
-                {/* Submit button */}
-                <button
-                  type="submit"
-                  disabled={savingSettings}
-                  className="w-full bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-400 hover:to-emerald-400 text-slate-950 font-bold text-xs py-3 rounded-xl shadow-lg transition-all"
-                >
-                  {savingSettings ? "Saving Settings..." : "Save System Configs"}
-                </button>
+                </div>
               </form>
             )}
           </div>

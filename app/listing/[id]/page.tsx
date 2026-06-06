@@ -1,33 +1,38 @@
 import { Metadata } from "next";
 import { supabase } from "@/lib/supabaseClient";
 import ListingDetailClient from "@/components/ListingDetailClient";
+import { getBrandingServer } from "@/lib/brandingServer";
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
-  const { data: listing } = await supabase
-    .from("listings")
-    .select("title, description, images, city, area, condition")
-    .eq("id", id)
-    .maybeSingle();
+  const [listingRes, branding] = await Promise.all([
+    supabase.from("listings").select("title, description, images, city, area, condition").eq("id", id).maybeSingle(),
+    getBrandingServer()
+  ]);
+
+  const { data: listing } = listingRes;
 
   if (!listing) {
     return {
-      title: "Item Not Found | FreeShare India",
-      description: "This item could not be found on FreeShare India.",
+      title: `Item Not Found | ${branding.appName}`,
+      description: `This item could not be found on ${branding.appName}.`,
     };
   }
 
-  const ogImage = listing.images?.[0] || "/icon-512x512.png";
+  const ogImage = listing.images?.[0] || branding.appLogoUrl;
   const desc = `${listing.condition || "Pre-loved"} item in ${listing.area}, ${listing.city}. ${listing.description}`;
 
+  const domainUrl = branding.appDomain.replace(/\/+$/, "");
+  const canonicalUrl = `${domainUrl}/listing/${id}`;
+
   return {
-    title: `${listing.title} | FreeShare India`,
+    title: `${listing.title} | ${branding.appName}`,
     description: desc,
     openGraph: {
-      title: `${listing.title} | FreeShare India`,
+      title: `${listing.title} | ${branding.appName}`,
       description: desc,
-      url: `https://freeshare-india.vercel.app/listing/${id}`,
-      siteName: "FreeShare India",
+      url: canonicalUrl,
+      siteName: branding.appName,
       images: [
         {
           url: ogImage,
@@ -40,7 +45,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     },
     twitter: {
       card: "summary_large_image",
-      title: `${listing.title} | FreeShare India`,
+      title: `${listing.title} | ${branding.appName}`,
       description: desc,
       images: [ogImage],
     },

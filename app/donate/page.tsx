@@ -8,6 +8,8 @@ import { getR2PublicUrl } from "@/lib/r2";
 import { Upload, X, Loader2, ArrowLeft, MapPin, Zap, Package } from "lucide-react";
 import CityAutocomplete from "@/components/CityAutocomplete";
 import { normalizeCityName } from "@/lib/cities";
+import { useBranding } from "@/components/BrandingContext";
+import { parseCategory } from "@/lib/branding";
 
 const ITEM_CATEGORIES = [
   "Furniture", "Electronics", "Books", "Clothing", "Toys",
@@ -34,6 +36,7 @@ const SKILL_CATEGORY_META: Record<string, { emoji: string; color: string }> = {
 };
 
 export default function DonatePage() {
+  const { itemCategories, skillCategories } = useBranding();
   const router = useRouter();
   const [userId, setUserId] = useState<string | null>(null);
 
@@ -354,7 +357,7 @@ export default function DonatePage() {
 
   const isSkill = listingType === "skill";
   const accentClass = isSkill ? "violet" : "teal";
-  const categories = isSkill ? SKILL_CATEGORIES : ITEM_CATEGORIES;
+  const categories = isSkill ? (skillCategories || []) : (itemCategories || []);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-slate-100 font-sans pb-24 sm:pb-12 selection:bg-violet-500 selection:text-black">
@@ -495,8 +498,8 @@ export default function DonatePage() {
               </label>
               {isSkill ? (
                 <div className="grid grid-cols-2 gap-2">
-                  {SKILL_CATEGORIES.map((cat) => {
-                    const meta = SKILL_CATEGORY_META[cat];
+                  {(skillCategories || []).map((cat) => {
+                    const { emoji, name } = parseCategory(cat);
                     const selected = category === cat;
                     return (
                       <button
@@ -509,8 +512,8 @@ export default function DonatePage() {
                             : "border-slate-800 bg-slate-950/30 text-slate-400 hover:border-slate-700 hover:text-slate-300"
                         }`}
                       >
-                        <span>{meta.emoji}</span>
-                        <span>{cat}</span>
+                        <span>{emoji}</span>
+                        <span>{name}</span>
                       </button>
                     );
                   })}
@@ -523,9 +526,12 @@ export default function DonatePage() {
                   className="w-full bg-slate-950/50 border border-slate-800 rounded-xl py-3 px-4 text-sm text-slate-100 focus:outline-none focus:border-teal-500/80 [color-scheme:dark]"
                 >
                   <option value="">Select Category</option>
-                  {ITEM_CATEGORIES.map((cat) => (
-                    <option key={cat} value={cat}>{cat}</option>
-                  ))}
+                  {(itemCategories || []).map((cat) => {
+                    const { emoji, name } = parseCategory(cat);
+                    return (
+                      <option key={cat} value={cat}>{emoji} {name}</option>
+                    );
+                  })}
                 </select>
               )}
             </div>

@@ -9,15 +9,12 @@ import { getR2PublicUrl } from "@/lib/r2";
 import CityAutocomplete from "@/components/CityAutocomplete";
 import { normalizeCityName } from "@/lib/cities";
 import ReportModal from "@/components/ReportModal";
-
-const CATEGORIES = [
-  "Furniture", "Electronics", "Books", "Clothing", "Toys", 
-  "Kitchen", "Appliances", "Sports", "Office", "Miscellaneous"
-];
-
+import { useBranding } from "@/components/BrandingContext";
+import { parseCategory } from "@/lib/branding";
 const CONDITIONS = ["Like New", "Good", "Fair", "Needs Repair"];
 
 export default function ListingDetailClient({ initialListing }: { initialListing: any }) {
+  const { itemCategories, skillCategories } = useBranding();
   const params = useParams();
   const router = useRouter();
   const id = params?.id as string;
@@ -818,9 +815,12 @@ export default function ListingDetailClient({ initialListing }: { initialListing
                   onChange={(e) => setEditCategory(e.target.value)}
                   className={`w-full bg-slate-950/50 border border-slate-800 rounded-xl py-2.5 px-3.5 text-xs text-slate-100 focus:outline-none ${listing.listing_type === "skill" ? "focus:border-violet-500/80" : "focus:border-teal-500/80"} [color-scheme:dark]`}
                 >
-                  {CATEGORIES.map((cat) => (
-                    <option key={cat} value={cat}>{cat}</option>
-                  ))}
+                  {(listing.listing_type === "skill" ? (skillCategories || []) : (itemCategories || [])).map((cat) => {
+                    const { emoji, name } = parseCategory(cat);
+                    return (
+                      <option key={cat} value={cat}>{emoji} {name}</option>
+                    );
+                  })}
                 </select>
               </div>
 
