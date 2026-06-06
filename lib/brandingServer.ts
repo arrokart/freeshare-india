@@ -7,7 +7,9 @@ import {
   DEFAULT_LOGO_URL, 
   DEFAULT_APP_DOMAIN,
   DEFAULT_ITEM_CATEGORIES,
-  DEFAULT_SKILL_CATEGORIES
+  DEFAULT_SKILL_CATEGORIES,
+  DEFAULT_BRAND_LOGO_URL,
+  DEFAULT_LOGO_DISPLAY_MODE
 } from "@/lib/branding";
 
 export async function getBrandingServer() {
@@ -27,7 +29,9 @@ export async function getBrandingServer() {
         appLogoUrl: DEFAULT_LOGO_URL,
         appDomain: DEFAULT_APP_DOMAIN,
         itemCategories: DEFAULT_ITEM_CATEGORIES,
-        skillCategories: DEFAULT_SKILL_CATEGORIES
+        skillCategories: DEFAULT_SKILL_CATEGORIES,
+        brandLogoUrl: DEFAULT_BRAND_LOGO_URL,
+        logoDisplayMode: DEFAULT_LOGO_DISPLAY_MODE
       };
     }
 
@@ -43,7 +47,9 @@ export async function getBrandingServer() {
       appLogoUrl: parsed.app_logo_url || DEFAULT_LOGO_URL,
       appDomain: parsed.app_domain || DEFAULT_APP_DOMAIN,
       itemCategories: parsed.item_categories || DEFAULT_ITEM_CATEGORIES,
-      skillCategories: parsed.skill_categories || DEFAULT_SKILL_CATEGORIES
+      skillCategories: parsed.skill_categories || DEFAULT_SKILL_CATEGORIES,
+      brandLogoUrl: parsed.brand_logo_url || DEFAULT_BRAND_LOGO_URL,
+      logoDisplayMode: parsed.logo_display_mode || DEFAULT_LOGO_DISPLAY_MODE
     };
   } catch (err) {
     console.error("Failed to load branding server-side:", err);
@@ -55,8 +61,9 @@ export async function getBrandingServer() {
       appLogoUrl: DEFAULT_LOGO_URL,
       appDomain: DEFAULT_APP_DOMAIN,
       itemCategories: DEFAULT_ITEM_CATEGORIES,
-      skillCategories: DEFAULT_SKILL_CATEGORIES
+      skillCategories: DEFAULT_SKILL_CATEGORIES,
+      brandLogoUrl: DEFAULT_BRAND_LOGO_URL,
+      logoDisplayMode: DEFAULT_LOGO_DISPLAY_MODE
     };
   }
 }
-

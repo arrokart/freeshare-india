@@ -27,7 +27,9 @@ const DEFAULT_SETTINGS = {
   app_logo_url: DEFAULT_LOGO_URL,
   app_domain: DEFAULT_APP_DOMAIN,
   item_categories: DEFAULT_ITEM_CATEGORIES,
-  skill_categories: DEFAULT_SKILL_CATEGORIES
+  skill_categories: DEFAULT_SKILL_CATEGORIES,
+  brand_logo_url: "",
+  logo_display_mode: "both"
 };
 
 // Helper to verify if user is admin
@@ -72,7 +74,9 @@ export async function GET(request: Request) {
         app_logo_url: parsed.app_logo_url ?? DEFAULT_SETTINGS.app_logo_url,
         app_domain: parsed.app_domain ?? DEFAULT_SETTINGS.app_domain,
         item_categories: parsed.item_categories ?? DEFAULT_SETTINGS.item_categories,
-        skill_categories: parsed.skill_categories ?? DEFAULT_SETTINGS.skill_categories
+        skill_categories: parsed.skill_categories ?? DEFAULT_SETTINGS.skill_categories,
+        brand_logo_url: parsed.brand_logo_url ?? DEFAULT_SETTINGS.brand_logo_url,
+        logo_display_mode: parsed.logo_display_mode ?? DEFAULT_SETTINGS.logo_display_mode
       });
     } catch {
       return NextResponse.json(DEFAULT_SETTINGS);
@@ -103,7 +107,9 @@ export async function POST(request: Request) {
       app_logo_url,
       app_domain,
       item_categories,
-      skill_categories
+      skill_categories,
+      brand_logo_url,
+      logo_display_mode
     } = body;
 
     if (!adminId || !(await verifyAdmin(adminId))) {
@@ -126,7 +132,9 @@ export async function POST(request: Request) {
       app_logo_url: app_logo_url !== undefined ? String(app_logo_url).trim() : DEFAULT_SETTINGS.app_logo_url,
       app_domain: app_domain !== undefined ? String(app_domain).trim() : DEFAULT_SETTINGS.app_domain,
       item_categories: Array.isArray(item_categories) ? item_categories : DEFAULT_SETTINGS.item_categories,
-      skill_categories: Array.isArray(skill_categories) ? skill_categories : DEFAULT_SETTINGS.skill_categories
+      skill_categories: Array.isArray(skill_categories) ? skill_categories : DEFAULT_SETTINGS.skill_categories,
+      brand_logo_url: brand_logo_url !== undefined ? String(brand_logo_url).trim() : DEFAULT_SETTINGS.brand_logo_url,
+      logo_display_mode: logo_display_mode !== undefined ? String(logo_display_mode).trim() : DEFAULT_SETTINGS.logo_display_mode
     };
 
     // Update the bio column of the admin user

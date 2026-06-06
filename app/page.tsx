@@ -61,7 +61,7 @@ const getNotificationIcon = (type: string) => {
 
 
 export default function HomeFeed() {
-  const { appName, appShortName, appDescription, supportEmail, appDomain, itemCategories } = useBranding();
+  const { appName, appShortName, appDescription, supportEmail, appDomain, itemCategories, brandLogoUrl, logoDisplayMode } = useBranding();
   const [user, setUser] = useState<any>(null);
   const [listings, setListings] = useState<any[]>([]);
   const [page, setPage] = useState(1);
@@ -507,9 +507,24 @@ export default function HomeFeed() {
       <nav className="border-b border-slate-900 bg-slate-950/80 backdrop-blur-md sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-5">
-            <span className="text-xl font-black bg-gradient-to-r from-teal-400 to-emerald-400 bg-clip-text text-transparent select-none">
-              {displayAppName}
-            </span>
+            <Link href="/" className="select-none flex items-center gap-1.5 hover:opacity-90 transition-opacity">
+              {logoDisplayMode === "text" ? null : brandLogoUrl ? (
+                <img
+                  src={brandLogoUrl}
+                  alt="Logo"
+                  className={`${logoDisplayMode === "logo" ? "h-10 w-auto" : "h-8 w-8"} object-contain shrink-0`}
+                />
+              ) : (
+                <svg className="w-6 h-6 text-teal-400 fill-current" viewBox="0 0 24 24">
+                  <path d="M12 2a10 10 0 00-7.07 17.07L12 22l7.07-2.93A10 10 0 0012 2zm-1 14.5V13H8v-2h3V8.5a2.5 2.5 0 015 0V11h-2V8.5a.5.5 0 00-1 0V13h3v2h-3v1.5a.5.5 0 001 0v.5a1.5 1.5 0 01-3 0z" />
+                </svg>
+              )}
+              {logoDisplayMode !== "logo" && (
+                <span className="text-xl font-black bg-gradient-to-r from-teal-400 to-emerald-400 bg-clip-text text-transparent">
+                  {displayAppName}
+                </span>
+              )}
+            </Link>
             
             <Link
               href="/events"
@@ -1240,7 +1255,7 @@ export default function HomeFeed() {
 }
 
 function LandingPageView({ listings, trendingListings, lang }: { listings: any[]; trendingListings: any[]; lang: Language }) {
-  const { appName, appShortName, appDescription, supportEmail, appDomain } = useBranding();
+  const { appName, appShortName, appDescription, supportEmail, appDomain, brandLogoUrl, logoDisplayMode } = useBranding();
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const t = (key: any) => getTranslation(key, lang);
   const displayAppName = appName === "FreeShare India" ? t("app_title") : appName;
@@ -1308,11 +1323,23 @@ function LandingPageView({ listings, trendingListings, lang }: { listings: any[]
       <nav className="border-b border-slate-900 bg-slate-950/80 backdrop-blur-md sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <span className="text-xl font-black bg-gradient-to-r from-teal-400 to-emerald-400 bg-clip-text text-transparent select-none flex items-center gap-1.5">
-              <svg className="w-6 h-6 text-teal-400 fill-current" viewBox="0 0 24 24">
-                <path d="M12 2a10 10 0 00-7.07 17.07L12 22l7.07-2.93A10 10 0 0012 2zm-1 14.5V13H8v-2h3V8.5a2.5 2.5 0 015 0V11h-2V8.5a.5.5 0 00-1 0V13h3v2h-3v1.5a.5.5 0 001 0v.5a1.5 1.5 0 01-3 0z" />
-              </svg>
-              {displayAppName}
+            <span className="select-none flex items-center gap-1.5">
+              {logoDisplayMode === "text" ? null : brandLogoUrl ? (
+                <img
+                  src={brandLogoUrl}
+                  alt="Logo"
+                  className={`${logoDisplayMode === "logo" ? "h-10 w-auto" : "h-8 w-8"} object-contain shrink-0`}
+                />
+              ) : (
+                <svg className="w-6 h-6 text-teal-400 fill-current" viewBox="0 0 24 24">
+                  <path d="M12 2a10 10 0 00-7.07 17.07L12 22l7.07-2.93A10 10 0 0012 2zm-1 14.5V13H8v-2h3V8.5a2.5 2.5 0 015 0V11h-2V8.5a.5.5 0 00-1 0V13h3v2h-3v1.5a.5.5 0 001 0v.5a1.5 1.5 0 01-3 0z" />
+                </svg>
+              )}
+              {logoDisplayMode !== "logo" && (
+                <span className="text-xl font-black bg-gradient-to-r from-teal-400 to-emerald-400 bg-clip-text text-transparent">
+                  {displayAppName}
+                </span>
+              )}
             </span>
             <div className="hidden sm:flex items-center gap-1 bg-slate-900 border border-slate-800 rounded-full px-3 py-1 text-[10px] font-bold text-slate-400 shadow-inner">
               <MapPin size={10} className="text-teal-400" />

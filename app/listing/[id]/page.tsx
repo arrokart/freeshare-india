@@ -19,7 +19,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     };
   }
 
-  const ogImage = listing.images?.[0] || branding.appLogoUrl;
+  const ogImage = listing.images?.[0] || branding.brandLogoUrl || branding.appLogoUrl;
   const desc = `${listing.condition || "Pre-loved"} item in ${listing.area}, ${listing.city}. ${listing.description}`;
 
   const domainUrl = branding.appDomain.replace(/\/+$/, "");

@@ -76,6 +76,9 @@ export default function AdminPage() {
   const [appDescription, setAppDescription] = useState("");
   const [supportEmail, setSupportEmail] = useState("");
   const [appLogoUrl, setAppLogoUrl] = useState("");
+  const [brandLogoUrl, setBrandLogoUrl] = useState("");
+  const [logoDisplayMode, setLogoDisplayMode] = useState("both");
+  const [uploadingBrandLogo, setUploadingBrandLogo] = useState(false);
   const [appDomain, setAppDomain] = useState("");
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [loadingSettings, setLoadingSettings] = useState(false);
@@ -255,6 +258,8 @@ export default function AdminPage() {
         setAppDescription(data.app_description ?? "");
         setSupportEmail(data.support_email ?? "");
         setAppLogoUrl(data.app_logo_url ?? "");
+        setBrandLogoUrl(data.brand_logo_url ?? "");
+        setLogoDisplayMode(data.logo_display_mode ?? "both");
         setAppDomain(data.app_domain ?? "");
         setItemCategoriesList(data.item_categories ?? []);
         setSkillCategoriesList(data.skill_categories ?? []);
@@ -450,7 +455,9 @@ export default function AdminPage() {
           app_logo_url: appLogoUrl,
           app_domain: appDomain,
           item_categories: itemCategoriesList,
-          skill_categories: skillCategoriesList
+          skill_categories: skillCategoriesList,
+          brand_logo_url: brandLogoUrl,
+          logo_display_mode: logoDisplayMode
         })
       });
 
@@ -1679,6 +1686,99 @@ export default function AdminPage() {
                         />
                         <p className="text-[10px] text-slate-500">The title of your application used in headers, titles, and SEO metadata.</p>
                       </div>
+
+                      {/* Navbar Brand Display Mode */}
+                      <div className="space-y-1.5 font-sans">
+                        <label className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider block">
+                          Navbar Brand Display Mode
+                        </label>
+                        <div className="relative">
+                          <select
+                            value={logoDisplayMode}
+                            onChange={(e) => setLogoDisplayMode(e.target.value)}
+                            className="w-full bg-slate-950/60 border border-slate-800 rounded-xl p-3 pr-10 text-xs text-slate-100 focus:outline-none focus:border-teal-500 appearance-none font-sans"
+                          >
+                            <option value="both">Logo + Text (Default)</option>
+                            <option value="logo">Logo Only</option>
+                            <option value="text">Text Only</option>
+                          </select>
+                          <SlidersHorizontal size={12} className="absolute right-3.5 top-4.5 text-slate-600 pointer-events-none" />
+                        </div>
+                        <p className="text-[10px] text-slate-500 font-sans">Choose how your brand identity renders in page navigation headers.</p>
+                      </div>
+
+                      {/* Website Brand Logo */}
+                      {(logoDisplayMode === "both" || logoDisplayMode === "logo") && (
+                        <div className="space-y-2 animate-in fade-in duration-200">
+                          <label className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider block">
+                            Custom Website Brand Logo (Header)
+                          </label>
+                          
+                          {brandLogoUrl ? (
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 bg-slate-950/40 border border-slate-850 rounded-2xl">
+                              <div className="flex items-center gap-3 min-w-0 w-full sm:w-auto">
+                                <div className="w-12 h-12 rounded-xl overflow-hidden bg-slate-900 border border-slate-800 flex items-center justify-center shrink-0">
+                                  <img src={brandLogoUrl} alt="Brand Logo Preview" className="w-full h-full object-cover" />
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <span className="text-[10px] text-slate-500 font-bold block truncate max-w-[180px] sm:max-w-xs">{brandLogoUrl}</span>
+                                </div>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => setBrandLogoUrl("")}
+                                className="w-full sm:w-auto text-center text-red-400 hover:text-red-350 text-[10px] font-bold uppercase tracking-wider px-3 py-2 rounded-xl border border-red-500/20 bg-red-500/5 hover:bg-red-500/10 transition-colors shrink-0"
+                              >
+                                Reset Logo
+                              </button>
+                            </div>
+                          ) : (
+                            <label className="flex flex-col items-center justify-center w-full h-24 rounded-2xl border border-dashed border-slate-800 hover:border-teal-500/50 bg-slate-950/20 hover:bg-slate-950/40 transition-all cursor-pointer group">
+                              <Loader2 size={16} className={`text-slate-650 animate-spin mb-1 ${uploadingBrandLogo ? "block" : "hidden"}`} />
+                              <span className={`text-[10px] font-bold text-slate-500 group-hover:text-slate-450 ${uploadingBrandLogo ? "hidden" : "block"}`}>
+                                Click to upload brand logo
+                              </span>
+                              <span className="text-[9px] text-slate-650 mt-1">PNG or JPEG up to 2MB</span>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                disabled={uploadingBrandLogo}
+                                onChange={async (e) => {
+                                  if (e.target.files && e.target.files[0]) {
+                                    const file = e.target.files[0];
+                                    setUploadingBrandLogo(true);
+                                    try {
+                                      const presignRes = await fetch("/api/listings/presign", {
+                                        method: "POST",
+                                        headers: { "Content-Type": "application/json" },
+                                        body: JSON.stringify({ filename: file.name, fileType: file.type }),
+                                      });
+                                      const { uploadUrl, fileKey } = await presignRes.json();
+                                      if (!uploadUrl) throw new Error("Failed to get upload url");
+
+                                      const uploadRes = await fetch(uploadUrl, {
+                                        method: "PUT",
+                                        headers: { "Content-Type": file.type },
+                                        body: file,
+                                      });
+                                      if (!uploadRes.ok) throw new Error("Upload failed");
+
+                                      const finalUrl = `https://pub-36f72b3e2769432e86d9d8f0b3abed58.r2.dev/${fileKey}`;
+                                      setBrandLogoUrl(finalUrl);
+                                    } catch (err: any) {
+                                      setErrorMsg(err.message || "Failed to upload website brand logo.");
+                                    } finally {
+                                      setUploadingBrandLogo(false);
+                                    }
+                                  }
+                                }}
+                                className="hidden"
+                              />
+                            </label>
+                          )}
+                          <p className="text-[10px] text-slate-500 font-sans">This logo will be displayed on the website headers and navigation bars.</p>
+                        </div>
+                      )}
 
                       {/* Application Description */}
                       <div className="space-y-1.5">

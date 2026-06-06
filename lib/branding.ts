@@ -8,6 +8,9 @@ export const DEFAULT_APP_DOMAIN = "https://freeshare-india.vercel.app";
 export const DEFAULT_TWITTER_HANDLE = "@freeshare_india";
 export const DEFAULT_INSTAGRAM_HANDLE = "@freeshare_india";
 
+export const DEFAULT_BRAND_LOGO_URL = "";
+export const DEFAULT_LOGO_DISPLAY_MODE = "both";
+
 export const DEFAULT_ITEM_CATEGORIES = [
   "🛋️ Furniture", "🔌 Electronics", "📚 Books", "👕 Clothing", "🧸 Toys", 
   "🍳 Kitchen", "📺 Appliances", "⚽ Sports", "🏢 Office", "✨ Miscellaneous"
