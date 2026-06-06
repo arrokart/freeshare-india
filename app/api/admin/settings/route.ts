@@ -32,6 +32,8 @@ const DEFAULT_SETTINGS = {
   logo_display_mode: "both"
 };
 
+import { revalidateTag } from "next/cache";
+
 // Helper to verify if user is admin
 async function verifyAdmin(userId: string): Promise<boolean> {
   const { data, error } = await supabase
@@ -46,13 +48,13 @@ async function verifyAdmin(userId: string): Promise<boolean> {
 
 export async function GET(request: Request) {
   try {
-    const { data: adminProfile, error } = await supabase
-      .from("users")
-      .select("bio")
-      .eq("email", "admin@freeshare.in")
+    const { data: settings, error } = await supabase
+      .from("platform_settings")
+      .select("*")
+      .eq("id", 1)
       .single();
 
-    if (error || !adminProfile || !adminProfile.bio) {
+    if (error || !settings) {
       return NextResponse.json(DEFAULT_SETTINGS, {
         headers: {
           "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate"
@@ -60,39 +62,30 @@ export async function GET(request: Request) {
       });
     }
 
-    try {
-      const parsed = JSON.parse(adminProfile.bio);
-      return NextResponse.json({
-        monthly_claim_limit: parsed.monthly_claim_limit ?? DEFAULT_SETTINGS.monthly_claim_limit,
-        grace_period_hours: parsed.grace_period_hours ?? DEFAULT_SETTINGS.grace_period_hours,
-        auto_restore_threshold: parsed.auto_restore_threshold ?? DEFAULT_SETTINGS.auto_restore_threshold,
-        campaign_type: parsed.campaign_type ?? DEFAULT_SETTINGS.campaign_type,
-        campaign_limit: parsed.campaign_limit ?? DEFAULT_SETTINGS.campaign_limit,
-        campaign_name: parsed.campaign_name ?? DEFAULT_SETTINGS.campaign_name,
-        welcome_trial_enabled: parsed.welcome_trial_enabled ?? DEFAULT_SETTINGS.welcome_trial_enabled,
-        ga_measurement_id: parsed.ga_measurement_id ?? DEFAULT_SETTINGS.ga_measurement_id,
-        adsense_client_id: parsed.adsense_client_id ?? DEFAULT_SETTINGS.adsense_client_id,
-        app_name: parsed.app_name ?? DEFAULT_SETTINGS.app_name,
-        app_description: parsed.app_description ?? DEFAULT_SETTINGS.app_description,
-        support_email: parsed.support_email ?? DEFAULT_SETTINGS.support_email,
-        app_logo_url: parsed.app_logo_url ?? DEFAULT_SETTINGS.app_logo_url,
-        app_domain: parsed.app_domain ?? DEFAULT_SETTINGS.app_domain,
-        item_categories: parsed.item_categories ?? DEFAULT_SETTINGS.item_categories,
-        skill_categories: parsed.skill_categories ?? DEFAULT_SETTINGS.skill_categories,
-        brand_logo_url: parsed.brand_logo_url ?? DEFAULT_SETTINGS.brand_logo_url,
-        logo_display_mode: parsed.logo_display_mode ?? DEFAULT_SETTINGS.logo_display_mode
-      }, {
-        headers: {
-          "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate"
-        }
-      });
-    } catch {
-      return NextResponse.json(DEFAULT_SETTINGS, {
-        headers: {
-          "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate"
-        }
-      });
-    }
+    return NextResponse.json({
+      monthly_claim_limit: settings.monthly_claim_limit ?? DEFAULT_SETTINGS.monthly_claim_limit,
+      grace_period_hours: settings.grace_period_hours ?? DEFAULT_SETTINGS.grace_period_hours,
+      auto_restore_threshold: settings.auto_restore_threshold ?? DEFAULT_SETTINGS.auto_restore_threshold,
+      campaign_type: settings.campaign_type ?? DEFAULT_SETTINGS.campaign_type,
+      campaign_limit: settings.campaign_limit ?? DEFAULT_SETTINGS.campaign_limit,
+      campaign_name: settings.campaign_name ?? DEFAULT_SETTINGS.campaign_name,
+      welcome_trial_enabled: settings.welcome_trial_enabled ?? DEFAULT_SETTINGS.welcome_trial_enabled,
+      ga_measurement_id: settings.ga_measurement_id ?? DEFAULT_SETTINGS.ga_measurement_id,
+      adsense_client_id: settings.adsense_client_id ?? DEFAULT_SETTINGS.adsense_client_id,
+      app_name: settings.app_name ?? DEFAULT_SETTINGS.app_name,
+      app_description: settings.app_description ?? DEFAULT_SETTINGS.app_description,
+      support_email: settings.support_email ?? DEFAULT_SETTINGS.support_email,
+      app_logo_url: settings.app_logo_url ?? DEFAULT_SETTINGS.app_logo_url,
+      app_domain: settings.app_domain ?? DEFAULT_SETTINGS.app_domain,
+      item_categories: settings.item_categories ?? DEFAULT_SETTINGS.item_categories,
+      skill_categories: settings.skill_categories ?? DEFAULT_SETTINGS.skill_categories,
+      brand_logo_url: settings.brand_logo_url ?? DEFAULT_SETTINGS.brand_logo_url,
+      logo_display_mode: settings.logo_display_mode ?? DEFAULT_SETTINGS.logo_display_mode
+    }, {
+      headers: {
+        "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate"
+      }
+    });
   } catch (error: any) {
     console.error("Fetch settings error:", error);
     return NextResponse.json(DEFAULT_SETTINGS, {
@@ -153,13 +146,16 @@ export async function POST(request: Request) {
       logo_display_mode: logo_display_mode !== undefined ? String(logo_display_mode).trim() : DEFAULT_SETTINGS.logo_display_mode
     };
 
-    // Update the bio column of the admin user
+    // Update the platform_settings table at id = 1
     const { error: updateError } = await supabase
-      .from("users")
-      .update({ bio: JSON.stringify(settingsObj) })
-      .eq("email", "admin@freeshare.in");
+      .from("platform_settings")
+      .update(settingsObj)
+      .eq("id", 1);
 
     if (updateError) throw updateError;
+
+    // Invalidate next.js cache for branding settings so the pages render updated branding instantly
+    revalidateTag("branding", "max");
 
     return NextResponse.json({ success: true, settings: settingsObj });
   } catch (error: any) {
@@ -167,3 +163,4 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: error.message || "Failed to save settings." }, { status: 500 });
   }
 }
+

@@ -1,4 +1,5 @@
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { unstable_cache } from "next/cache";
 import { 
   DEFAULT_APP_NAME, 
   DEFAULT_APP_SHORT_NAME,
@@ -12,15 +13,16 @@ import {
   DEFAULT_LOGO_DISPLAY_MODE
 } from "@/lib/branding";
 
-export async function getBrandingServer() {
+// Fetch branding directly from the dedicated table
+async function fetchBrandingFromDb() {
   try {
-    const { data: adminProfile, error } = await supabaseAdmin
-      .from("users")
-      .select("bio")
-      .eq("email", "admin@freeshare.in")
+    const { data: settings, error } = await supabaseAdmin
+      .from("platform_settings")
+      .select("*")
+      .eq("id", 1)
       .single();
 
-    if (error || !adminProfile || !adminProfile.bio) {
+    if (error || !settings) {
       return {
         appName: DEFAULT_APP_NAME,
         appShortName: DEFAULT_APP_SHORT_NAME,
@@ -35,21 +37,20 @@ export async function getBrandingServer() {
       };
     }
 
-    const parsed = JSON.parse(adminProfile.bio);
-    const appName = parsed.app_name || DEFAULT_APP_NAME;
+    const appName = settings.app_name || DEFAULT_APP_NAME;
     const appShortName = appName.split(" ")[0] || DEFAULT_APP_SHORT_NAME;
 
     return {
       appName,
       appShortName,
-      appDescription: parsed.app_description || DEFAULT_APP_DESCRIPTION,
-      supportEmail: parsed.support_email || DEFAULT_SUPPORT_EMAIL,
-      appLogoUrl: parsed.app_logo_url || DEFAULT_LOGO_URL,
-      appDomain: parsed.app_domain || DEFAULT_APP_DOMAIN,
-      itemCategories: parsed.item_categories || DEFAULT_ITEM_CATEGORIES,
-      skillCategories: parsed.skill_categories || DEFAULT_SKILL_CATEGORIES,
-      brandLogoUrl: parsed.brand_logo_url || DEFAULT_BRAND_LOGO_URL,
-      logoDisplayMode: parsed.logo_display_mode || DEFAULT_LOGO_DISPLAY_MODE
+      appDescription: settings.app_description || DEFAULT_APP_DESCRIPTION,
+      supportEmail: settings.support_email || DEFAULT_SUPPORT_EMAIL,
+      appLogoUrl: settings.app_logo_url || DEFAULT_LOGO_URL,
+      appDomain: settings.app_domain || DEFAULT_APP_DOMAIN,
+      itemCategories: settings.item_categories || DEFAULT_ITEM_CATEGORIES,
+      skillCategories: settings.skill_categories || DEFAULT_SKILL_CATEGORIES,
+      brandLogoUrl: settings.brand_logo_url || DEFAULT_BRAND_LOGO_URL,
+      logoDisplayMode: settings.logo_display_mode || DEFAULT_LOGO_DISPLAY_MODE
     };
   } catch (err) {
     console.error("Failed to load branding server-side:", err);
@@ -67,3 +68,15 @@ export async function getBrandingServer() {
     };
   }
 }
+
+// Wrap with unstable_cache to serve data in 0ms, invalidating only when revalidateTag('branding') is called
+export const getBrandingServer = unstable_cache(
+  async () => {
+    return fetchBrandingFromDb();
+  },
+  ["branding-settings"],
+  {
+    tags: ["branding"],
+    revalidate: false // Cache indefinitely until manually invalidated
+  }
+);
