@@ -64,6 +64,9 @@ export default function HomeFeed() {
   const { appName, appShortName, appDescription, supportEmail, appDomain, itemCategories } = useBranding();
   const [user, setUser] = useState<any>(null);
   const [listings, setListings] = useState<any[]>([]);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
+  const [isFetchingMore, setIsFetchingMore] = useState(false);
   const [loading, setLoading] = useState(true);
   const [authLoading, setAuthLoading] = useState(true);
 
@@ -385,10 +388,19 @@ export default function HomeFeed() {
     }
   };
 
-  // Fetch listings on filter change
+  // Reset page to 1 when filters change
+  useEffect(() => {
+    setPage(1);
+  }, [searchTerm, selectedCategory, selectedCondition, selectedListingType, userCoords, selectedRadius, selectedLocation]);
+
+  // Fetch listings on filter or page change
   useEffect(() => {
     const fetchListings = async () => {
-      setLoading(true);
+      if (page === 1) {
+        setLoading(true);
+      } else {
+        setIsFetchingMore(true);
+      }
       try {
         const queryParams = new URLSearchParams();
         if (searchTerm) queryParams.set("search", searchTerm);
@@ -408,23 +420,59 @@ export default function HomeFeed() {
           }
         }
 
+        queryParams.set("page", page.toString());
+        queryParams.set("limit", "12");
+
         const res = await fetch(`/api/listings?${queryParams.toString()}`);
         const data = await res.json();
-        setListings(Array.isArray(data) ? data : []);
+        
+        if (data && Array.isArray(data.listings)) {
+          setListings((prev) => (page === 1 ? data.listings : [...prev, ...data.listings]));
+          setHasMore(data.hasMore ?? false);
+        } else {
+          setListings((prev) => (page === 1 ? [] : prev));
+          setHasMore(false);
+        }
       } catch (err) {
         console.error("Failed to load listings:", err);
       } finally {
         setLoading(false);
+        setIsFetchingMore(false);
       }
     };
 
-    // Debounce search query to prevent continuous API calls
+    // Debounce search query to prevent continuous API calls (only on page 1)
     const delayDebounceFn = setTimeout(() => {
       fetchListings();
-    }, 300);
+    }, page === 1 ? 300 : 0);
 
     return () => clearTimeout(delayDebounceFn);
-  }, [searchTerm, selectedCategory, selectedCondition, selectedListingType, userCoords, selectedRadius, selectedLocation]);
+  }, [searchTerm, selectedCategory, selectedCondition, selectedListingType, userCoords, selectedRadius, selectedLocation, page]);
+
+  // Intersection Observer for Infinite Scroll (pages 2 and 3)
+  useEffect(() => {
+    if (!hasMore || page >= 3 || loading || isFetchingMore) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          setPage((prev) => prev + 1);
+        }
+      },
+      { threshold: 0.1, rootMargin: "100px" }
+    );
+
+    const sentinel = document.getElementById("feed-sentinel");
+    if (sentinel) {
+      observer.observe(sentinel);
+    }
+
+    return () => {
+      if (sentinel) {
+        observer.unobserve(sentinel);
+      }
+    };
+  }, [hasMore, page, loading, isFetchingMore]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -1128,6 +1176,40 @@ export default function HomeFeed() {
                   </Link>
                     );
                   })}
+              </div>
+
+              {/* Pagination controls & loading states */}
+              <div className="pt-8 flex flex-col items-center justify-center gap-4">
+                {/* Loader spinner during pagination fetch */}
+                {isFetchingMore && (
+                  <div className="flex items-center gap-2 py-4">
+                    <Loader2 className="animate-spin text-teal-400 w-5 h-5" />
+                    <span className="text-xs text-slate-500 font-medium animate-pulse">Loading next items...</span>
+                  </div>
+                )}
+
+                {/* Sentinel div for Infinite Scroll (active when page < 3 and hasMore is true) */}
+                {hasMore && page < 3 && !isFetchingMore && (
+                  <div id="feed-sentinel" className="h-4 w-full" />
+                )}
+
+                {/* Manual Load More button (rendered when page >= 3 and hasMore is true) */}
+                {hasMore && page >= 3 && !isFetchingMore && (
+                  <button
+                    type="button"
+                    onClick={() => setPage((prev) => prev + 1)}
+                    className="px-6 py-3 rounded-full bg-slate-900 border border-slate-800 text-slate-200 hover:text-teal-450 hover:border-slate-700/85 font-extrabold text-xs uppercase tracking-wider transition-all shadow-lg hover:scale-[1.01] active:scale-[0.99] cursor-pointer"
+                  >
+                    Load More Listings
+                  </button>
+                )}
+
+                {/* End of listings notice */}
+                {!hasMore && listings.length > 0 && (
+                  <p className="text-[10px] text-slate-600 italic font-semibold py-6">
+                    🎉 You've seen all listings in your neighborhood!
+                  </p>
+                )}
               </div>
             </div>
           </>

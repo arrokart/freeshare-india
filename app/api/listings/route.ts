@@ -76,9 +76,12 @@ export async function GET(request: Request) {
       query = query.or(`title.ilike.%${search}%,description.ilike.%${search}%,skill_tags.cs.{${search}}`);
     }
 
-    const limit = searchParams.get("limit");
-    if (limit) {
-      query = query.limit(parseInt(limit));
+    const limitParam = searchParams.get("limit");
+    const pageParam = searchParams.get("page");
+
+    // Only apply database-level limit if we are not paginating on coordinates
+    if (limitParam && !pageParam && !(latParam && lngParam && radiusParam)) {
+      query = query.limit(parseInt(limitParam));
     }
 
     const { data, error } = await query;
@@ -128,7 +131,19 @@ export async function GET(request: Request) {
       }
     }
 
-    return NextResponse.json(listings);
+    // Apply pagination slicing
+    let hasMore = false;
+    if (pageParam || limitParam) {
+      const page = parseInt(pageParam || "1");
+      const limit = parseInt(limitParam || "12");
+      const startIndex = (page - 1) * limit;
+      const endIndex = startIndex + limit;
+
+      hasMore = endIndex < listings.length;
+      listings = listings.slice(startIndex, endIndex);
+    }
+
+    return NextResponse.json({ listings, hasMore });
   } catch (error: any) {
     console.error("Fetch listings error:", error);
     return NextResponse.json(
