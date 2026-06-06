@@ -36,17 +36,34 @@ const BrandingContext = createContext<BrandingData>({
   loading: true
 });
 
-export function BrandingProvider({ children }: { children: ReactNode }) {
+export interface InitialBrandingData {
+  appName: string;
+  appShortName: string;
+  appDescription: string;
+  supportEmail: string;
+  appLogoUrl: string;
+  appDomain: string;
+  itemCategories: string[];
+  skillCategories: string[];
+}
+
+export function BrandingProvider({ 
+  children,
+  initialData
+}: { 
+  children: ReactNode;
+  initialData?: InitialBrandingData;
+}) {
   const [branding, setBranding] = useState<BrandingData>({
-    appName: DEFAULT_APP_NAME,
-    appShortName: DEFAULT_APP_SHORT_NAME,
-    appDescription: DEFAULT_APP_DESCRIPTION,
-    supportEmail: DEFAULT_SUPPORT_EMAIL,
-    appLogoUrl: DEFAULT_LOGO_URL,
-    appDomain: DEFAULT_APP_DOMAIN,
-    itemCategories: DEFAULT_ITEM_CATEGORIES,
-    skillCategories: DEFAULT_SKILL_CATEGORIES,
-    loading: true
+    appName: initialData?.appName || DEFAULT_APP_NAME,
+    appShortName: initialData?.appShortName || DEFAULT_APP_SHORT_NAME,
+    appDescription: initialData?.appDescription || DEFAULT_APP_DESCRIPTION,
+    supportEmail: initialData?.supportEmail || DEFAULT_SUPPORT_EMAIL,
+    appLogoUrl: initialData?.appLogoUrl || DEFAULT_LOGO_URL,
+    appDomain: initialData?.appDomain || DEFAULT_APP_DOMAIN,
+    itemCategories: initialData?.itemCategories || DEFAULT_ITEM_CATEGORIES,
+    skillCategories: initialData?.skillCategories || DEFAULT_SKILL_CATEGORIES,
+    loading: initialData ? false : true
   });
 
   useEffect(() => {

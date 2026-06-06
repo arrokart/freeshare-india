@@ -22,19 +22,22 @@ import MobileNavBar from "@/components/MobileNavBar";
 import AnalyticsManager from "@/components/AnalyticsManager";
 import CookieConsent from "@/components/CookieConsent";
 import { BrandingProvider } from "@/components/BrandingContext";
+import { getBrandingServer } from "@/lib/brandingServer";
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const branding = await getBrandingServer();
+
   return (
     <html
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <BrandingProvider>
+        <BrandingProvider initialData={branding}>
           <main className="flex-1 pb-20 md:pb-0">{children}</main>
           <AnalyticsManager />
           <CookieConsent />
