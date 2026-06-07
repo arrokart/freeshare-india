@@ -585,7 +585,7 @@ export default function HomeFeed() {
                   className="hidden sm:flex items-center gap-1 px-3 py-1.5 rounded-full bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-400 hover:to-emerald-400 text-[10px] font-black text-slate-950 transition-all shadow-md shadow-teal-500/10 cursor-pointer uppercase tracking-wider shrink-0"
                 >
                   <Plus size={11} strokeWidth={3} />
-                  <span>Donate</span>
+                  <span>Upload</span>
                 </Link>
 
                 {/* Direct Messages Icon Button */}
