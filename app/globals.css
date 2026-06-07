@@ -27,6 +27,17 @@
   --color-slate-850: #cbd5e1;
   --color-slate-900: #ffffff;
   --color-slate-950: #f1f5f9;
+
+  /* Map old teal-emerald gradients to the new #A6D96A accent green */
+  --color-teal-400: #A6D96A;
+  --color-teal-500: #A6D96A;
+  --color-teal-600: #93C757;  /* Hover state */
+  --color-teal-700: #7EB143;
+
+  --color-emerald-400: #A6D96A;
+  --color-emerald-500: #A6D96A;
+  --color-emerald-600: #93C757;
+  --color-emerald-700: #7EB143;
 }
 
 body {
