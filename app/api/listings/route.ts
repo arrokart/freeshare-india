@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabaseClient";
+import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
 // Helper function to calculate great-circle distance (Haversine formula)
 function getDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
@@ -199,7 +200,7 @@ export async function POST(request: Request) {
       locationData = `POINT(${parseFloat(longitude)} ${parseFloat(latitude)})`;
     }
 
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from("listings")
       .insert({
         donor_id,
@@ -302,7 +303,7 @@ export async function PUT(request: Request) {
       locationData = `POINT(${parseFloat(longitude)} ${parseFloat(latitude)})`;
     }
 
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from("listings")
       .update({
         title,
