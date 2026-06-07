@@ -1020,26 +1020,29 @@ export default function ListingDetailClient({ initialListing }: { initialListing
               <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2">
                   {listing.listing_type === "skill" ? (
-                    <span className="text-[10px] font-extrabold uppercase tracking-widest px-2.5 py-1 rounded-md bg-violet-500/10 text-violet-400 border border-violet-500/20">
-                      🎯 {listing.category}
-                    </span>
-                  ) : (
-                    <span className="text-[10px] font-extrabold uppercase tracking-widest px-2.5 py-1 rounded-md bg-teal-500/10 text-teal-400 border border-teal-500/20">
-                      {listing.category}
-                    </span>
-                  )}
-                  {listing.listing_type === "skill" ? (
-                    listing.skill_duration && (
-                      <span className="text-[10px] font-extrabold uppercase tracking-widest px-2.5 py-1 rounded-md bg-violet-900/40 text-violet-300 border border-violet-800/40">
-                        ⏱ {listing.skill_duration}
+                    <>
+                      <span className="text-[10px] font-extrabold uppercase tracking-widest px-2.5 py-1 rounded-md bg-violet-500/10 text-violet-400 border border-violet-500/20">
+                        🎯 {listing.category}
                       </span>
-                    )
+                      {listing.skill_duration && (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-medium text-slate-500">
+                          <span>⏱</span>
+                          <span>{listing.skill_duration}</span>
+                        </span>
+                      )}
+                    </>
                   ) : (
-                    <span className="text-[10px] font-extrabold uppercase tracking-widest px-2.5 py-1 rounded-md bg-slate-800 text-slate-300">
-                      {listing.condition}
-                    </span>
+                    <>
+                      <span className="text-[10px] font-extrabold uppercase tracking-widest px-2.5 py-1 rounded-md bg-teal-500/10 text-teal-400 border border-teal-500/20">
+                        {listing.category}
+                      </span>
+                      <span className="text-[10px] font-extrabold uppercase tracking-widest px-2.5 py-1 rounded-md bg-slate-800 text-slate-300">
+                        {listing.condition}
+                      </span>
+                    </>
                   )}
                 </div>
+
                 <div className="flex items-center gap-2">
                   <button
                     onClick={handleShare}
@@ -1090,18 +1093,15 @@ export default function ListingDetailClient({ initialListing }: { initialListing
 
             {/* Skill Tags */}
             {listing.listing_type === "skill" && listing.skill_tags && listing.skill_tags.length > 0 && (
-              <div className="bg-violet-950/20 border border-violet-900/30 rounded-2xl p-5 space-y-3">
-                <h3 className="text-xs font-bold text-violet-400 uppercase tracking-widest">Skill Tags</h3>
-                <div className="flex flex-wrap gap-2">
-                  {listing.skill_tags.map((tag: string) => (
-                    <span
-                      key={tag}
-                      className="inline-flex items-center text-xs font-semibold text-violet-300 bg-violet-500/10 border border-violet-500/25 px-3 py-1 rounded-full"
-                    >
-                      #{tag}
-                    </span>
-                  ))}
-                </div>
+              <div className="flex flex-wrap gap-2">
+                {listing.skill_tags.map((tag: string) => (
+                  <span
+                    key={tag}
+                    className="inline-flex items-center text-xs font-medium text-slate-400 bg-slate-900 border border-slate-800 px-3 py-1 rounded-full"
+                  >
+                    #{tag}
+                  </span>
+                ))}
               </div>
             )}
 
