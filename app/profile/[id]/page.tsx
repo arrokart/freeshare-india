@@ -363,7 +363,7 @@ export default function UserProfilePage() {
                     required
                     value={editCity}
                     onChange={(val) => setEditCity(val)}
-                    className="w-full bg-slate-950/40 border border-slate-800/80 rounded-xl py-2 px-3 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-teal-500/80 focus:ring-1 focus:ring-teal-500/10 transition-all"
+                    className="w-full bg-slate-950/40 border border-slate-800/80 rounded-xl py-3 px-3 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-teal-500/80 focus:ring-1 focus:ring-teal-500/10 transition-all"
                   />
                 </div>
 
@@ -375,7 +375,7 @@ export default function UserProfilePage() {
                     required
                     value={editArea}
                     onChange={(e) => setEditArea(e.target.value)}
-                    className="w-full bg-slate-950/40 border border-slate-800/80 rounded-xl py-2 px-3 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-teal-500/80 focus:ring-1 focus:ring-teal-500/10 transition-all"
+                    className="w-full bg-slate-950/40 border border-slate-800/80 rounded-xl py-3 px-3 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-teal-500/80 focus:ring-1 focus:ring-teal-500/10 transition-all"
                   />
                 </div>
 
@@ -387,7 +387,7 @@ export default function UserProfilePage() {
                     required
                     value={editPincode}
                     onChange={(e) => setEditPincode(e.target.value)}
-                    className="w-full bg-slate-950/40 border border-slate-800/80 rounded-xl py-2 px-3 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-teal-500/80 focus:ring-1 focus:ring-teal-500/10 transition-all"
+                    className="w-full bg-slate-950/40 border border-slate-800/80 rounded-xl py-3 px-3 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-teal-500/80 focus:ring-1 focus:ring-teal-500/10 transition-all"
                   />
                 </div>
 
@@ -398,7 +398,7 @@ export default function UserProfilePage() {
                     required
                     value={editGender}
                     onChange={(e) => setEditGender(e.target.value)}
-                    className="w-full bg-slate-950/40 border border-slate-800/80 rounded-xl py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-teal-500/80 focus:ring-1 focus:ring-teal-500/10 transition-all [color-scheme:dark]"
+                    className="w-full bg-slate-950/40 border border-slate-800/80 rounded-xl py-3 px-3 text-sm text-slate-100 focus:outline-none focus:border-teal-500/80 focus:ring-1 focus:ring-teal-500/10 transition-all [color-scheme:dark]"
                   >
                     <option value="Male">Male</option>
                     <option value="Female">Female</option>
@@ -414,7 +414,7 @@ export default function UserProfilePage() {
                     value={editBio}
                     onChange={(e) => setEditBio(e.target.value)}
                     placeholder="Write something about yourself..."
-                    className="w-full bg-slate-950/40 border border-slate-800/80 rounded-xl py-2 px-3 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-teal-500/80 focus:ring-1 focus:ring-teal-500/10 transition-all resize-none"
+                    className="w-full bg-slate-950/40 border border-slate-800/80 rounded-xl py-3 px-3 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-teal-500/80 focus:ring-1 focus:ring-teal-500/10 transition-all resize-none"
                   />
                 </div>
 

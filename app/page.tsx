@@ -213,6 +213,15 @@ export default function HomeFeed() {
     const initializeData = async () => {
       setAuthLoading(true);
       
+      // Clean up URL hash parameters (like #access_token=...) from OAuth redirect
+      if (typeof window !== "undefined" && window.location.hash && window.location.hash.includes("access_token=")) {
+        try {
+          window.history.replaceState(null, "", window.location.pathname + window.location.search);
+        } catch (e) {
+          console.error("Failed to clean OAuth hash parameters:", e);
+        }
+      }
+
       let fetchedSettings: any = null;
       // Parallel loading of system settings and user details initialization
       try {

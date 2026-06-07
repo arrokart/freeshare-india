@@ -292,10 +292,14 @@ export default function RegisterPage() {
               </div>
 
               {/* ── Visual separator: Account Info → Location ── */}
-              <div className="h-px bg-slate-800/60 my-1" />
+              <div className="flex items-center gap-3 py-2">
+                <div className="flex-1 h-px bg-slate-800/60" />
+                <span className="text-[10px] font-extrabold text-slate-500 uppercase tracking-widest">Location details</span>
+                <div className="flex-1 h-px bg-slate-800/60" />
+              </div>
 
               {/* Location (City, Area & Pincode) */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold text-slate-300 uppercase tracking-wider block">
                     City
@@ -310,7 +314,7 @@ export default function RegisterPage() {
                       value={city}
                       onChange={(e) => setCity(e.target.value)}
                       placeholder="e.g. Mumbai"
-                      className="w-full bg-slate-950/50 border border-slate-800 rounded-xl py-2.5 pl-9 pr-4 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-teal-500/80 focus:ring-1 focus:ring-teal-500/20 transition-all"
+                      className="w-full bg-slate-950/50 border border-slate-800 rounded-xl py-3 pl-9 pr-4 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-teal-500/80 focus:ring-1 focus:ring-teal-500/20 transition-all"
                     />
                   </div>
                 </div>
@@ -328,7 +332,7 @@ export default function RegisterPage() {
                       value={area}
                       onChange={(e) => setArea(e.target.value)}
                       placeholder="e.g. Andheri West"
-                      className="w-full bg-slate-950/50 border border-slate-800 rounded-xl py-2.5 pl-9 pr-4 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-teal-500/80 focus:ring-1 focus:ring-teal-500/20 transition-all"
+                      className="w-full bg-slate-950/50 border border-slate-800 rounded-xl py-3 pl-9 pr-4 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-teal-500/80 focus:ring-1 focus:ring-teal-500/20 transition-all"
                     />
                   </div>
                 </div>
@@ -347,7 +351,7 @@ export default function RegisterPage() {
                       onChange={(e) => setPincode(e.target.value)}
                       placeholder="e.g. 400053"
                       maxLength={10}
-                      className="w-full bg-slate-950/50 border border-slate-800 rounded-xl py-2.5 pl-9 pr-4 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-teal-500/80 focus:ring-1 focus:ring-teal-500/20 transition-all"
+                      className="w-full bg-slate-950/50 border border-slate-800 rounded-xl py-3 pl-9 pr-4 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-teal-500/80 focus:ring-1 focus:ring-teal-500/20 transition-all"
                     />
                   </div>
                 </div>
@@ -363,7 +367,7 @@ export default function RegisterPage() {
                   value={referralCode}
                   onChange={(e) => setReferralCode(e.target.value)}
                   placeholder="e.g. REF-81158650"
-                  className="w-full bg-slate-950/50 border border-slate-800 rounded-xl py-2.5 px-4 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-teal-500/80 focus:ring-1 focus:ring-teal-500/20 transition-all uppercase"
+                  className="w-full bg-slate-950/50 border border-slate-800 rounded-xl py-3 px-4 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-teal-500/80 focus:ring-1 focus:ring-teal-500/20 transition-all uppercase"
                 />
               </div>
 
@@ -371,7 +375,7 @@ export default function RegisterPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full mt-4 relative overflow-hidden group bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-400 hover:to-emerald-400 text-slate-950 font-bold py-3 px-4 rounded-xl shadow-lg shadow-teal-500/10 flex items-center justify-center gap-2 transition-all active:scale-[0.99] disabled:opacity-50"
+                className="w-full mt-4 relative overflow-hidden group bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-400 hover:to-emerald-400 text-slate-950 font-bold py-3.5 px-4 rounded-xl shadow-lg shadow-teal-500/10 flex items-center justify-center gap-2 transition-all active:scale-[0.99] disabled:opacity-50"
               >
                 {loading ? (
                   <Loader2 className="animate-spin text-slate-950" size={18} />
