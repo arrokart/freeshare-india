@@ -57,6 +57,7 @@ import PWARegister from "@/components/PWARegister";
 import MobileNavBar from "@/components/MobileNavBar";
 import AnalyticsManager from "@/components/AnalyticsManager";
 import CookieConsent from "@/components/CookieConsent";
+import FeedbackModal from "@/components/FeedbackModal";
 import { BrandingProvider } from "@/components/BrandingContext";
 import { getBrandingServer } from "@/lib/brandingServer";
 
@@ -78,6 +79,7 @@ export default async function RootLayout({
           <AnalyticsManager />
           <CookieConsent />
           <PWARegister />
+          <FeedbackModal />
           <MobileNavBar />
         </BrandingProvider>
       </body>

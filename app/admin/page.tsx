@@ -8,10 +8,10 @@ import {
   Loader2, ArrowLeft, ShieldAlert, Flag, UserMinus, FileMinus, 
   CheckCircle2, ShieldCheck, Search, SlidersHorizontal, Users, 
   Settings, Check, X, ShieldX, ToggleLeft, ToggleRight, RotateCcw,
-  Edit2, Heart, FileText, BarChart3, Send, Palette, Megaphone
+  Edit2, Heart, FileText, BarChart3, Send, Palette, Megaphone, MessageSquare
 } from "lucide-react";
 
-type TabState = "queue" | "users" | "listings" | "settings" | "ngos" | "analytics" | "broadcast";
+type TabState = "queue" | "users" | "listings" | "settings" | "ngos" | "analytics" | "broadcast" | "feedback";
 
 export default function AdminPage() {
   const router = useRouter();
@@ -100,6 +100,10 @@ export default function AdminPage() {
   // User Limit Override States
   const [editingLimitUserId, setEditingLimitUserId] = useState<string | null>(null);
   const [targetLimit, setTargetLimit] = useState("");
+
+  // Feedback State
+  const [feedbacks, setFeedbacks] = useState<any[]>([]);
+  const [loadingFeedback, setLoadingFeedback] = useState(false);
 
   useEffect(() => {
     const checkAdminStatus = async () => {
@@ -290,6 +294,41 @@ export default function AdminPage() {
     }
   };
 
+  // Load feedbacks
+  const loadFeedbacks = async () => {
+    if (!userId) return;
+    setLoadingFeedback(true);
+    try {
+      const res = await fetch(`/api/admin/feedbacks?adminId=${userId}`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to load feedbacks");
+      setFeedbacks(data || []);
+    } catch (err: any) {
+      setErrorMsg(err.message || "Failed to fetch feedback logs.");
+    } finally {
+      setLoadingFeedback(false);
+    }
+  };
+
+  const handleArchiveFeedback = async (id: number) => {
+    if (!userId) return;
+    setErrorMsg("");
+    setSuccessMsg("");
+    try {
+      const res = await fetch(`/api/admin/feedbacks?adminId=${userId}&id=${id}`, {
+        method: "DELETE"
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Failed to delete feedback.");
+      }
+      setSuccessMsg("Feedback archived successfully.");
+      await loadFeedbacks();
+    } catch (err: any) {
+      setErrorMsg(err.message || "Archive feedback failed.");
+    }
+  };
+
   // Load NGO applications
   const loadNgoApplications = async (status: string = ngoAppStatusFilter) => {
     if (!userId) return;
@@ -344,6 +383,7 @@ export default function AdminPage() {
       if (activeTab === "ngos") loadNgoApplications(ngoAppStatusFilter);
       if (activeTab === "settings") loadSettings();
       if (activeTab === "analytics") loadAnalyticsData();
+      if (activeTab === "feedback") loadFeedbacks();
     }
   }, [activeTab, isAdmin, userId, userPage, userLimit, listingPage, listingLimit, ngoAppStatusFilter]);
 
@@ -662,6 +702,17 @@ export default function AdminPage() {
           >
             <Send size={14} />
             Alert Broadcast
+          </button>
+          <button
+            onClick={() => setActiveTab("feedback")}
+            className={`flex items-center gap-2 px-5 py-3 text-xs font-bold border-b-2 transition-all whitespace-nowrap ${
+              activeTab === "feedback"
+                ? "border-teal-500 text-teal-400"
+                : "border-transparent text-slate-400 hover:text-slate-200"
+            }`}
+          >
+            <MessageSquare size={14} />
+            User Feedback
           </button>
         </div>
 
@@ -2588,6 +2639,68 @@ export default function AdminPage() {
                 )}
               </button>
             </form>
+          </div>
+        )}
+        {/* =====================================================================
+            TAB 8: USER FEEDBACK PANEL
+            ===================================================================== */}
+        {activeTab === "feedback" && (
+          <div className="space-y-6 animate-in fade-in duration-200">
+            <div>
+              <h2 className="text-xl font-black text-slate-100">User Feedback Log</h2>
+              <p className="text-xs text-slate-500 mt-1">Review feedback, bug reports, and suggestions submitted by logged-in users.</p>
+            </div>
+
+            {loadingFeedback ? (
+              <div className="text-center py-20 flex justify-center items-center gap-2">
+                <Loader2 className="animate-spin text-teal-400" size={24} />
+                <span className="text-xs text-slate-500">Loading feedbacks...</span>
+              </div>
+            ) : feedbacks.length === 0 ? (
+              <div className="text-center py-20 border border-dashed border-slate-900 rounded-3xl">
+                <CheckCircle2 className="mx-auto text-slate-700 mb-3" size={36} />
+                <p className="text-sm font-bold text-slate-400">No feedbacks yet!</p>
+                <p className="text-xs text-slate-600 mt-1">Logged-in users haven't submitted any feedback yet.</p>
+              </div>
+            ) : (
+              <div className="space-y-4 max-w-4xl">
+                {feedbacks.map((fb) => (
+                  <div key={fb.id} className="bg-slate-900/30 border border-slate-900 rounded-3xl p-5 space-y-3 flex flex-col justify-between">
+                    <div className="flex justify-between items-start gap-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full overflow-hidden bg-slate-950 flex items-center justify-center border border-slate-800 text-slate-500 shrink-0">
+                          {fb.user?.avatar_url ? (
+                            <img src={fb.user.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+                          ) : (
+                            <Users size={20} />
+                          )}
+                        </div>
+                        <div>
+                          <h4 className="font-bold text-slate-200 text-xs">{fb.user?.name || "Anonymous User"}</h4>
+                          <span className="text-[10px] text-slate-500 block">{fb.user?.email || "No email available"}</span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span className="text-[9px] font-mono text-slate-500">
+                          {new Date(fb.created_at).toLocaleString()}
+                        </span>
+                        <button
+                          onClick={() => handleArchiveFeedback(fb.id)}
+                          className="bg-slate-950 hover:bg-red-500/10 border border-slate-850 hover:border-red-500/20 text-slate-400 hover:text-red-400 px-3 py-1.5 rounded-xl text-[10px] font-bold transition-all cursor-pointer"
+                        >
+                          Archive
+                        </button>
+                      </div>
+                    </div>
+
+                    <p className="text-xs text-slate-300 leading-relaxed font-sans bg-slate-950/20 p-3 rounded-2xl border border-slate-900/50 break-words whitespace-pre-line">
+                      {fb.message}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>
