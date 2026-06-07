@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { supabase } from "@/lib/supabaseClient";
 import { Search, Filter, Plus, User as UserIcon, LogOut, Loader2, Sparkles, MapPin, Grid, MessageSquare, Gift, AlertCircle, Bell, CheckCircle, ArrowRight, Heart, Star, Smile, BookOpen, Smartphone, ShieldCheck, Award, Tv, Shirt, ToyBrick, Soup, Trophy, Quote, HeartHandshake, Calendar } from "lucide-react";
 import dynamic from "next/dynamic";
@@ -509,9 +510,12 @@ export default function HomeFeed() {
           <div className="flex items-center gap-5">
             <Link href="/" className="select-none flex items-center gap-1.5 hover:opacity-90 transition-opacity">
               {logoDisplayMode === "text" ? null : brandLogoUrl ? (
-                <img
+                <Image
                   src={brandLogoUrl}
                   alt="Logo"
+                  width={logoDisplayMode === "logo" ? 120 : 32}
+                  height={logoDisplayMode === "logo" ? 40 : 32}
+                  priority
                   className={`${logoDisplayMode === "logo" ? "h-10 w-auto" : "h-8 w-8"} object-contain shrink-0`}
                 />
               ) : (
@@ -1035,9 +1039,11 @@ export default function HomeFeed() {
                             <span className="text-[10px] text-violet-400 font-bold">{item.donor?.name?.split(" ")[0]}</span>
                           </div>
                         ) : (
-                          <img
+                          <Image
                             src={item.images?.[0]}
                             alt={item.title}
+                            fill
+                            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                           />
                         )}
@@ -1138,9 +1144,11 @@ export default function HomeFeed() {
                           <span className="text-[10px] text-violet-400 font-bold">{item.donor?.name?.split(" ")[0]}</span>
                         </div>
                       ) : (
-                        <img
+                        <Image
                           src={item.images?.[0]}
                           alt={item.title}
+                          fill
+                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                         />
                       )}
@@ -1325,9 +1333,12 @@ function LandingPageView({ listings, trendingListings, lang }: { listings: any[]
           <div className="flex items-center gap-3">
             <span className="select-none flex items-center gap-1.5">
               {logoDisplayMode === "text" ? null : brandLogoUrl ? (
-                <img
+                <Image
                   src={brandLogoUrl}
                   alt="Logo"
+                  width={logoDisplayMode === "logo" ? 120 : 32}
+                  height={logoDisplayMode === "logo" ? 40 : 32}
+                  priority
                   className={`${logoDisplayMode === "logo" ? "h-10 w-auto" : "h-8 w-8"} object-contain shrink-0`}
                 />
               ) : (
@@ -1793,10 +1804,11 @@ function LandingPageView({ listings, trendingListings, lang }: { listings: any[]
                 }`}
               >
                 <div className="aspect-square relative overflow-hidden bg-slate-950">
-                  <img
+                  <Image
                     src={item.images?.[0]}
                     alt={item.title}
-                    loading="lazy"
+                    fill
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
                   <span className={`absolute top-1.5 left-1.5 sm:top-2.5 sm:left-2.5 text-[8px] sm:text-[9px] font-extrabold uppercase px-1.5 py-0.5 sm:px-2 sm:py-1 rounded bg-black/60 backdrop-blur-md tracking-wider ${
