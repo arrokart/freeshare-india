@@ -47,6 +47,9 @@ export async function generateMetadata(): Promise<Metadata> {
       description: branding.appDescription,
       images: [branding.brandLogoUrl || branding.appLogoUrl],
     },
+    verification: {
+      google: "aMZnTITfGYYhnaXrtCvo_jcmuKjhhR1SbhNGzwnnCZQ",
+    },
   };
 }
 
