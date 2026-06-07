@@ -1,12 +1,12 @@
-export const DEFAULT_APP_NAME = "FreeShare India";
-export const DEFAULT_APP_SHORT_NAME = "FreeShare";
+export const DEFAULT_APP_NAME = "ArcShare India";
+export const DEFAULT_APP_SHORT_NAME = "ArcShare";
 export const DEFAULT_APP_DESCRIPTION = "Share surplus items, coordinate community cleanups, and request verified skill sharing.";
-export const DEFAULT_SUPPORT_EMAIL = "support@freeshare.in";
-export const DEFAULT_LEGAL_EMAIL = "legal@freeshare.in";
+export const DEFAULT_SUPPORT_EMAIL = "support@arcshare.in";
+export const DEFAULT_LEGAL_EMAIL = "legal@arcshare.in";
 export const DEFAULT_LOGO_URL = "/icon-192x192.png";
-export const DEFAULT_APP_DOMAIN = "https://freeshare-india.vercel.app";
-export const DEFAULT_TWITTER_HANDLE = "@freeshare_india";
-export const DEFAULT_INSTAGRAM_HANDLE = "@freeshare_india";
+export const DEFAULT_APP_DOMAIN = "https://arcshare.in";
+export const DEFAULT_TWITTER_HANDLE = "@arcshare_india";
+export const DEFAULT_INSTAGRAM_HANDLE = "@arcshare_india";
 
 export const DEFAULT_BRAND_LOGO_URL = "";
 export const DEFAULT_LOGO_DISPLAY_MODE = "both";
