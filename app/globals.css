@@ -37,8 +37,8 @@ body {
 }
 
 html, body {
-  /* Prevent iOS rubber-band scroll from showing white background */
-  overscroll-behavior-y: contain;
+  /* Allow native browser pull-to-refresh on mobile viewports */
+  overscroll-behavior-y: auto;
 }
 
 /* Touch Targets Optimization & Hide Scrollbars */
