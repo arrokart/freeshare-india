@@ -69,8 +69,8 @@ export function BrandingProvider({
     supportEmail: initialData?.supportEmail || DEFAULT_SUPPORT_EMAIL,
     appLogoUrl: initialData?.appLogoUrl || DEFAULT_LOGO_URL,
     appDomain: initialData?.appDomain || DEFAULT_APP_DOMAIN,
-    itemCategories: initialData?.itemCategories || DEFAULT_ITEM_CATEGORIES,
-    skillCategories: initialData?.skillCategories || DEFAULT_SKILL_CATEGORIES,
+    itemCategories: (initialData?.itemCategories && initialData.itemCategories.length > 0) ? initialData.itemCategories : DEFAULT_ITEM_CATEGORIES,
+    skillCategories: (initialData?.skillCategories && initialData.skillCategories.length > 0) ? initialData.skillCategories : DEFAULT_SKILL_CATEGORIES,
     brandLogoUrl: initialData?.brandLogoUrl || DEFAULT_BRAND_LOGO_URL,
     logoDisplayMode: initialData?.logoDisplayMode || DEFAULT_LOGO_DISPLAY_MODE,
     loading: initialData ? false : true
@@ -93,8 +93,8 @@ export function BrandingProvider({
             supportEmail: settings.support_email || DEFAULT_SUPPORT_EMAIL,
             appLogoUrl: settings.app_logo_url || DEFAULT_LOGO_URL,
             appDomain: settings.app_domain || DEFAULT_APP_DOMAIN,
-            itemCategories: settings.item_categories || DEFAULT_ITEM_CATEGORIES,
-            skillCategories: settings.skill_categories || DEFAULT_SKILL_CATEGORIES,
+            itemCategories: (settings.item_categories && settings.item_categories.length > 0) ? settings.item_categories : DEFAULT_ITEM_CATEGORIES,
+            skillCategories: (settings.skill_categories && settings.skill_categories.length > 0) ? settings.skill_categories : DEFAULT_SKILL_CATEGORIES,
             brandLogoUrl: settings.brand_logo_url || DEFAULT_BRAND_LOGO_URL,
             logoDisplayMode: settings.logo_display_mode || DEFAULT_LOGO_DISPLAY_MODE,
             loading: false
