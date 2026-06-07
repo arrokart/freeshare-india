@@ -636,7 +636,7 @@ export default function HomeFeed() {
 
                   {/* Dropdown Box Panel */}
                   {showNotifications && (
-                    <div className="absolute right-0 mt-3 w-80 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-4 space-y-3 z-50">
+                    <div className="fixed md:absolute left-1/2 -translate-x-1/2 md:translate-x-0 md:left-auto md:right-0 mt-3 w-[calc(100vw-32px)] md:w-80 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-4 space-y-3 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
                       <div className="flex justify-between items-center border-b border-slate-800 pb-2">
                         <span className="text-xs font-bold text-slate-100 font-sans">Recent Alerts</span>
                         <div className="flex gap-2.5">
@@ -721,7 +721,7 @@ export default function HomeFeed() {
                     const refLink = typeof window !== "undefined" ? `${window.location.origin}/register?ref=${user.id}` : "";
 
                     return (
-                      <div className="absolute right-0 mt-3 w-72 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-4 space-y-4 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                      <div className="fixed md:absolute left-1/2 -translate-x-1/2 md:translate-x-0 md:left-auto md:right-0 mt-3 w-[calc(100vw-32px)] md:w-72 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-4 space-y-4 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
                         {/* User Summary Header */}
                         <Link
                           href={`/profile/${user.id}`}
