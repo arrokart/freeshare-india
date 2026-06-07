@@ -1083,7 +1083,7 @@ export default function ListingDetailClient({ initialListing }: { initialListing
               <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">
                 Description
               </h3>
-              <p className="text-sm text-slate-300 leading-relaxed whitespace-pre-line">
+              <p className="text-sm text-slate-300 leading-relaxed whitespace-pre-line break-words overflow-wrap-anywhere">
                 {listing.description}
               </p>
             </div>
