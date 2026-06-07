@@ -70,6 +70,19 @@ export default function HomeFeed() {
   const [isFetchingMore, setIsFetchingMore] = useState(false);
   const [loading, setLoading] = useState(true);
   const [authLoading, setAuthLoading] = useState(true);
+  const [isOffline, setIsOffline] = useState(typeof window !== "undefined" ? !navigator.onLine : false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const handleOnline = () => setIsOffline(false);
+    const handleOffline = () => setIsOffline(true);
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, []);
 
   // Search & Filter States
   const [searchTerm, setSearchTerm] = useState("");
@@ -991,10 +1004,34 @@ export default function HomeFeed() {
 
       {/* Grid listing content */}
       <div className="max-w-7xl mx-auto px-4 mt-6 space-y-12">
+        {isOffline && (
+          <div className="p-3.5 bg-amber-500/10 border border-amber-500/20 rounded-2xl flex items-center justify-between gap-3 text-amber-400 select-none animate-in fade-in duration-300">
+            <div className="flex items-center gap-2">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+              </span>
+              <p className="text-xs font-semibold leading-none">Offline Mode — Showing Cached Neighborhood Items</p>
+            </div>
+            <span className="text-[10px] uppercase font-black tracking-wider bg-amber-500/20 px-2 py-0.5 rounded-lg border border-amber-500/30">Cached</span>
+          </div>
+        )}
+
         {loading ? (
-          <div className="flex flex-col items-center justify-center py-20 gap-4">
-            <Loader2 className="animate-spin text-teal-400" size={36} />
-            <p className="text-sm text-slate-500">Scanning local neighborhood...</p>
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
+            {Array.from({ length: 8 }).map((_, idx) => (
+              <div key={idx} className="border border-slate-900 bg-slate-900/20 rounded-2xl overflow-hidden flex flex-col animate-pulse">
+                <div className="aspect-square bg-slate-900 relative" />
+                <div className="p-3 sm:p-4 flex-1 space-y-2">
+                  <div className="h-4 bg-slate-900 rounded w-3/4" />
+                  <div className="h-3 bg-slate-900/60 rounded w-1/2" />
+                  <div className="flex items-center justify-between pt-2">
+                    <div className="h-5 w-5 bg-slate-900/80 rounded-full" />
+                    <div className="h-3 bg-slate-900/40 rounded w-1/4" />
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         ) : listings.length === 0 ? (
           <div className="text-center py-20 border border-dashed border-slate-900 rounded-3xl">
