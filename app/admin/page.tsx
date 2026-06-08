@@ -430,6 +430,53 @@ export default function AdminPage() {
     }
   };
 
+  const handleDeleteUser = async (targetUserId: string, targetUserName: string) => {
+    if (!userId) return;
+    if (!window.confirm(`Are you sure you want to PERMANENTLY delete the account for "${targetUserName}"?\n\nThis will delete the user account, all their listings, and remove all associated image/document files from storage. This action CANNOT be undone.`)) {
+      return;
+    }
+    if (!window.confirm("FINAL CONFIRMATION: Please confirm once more to proceed with deletion.")) {
+      return;
+    }
+
+    setErrorMsg("");
+    setSuccessMsg("");
+    try {
+      const res = await fetch(`/api/admin/users?adminId=${userId}&targetUserId=${targetUserId}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to delete user account");
+
+      setSuccessMsg("User account deleted successfully.");
+      await loadUsersDirectory();
+    } catch (err: any) {
+      setErrorMsg(err.message || "Failed to delete user account.");
+    }
+  };
+
+  const handleDeleteListingPermanent = async (listingId: string) => {
+    if (!userId) return;
+    if (!window.confirm("Are you sure you want to PERMANENTLY delete this listing and remove all its images from storage? This action CANNOT be undone.")) {
+      return;
+    }
+
+    setErrorMsg("");
+    setSuccessMsg("");
+    try {
+      const res = await fetch(`/api/listings?listingId=${listingId}&userId=${userId}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to delete listing");
+
+      setSuccessMsg("Listing deleted successfully.");
+      await loadListingsDirectory();
+    } catch (err: any) {
+      setErrorMsg(err.message || "Failed to delete listing.");
+    }
+  };
+
   const handleBroadcast = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!userId) return;
@@ -1325,12 +1372,20 @@ export default function AdminPage() {
                                 ) : (
                                   <button
                                     onClick={() => handleModerationAction(undefined, "ban_user", u.id)}
-                                    className="text-[10px] bg-slate-900 border border-slate-800 text-red-450 hover:bg-red-550/10 font-bold px-2.5 py-1 rounded-lg transition-colors inline-flex items-center gap-1"
+                                    className="text-[10px] bg-slate-900 border border-slate-800 text-red-450 hover:bg-red-555/10 font-bold px-2.5 py-1 rounded-lg transition-colors inline-flex items-center gap-1"
                                   >
                                     <UserMinus size={10} />
                                     Ban
                                   </button>
                                 )}
+
+                                <button
+                                  onClick={() => handleDeleteUser(u.id, u.name || u.email)}
+                                  className="text-[10px] bg-slate-900 border border-slate-800 text-red-500 hover:bg-red-500/10 font-bold px-2.5 py-1 rounded-lg transition-colors inline-flex items-center gap-1"
+                                  title="Permanently delete this user account and clean up their files"
+                                >
+                                  Delete Account
+                                </button>
                               </div>
                             </td>
                           </tr>
@@ -1516,22 +1571,28 @@ export default function AdminPage() {
                       </div>
                     </div>
 
-                    <div className="shrink-0">
+                    <div className="shrink-0 flex flex-col gap-2">
                       {item.status !== "removed" ? (
                         <button
                           onClick={() => handleModerationAction(undefined, "remove_listing", undefined, item.id)}
-                          className="text-[10px] bg-slate-950 hover:bg-red-550/10 border border-slate-900 hover:border-red-500/30 text-red-400 font-bold px-2.5 py-1.5 rounded-xl transition-all"
+                          className="text-[10px] bg-slate-950 hover:bg-red-550/10 border border-slate-900 hover:border-red-500/30 text-red-400 font-bold px-2.5 py-1.5 rounded-xl transition-all w-full text-center"
                         >
                           Suspend Listing
                         </button>
                       ) : (
                         <button
                           onClick={() => handleModerationAction(undefined, "approve_appeal", undefined, item.id)}
-                          className="text-[10px] bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold px-2.5 py-1.5 rounded-xl transition-all shadow-lg shadow-teal-500/5"
+                          className="text-[10px] bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold px-2.5 py-1.5 rounded-xl transition-all shadow-lg shadow-teal-500/5 w-full text-center"
                         >
                           Relist Item
                         </button>
                       )}
+                      <button
+                        onClick={() => handleDeleteListingPermanent(item.id)}
+                        className="text-[10px] bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-450 font-bold px-2.5 py-1.5 rounded-xl transition-all w-full text-center"
+                      >
+                        Delete
+                      </button>
                     </div>
                   </div>
                 ))}

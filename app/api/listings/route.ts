@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabaseClient";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { deleteFileFromR2 } from "@/lib/r2";
 
 // Helper function to calculate great-circle distance (Haversine formula)
 function getDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
@@ -338,4 +339,90 @@ export async function PUT(request: Request) {
     );
   }
 }
+
+// DELETE a listing and clean up its associated storage images
+export async function DELETE(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const listingId = searchParams.get("listingId");
+    const userId = searchParams.get("userId");
+
+    if (!listingId || !userId) {
+      return NextResponse.json(
+        { error: "Missing listingId or userId parameters" },
+        { status: 400 }
+      );
+    }
+
+    // 1. Fetch the listing to verify ownership and retrieve image URLs
+    const { data: listing, error: fetchError } = await supabaseAdmin
+      .from("listings")
+      .select("donor_id, images")
+      .eq("id", listingId)
+      .single();
+
+    if (fetchError || !listing) {
+      return NextResponse.json(
+        { error: "Listing not found" },
+        { status: 404 }
+      );
+    }
+
+    // 2. Check if user is the donor or an admin
+    const { data: userProfile } = await supabaseAdmin
+      .from("users")
+      .select("is_admin")
+      .eq("id", userId)
+      .maybeSingle();
+
+    const isAdmin = userProfile?.is_admin === true;
+
+    if (listing.donor_id !== userId && !isAdmin) {
+      return NextResponse.json(
+        { error: "Unauthorized: You do not own this listing" },
+        { status: 403 }
+      );
+    }
+
+    // 3. Extract R2 keys and delete the images from storage
+    const images = listing.images || [];
+    const publicDomain = process.env.NEXT_PUBLIC_CLOUDFLARE_R2_PUBLIC_URL || "";
+    const domain = publicDomain ? (publicDomain.endsWith("/") ? publicDomain : `${publicDomain}/`) : null;
+    const placeholderDomain = "https://pub-placeholder-domain.r2.dev/";
+
+    for (const imageUrl of images) {
+      let fileKey: string | null = null;
+      if (domain && imageUrl.startsWith(domain)) {
+        fileKey = imageUrl.substring(domain.length);
+      } else if (imageUrl.startsWith(placeholderDomain)) {
+        fileKey = imageUrl.substring(placeholderDomain.length);
+      }
+      
+      if (fileKey) {
+        try {
+          await deleteFileFromR2(fileKey);
+        } catch (storageErr) {
+          console.error(`Failed to delete storage file ${fileKey}:`, storageErr);
+        }
+      }
+    }
+
+    // 4. Perform the hard delete from the database
+    const { error: deleteError } = await supabaseAdmin
+      .from("listings")
+      .delete()
+      .eq("id", listingId);
+
+    if (deleteError) throw deleteError;
+
+    return NextResponse.json({ success: true, message: "Listing deleted successfully" });
+  } catch (error: any) {
+    console.error("Delete listing error:", error);
+    return NextResponse.json(
+      { error: error.message || "Failed to delete listing" },
+      { status: 500 }
+    );
+  }
+}
+
 

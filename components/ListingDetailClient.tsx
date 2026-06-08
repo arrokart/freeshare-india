@@ -242,18 +242,21 @@ export default function ListingDetailClient({ initialListing }: { initialListing
   };
 
   const handleDeleteListing = async () => {
+    if (!userId) {
+      alert("You must be logged in to delete this listing.");
+      return;
+    }
     if (!window.confirm("Are you sure you want to permanently delete this listing? This action cannot be undone.")) {
       return;
     }
     
     setDeleteLoading(true);
     try {
-      const { error } = await supabase
-        .from("listings")
-        .delete()
-        .eq("id", listing.id);
-        
-      if (error) throw error;
+      const res = await fetch(`/api/listings?listingId=${listing.id}&userId=${userId}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to delete listing.");
       
       alert("Listing deleted successfully.");
       router.push("/dashboard");

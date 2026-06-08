@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin as supabase } from "@/lib/supabaseAdmin";
+import { deleteFileFromR2 } from "@/lib/r2";
 
 // Helper to verify if user is admin
 async function verifyAdmin(userId: string): Promise<boolean> {
@@ -151,3 +152,102 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: error.message || "Failed to set custom claim limit" }, { status: 500 });
   }
 }
+
+// DELETE a user account and clean up all associated R2 assets
+export async function DELETE(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const adminId = searchParams.get("adminId");
+    const targetUserId = searchParams.get("targetUserId");
+
+    if (!adminId || !(await verifyAdmin(adminId))) {
+      return NextResponse.json({ error: "Access Denied: Administrator privileges required." }, { status: 403 });
+    }
+
+    if (!targetUserId) {
+      return NextResponse.json({ error: "Missing targetUserId parameter." }, { status: 400 });
+    }
+
+    // 1. Retrieve the user profile to find their avatar and NGO documents
+    const { data: userProfile, error: profileErr } = await supabase
+      .from("users")
+      .select("avatar_url, bio")
+      .eq("id", targetUserId)
+      .single();
+
+    if (profileErr || !userProfile) {
+      return NextResponse.json({ error: "Target user profile not found." }, { status: 404 });
+    }
+
+    // 2. Retrieve all listings owned by the user to get their images
+    const { data: listings, error: listingsErr } = await supabase
+      .from("listings")
+      .select("images")
+      .eq("donor_id", targetUserId);
+
+    if (listingsErr) {
+      console.warn("Could not retrieve user listings for storage cleanup:", listingsErr);
+    }
+
+    // Collect all URLs to clean up
+    const urlsToCleanup: string[] = [];
+
+    // Add user avatar
+    if (userProfile.avatar_url) {
+      urlsToCleanup.push(userProfile.avatar_url);
+    }
+
+    // Parse bio for NGO application document
+    if (userProfile.bio) {
+      try {
+        const parsedBio = JSON.parse(userProfile.bio);
+        if (parsedBio && typeof parsedBio === "object" && parsedBio.document_url) {
+          urlsToCleanup.push(parsedBio.document_url);
+        }
+      } catch {
+        // Standard bio text, no JSON
+      }
+    }
+
+    // Add all listings' images
+    if (listings && listings.length > 0) {
+      for (const item of listings) {
+        if (item.images && Array.isArray(item.images)) {
+          urlsToCleanup.push(...item.images);
+        }
+      }
+    }
+
+    // 3. Delete files from R2
+    const publicDomain = process.env.NEXT_PUBLIC_CLOUDFLARE_R2_PUBLIC_URL || "";
+    const domain = publicDomain ? (publicDomain.endsWith("/") ? publicDomain : `${publicDomain}/`) : null;
+    const placeholderDomain = "https://pub-placeholder-domain.r2.dev/";
+
+    for (const fileUrl of urlsToCleanup) {
+      let fileKey: string | null = null;
+      if (domain && fileUrl.startsWith(domain)) {
+        fileKey = fileUrl.substring(domain.length);
+      } else if (fileUrl.startsWith(placeholderDomain)) {
+        fileKey = fileUrl.substring(placeholderDomain.length);
+      }
+
+      if (fileKey) {
+        try {
+          await deleteFileFromR2(fileKey);
+        } catch (storageErr) {
+          console.error(`Failed to delete storage file ${fileKey}:`, storageErr);
+        }
+      }
+    }
+
+    // 4. Delete the user from authentication (this will cascade delete users, listings, claims, messages tables)
+    const { error: deleteErr } = await supabase.auth.admin.deleteUser(targetUserId);
+    if (deleteErr) throw deleteErr;
+
+    return NextResponse.json({ success: true, message: "User account and all associated data and files deleted successfully." });
+  } catch (error: any) {
+    console.error("Delete user account error:", error);
+    return NextResponse.json({ error: error.message || "Failed to delete user account" }, { status: 500 });
+  }
+}
+
