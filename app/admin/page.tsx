@@ -8,10 +8,11 @@ import {
   Loader2, ArrowLeft, ShieldAlert, Flag, UserMinus, FileMinus, 
   CheckCircle2, ShieldCheck, Search, SlidersHorizontal, Users, 
   Settings, Check, X, ShieldX, ToggleLeft, ToggleRight, RotateCcw,
-  Edit2, Heart, FileText, BarChart3, Send, Palette, Megaphone, MessageSquare
+  Edit2, Heart, FileText, BarChart3, Send, Palette, Megaphone, MessageSquare,
+  Calendar
 } from "lucide-react";
 
-type TabState = "queue" | "users" | "listings" | "settings" | "ngos" | "analytics" | "broadcast" | "feedback";
+type TabState = "queue" | "users" | "listings" | "settings" | "ngos" | "analytics" | "broadcast" | "feedback" | "events";
 
 export default function AdminPage() {
   const router = useRouter();
@@ -43,6 +44,27 @@ export default function AdminPage() {
   const [userPage, setUserPage] = useState(1);
   const [userLimit, setUserLimit] = useState(10);
   const [totalUsers, setTotalUsers] = useState(0);
+
+  // Events Tab States
+  const [events, setEvents] = useState<any[]>([]);
+  const [totalEvents, setTotalEvents] = useState(0);
+  const [loadingEvents, setLoadingEvents] = useState(false);
+  const [eventSearch, setEventSearch] = useState("");
+  const [eventPage, setEventPage] = useState(1);
+  const [eventLimit, setEventLimit] = useState(10);
+
+  // Edit Event State
+  const [editingEventId, setEditingEventId] = useState<string | null>(null);
+  const [editEventTitle, setEditEventTitle] = useState("");
+  const [editEventDescription, setEditEventDescription] = useState("");
+  const [editEventLocation, setEditEventLocation] = useState("");
+  const [editEventCity, setEditEventCity] = useState("");
+  const [editEventArea, setEditEventArea] = useState("");
+  const [editEventPincode, setEditEventPincode] = useState("");
+  const [editEventStartDate, setEditEventStartDate] = useState("");
+  const [editEventEndDate, setEditEventEndDate] = useState("");
+  const [editEventMaxParticipants, setEditEventMaxParticipants] = useState("");
+  const [eventSubmitting, setEventSubmitting] = useState(false);
 
   // Listings Directory States
   const [listings, setListings] = useState<any[]>([]);
@@ -384,8 +406,9 @@ export default function AdminPage() {
       if (activeTab === "settings") loadSettings();
       if (activeTab === "analytics") loadAnalyticsData();
       if (activeTab === "feedback") loadFeedbacks();
+      if (activeTab === "events") loadEventsDirectory(eventPage, eventLimit);
     }
-  }, [activeTab, isAdmin, userId, userPage, userLimit, listingPage, listingLimit, ngoAppStatusFilter]);
+  }, [activeTab, isAdmin, userId, userPage, userLimit, listingPage, listingLimit, ngoAppStatusFilter, eventPage, eventLimit]);
 
   // Execute moderation actions
   const handleModerationAction = async (
@@ -427,6 +450,85 @@ export default function AdminPage() {
       setErrorMsg(err.message || "Moderation action failed.");
     } finally {
       setActionLoadingId(null);
+    }
+  };
+
+  // Events Tab Methods
+
+  const loadEventsDirectory = async (page = eventPage, limit = eventLimit) => {
+    if (!userId) return;
+    setLoadingEvents(true);
+    try {
+      const res = await fetch(`/api/admin/events?adminId=${userId}&search=${encodeURIComponent(eventSearch)}&page=${page}&limit=${limit}`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to load events");
+      setEvents(data.events || []);
+      setTotalEvents(data.totalCount || 0);
+    } catch (err: any) {
+      setErrorMsg(err.message || "Failed to load events.");
+    } finally {
+      setLoadingEvents(false);
+    }
+  };
+
+  const handleUpdateEvent = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!userId || !editingEventId) return;
+
+    setEventSubmitting(true);
+    setErrorMsg("");
+    setSuccessMsg("");
+    try {
+      const res = await fetch("/api/admin/events", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          adminId: userId,
+          eventId: editingEventId,
+          title: editEventTitle,
+          description: editEventDescription,
+          start_date: editEventStartDate,
+          end_date: editEventEndDate,
+          location_name: editEventLocation,
+          city: editEventCity,
+          area: editEventArea,
+          pincode: editEventPincode,
+          max_participants: editEventMaxParticipants,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to update event");
+
+      setSuccessMsg("Event updated successfully.");
+      setEditingEventId(null);
+      await loadEventsDirectory();
+    } catch (err: any) {
+      setErrorMsg(err.message || "Failed to update event.");
+    } finally {
+      setEventSubmitting(false);
+    }
+  };
+
+  const handleDeleteEventPermanent = async (eventId: string) => {
+    if (!userId) return;
+    if (!window.confirm("Are you sure you want to PERMANENTLY delete this event and remove its image from storage? This action CANNOT be undone.")) {
+      return;
+    }
+
+    setErrorMsg("");
+    setSuccessMsg("");
+    try {
+      const res = await fetch(`/api/events?eventId=${eventId}&userId=${userId}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to delete event");
+
+      setSuccessMsg("Event deleted successfully.");
+      await loadEventsDirectory();
+    } catch (err: any) {
+      setErrorMsg(err.message || "Failed to delete event.");
     }
   };
 
@@ -760,6 +862,17 @@ export default function AdminPage() {
           >
             <MessageSquare size={14} />
             User Feedback
+          </button>
+          <button
+            onClick={() => setActiveTab("events")}
+            className={`flex items-center gap-2 px-5 py-3 text-xs font-bold border-b-2 transition-all whitespace-nowrap ${
+              activeTab === "events"
+                ? "border-teal-500 text-teal-400"
+                : "border-transparent text-slate-400 hover:text-slate-200"
+            }`}
+          >
+            <Calendar size={14} />
+            Event Directory
           </button>
         </div>
 
@@ -2764,7 +2877,279 @@ export default function AdminPage() {
             )}
           </div>
         )}
+
+        {/* =====================================================================
+            TAB 9: EVENT DIRECTORY
+            ===================================================================== */}
+        {activeTab === "events" && (
+          <div className="space-y-6 animate-in fade-in duration-200">
+            <div>
+              <h2 className="text-xl font-black text-slate-100">Event Directory</h2>
+              <p className="text-xs text-slate-500 mt-1 font-sans">Audit active community events, update information, or permanently remove events.</p>
+            </div>
+
+            {/* Search & Limit Controls */}
+            <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
+              <div className="relative w-full sm:max-w-md">
+                <Search size={14} className="absolute left-3.5 top-3.5 text-slate-500" />
+                <input
+                  type="text"
+                  placeholder="Search by event title..."
+                  value={eventSearch}
+                  onChange={(e) => setEventSearch(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      setEventPage(1);
+                      loadEventsDirectory(1, eventLimit);
+                    }
+                  }}
+                  className="w-full bg-slate-950/60 border border-slate-800 rounded-2xl py-2.5 pl-9 pr-4 text-xs text-slate-100 placeholder-slate-650 focus:outline-none focus:border-teal-500"
+                />
+              </div>
+              <div className="relative w-full sm:w-48 shrink-0">
+                <select
+                  value={eventLimit}
+                  onChange={(e) => {
+                    const newLimit = Number(e.target.value);
+                    setEventLimit(newLimit);
+                    setEventPage(1);
+                    loadEventsDirectory(1, newLimit);
+                  }}
+                  className="w-full bg-slate-950/60 border border-slate-800 rounded-2xl py-2.5 px-4 text-xs text-slate-355 focus:outline-none focus:border-teal-500 appearance-none"
+                >
+                  <option value={10}>10 events per page</option>
+                  <option value={20}>20 events per page</option>
+                  <option value={50}>50 events per page</option>
+                </select>
+                <SlidersHorizontal size={12} className="absolute right-3.5 top-4 text-slate-600 pointer-events-none" />
+              </div>
+            </div>
+
+            {/* Events Grid */}
+            {loadingEvents ? (
+              <div className="text-center py-20 flex justify-center items-center gap-2">
+                <Loader2 className="animate-spin text-teal-400" size={24} />
+                <span className="text-xs text-slate-500">Fetching events...</span>
+              </div>
+            ) : events.length === 0 ? (
+              <p className="text-xs text-slate-500 text-center py-10">No events found.</p>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {events.map((evt) => (
+                  <div key={evt.id} className="bg-slate-900/30 border border-slate-900 rounded-3xl p-5 flex gap-4 justify-between items-start">
+                    <div className="flex gap-4">
+                      {evt.image_url && (
+                        <div className="w-14 h-14 rounded-xl overflow-hidden bg-slate-950 border border-slate-800 shrink-0">
+                          <img src={evt.image_url} alt="event banner" className="w-full h-full object-cover" />
+                        </div>
+                      )}
+                      <div className="space-y-1.5 min-w-0">
+                        <h4 className="font-bold text-sm text-slate-100 truncate max-w-[200px]">{evt.title}</h4>
+                        <div className="text-[10px] text-slate-500 font-medium">
+                          Host: <span className="font-bold text-slate-400">{evt.organizer?.name || "N/A"}</span>
+                        </div>
+                        <div className="text-[10px] text-slate-500 font-medium truncate max-w-[200px]">
+                          📍 {evt.location_name}, {evt.city}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="shrink-0 flex flex-col gap-2">
+                      <button
+                        onClick={() => {
+                          setEditingEventId(evt.id);
+                          setEditEventTitle(evt.title || "");
+                          setEditEventDescription(evt.description || "");
+                          setEditEventLocation(evt.location_name || "");
+                          setEditEventCity(evt.city || "");
+                          setEditEventArea(evt.area || "");
+                          setEditEventPincode(evt.pincode || "");
+                          setEditEventStartDate(evt.start_date ? evt.start_date.substring(0, 16) : "");
+                          setEditEventEndDate(evt.end_date ? evt.end_date.substring(0, 16) : "");
+                          setEditEventMaxParticipants(evt.max_participants || "");
+                        }}
+                        className="text-[10px] bg-slate-950 hover:bg-slate-900 border border-slate-850 hover:border-slate-800 text-teal-400 font-bold px-2.5 py-1.5 rounded-xl transition-all text-center"
+                      >
+                        Modify
+                      </button>
+                      <button
+                        onClick={() => handleDeleteEventPermanent(evt.id)}
+                        className="text-[10px] bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-455 font-bold px-2.5 py-1.5 rounded-xl transition-all text-center"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Events Pagination */}
+            {totalEvents > eventLimit && (
+              <div className="flex items-center justify-between mt-4 bg-slate-900/10 border border-slate-900/60 p-3 rounded-2xl">
+                <span className="text-xs text-slate-500 font-medium">
+                  Showing {(eventPage - 1) * eventLimit + 1} - {Math.min(eventPage * eventLimit, totalEvents)} of {totalEvents} events
+                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    disabled={eventPage === 1}
+                    onClick={() => {
+                      const prev = eventPage - 1;
+                      setEventPage(prev);
+                      loadEventsDirectory(prev, eventLimit);
+                    }}
+                    className="px-3 py-1.5 rounded-xl border border-slate-800 text-xs text-slate-350 hover:bg-slate-900 disabled:opacity-40 disabled:hover:bg-transparent"
+                  >
+                    Previous
+                  </button>
+                  <button
+                    disabled={eventPage * eventLimit >= totalEvents}
+                    onClick={() => {
+                      const next = eventPage + 1;
+                      setEventPage(next);
+                      loadEventsDirectory(next, eventLimit);
+                    }}
+                    className="px-3 py-1.5 rounded-xl border border-slate-800 text-xs text-slate-350 hover:bg-slate-900 disabled:opacity-40 disabled:hover:bg-transparent"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Event Edit Modal */}
+        {editingEventId && (
+          <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 w-full max-w-xl max-h-[90vh] overflow-y-auto space-y-4">
+              <div className="flex justify-between items-center border-b border-slate-800 pb-3">
+                <h3 className="text-base font-extrabold text-slate-100 flex items-center gap-1.5">
+                  <Calendar className="text-teal-400" size={18} />
+                  Modify Event details
+                </h3>
+                <button
+                  onClick={() => setEditingEventId(null)}
+                  className="p-1 hover:bg-slate-800 text-slate-400 hover:text-slate-200 rounded-lg transition-colors"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              <form onSubmit={handleUpdateEvent} className="space-y-4">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest block">Event Title</label>
+                  <input
+                    type="text"
+                    required
+                    value={editEventTitle}
+                    onChange={(e) => setEditEventTitle(e.target.value)}
+                    className="w-full bg-slate-950/50 border border-slate-800 rounded-xl py-2 px-3 text-xs text-slate-100 placeholder-slate-650 focus:outline-none focus:border-teal-500"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest block">Description</label>
+                  <textarea
+                    required
+                    rows={4}
+                    value={editEventDescription}
+                    onChange={(e) => setEditEventDescription(e.target.value)}
+                    className="w-full bg-slate-950/50 border border-slate-800 rounded-xl py-2 px-3 text-xs text-slate-100 placeholder-slate-650 focus:outline-none focus:border-teal-500 resize-none"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest block">Start Date/Time</label>
+                    <input
+                      type="datetime-local"
+                      required
+                      value={editEventStartDate}
+                      onChange={(e) => setEditEventStartDate(e.target.value)}
+                      className="w-full bg-slate-950/50 border border-slate-800 rounded-xl py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-teal-500"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest block">End Date/Time</label>
+                    <input
+                      type="datetime-local"
+                      required
+                      value={editEventEndDate}
+                      onChange={(e) => setEditEventEndDate(e.target.value)}
+                      className="w-full bg-slate-950/50 border border-slate-800 rounded-xl py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-teal-500"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="col-span-2 space-y-1">
+                    <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest block">Location / Venue Name</label>
+                    <input
+                      type="text"
+                      required
+                      value={editEventLocation}
+                      onChange={(e) => setEditEventLocation(e.target.value)}
+                      className="w-full bg-slate-950/50 border border-slate-800 rounded-xl py-2 px-3 text-xs text-slate-100 placeholder-slate-650 focus:outline-none focus:border-teal-500"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest block">Max Participants</label>
+                    <input
+                      type="number"
+                      value={editEventMaxParticipants}
+                      onChange={(e) => setEditEventMaxParticipants(e.target.value)}
+                      className="w-full bg-slate-950/50 border border-slate-800 rounded-xl py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-teal-500"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest block">City</label>
+                    <input
+                      type="text"
+                      required
+                      value={editEventCity}
+                      onChange={(e) => setEditEventCity(e.target.value)}
+                      className="w-full bg-slate-950/50 border border-slate-800 rounded-xl py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-teal-500"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest block">Area</label>
+                    <input
+                      type="text"
+                      required
+                      value={editEventArea}
+                      onChange={(e) => setEditEventArea(e.target.value)}
+                      className="w-full bg-slate-950/50 border border-slate-800 rounded-xl py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-teal-500"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest block">Pincode</label>
+                    <input
+                      type="text"
+                      value={editEventPincode}
+                      onChange={(e) => setEditEventPincode(e.target.value)}
+                      className="w-full bg-slate-950/50 border border-slate-800 rounded-xl py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-teal-500"
+                    />
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={eventSubmitting}
+                  className="w-full relative overflow-hidden bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-400 hover:to-emerald-400 text-slate-950 font-extrabold py-3 rounded-xl shadow-lg transition-all active:scale-[0.99] disabled:opacity-50 flex items-center justify-center gap-1.5 cursor-pointer mt-4 uppercase tracking-wider text-xs"
+                >
+                  {eventSubmitting ? <Loader2 className="animate-spin" size={14} /> : <Check size={14} />}
+                  <span>Save Changes</span>
+                </button>
+              </form>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
 }
+

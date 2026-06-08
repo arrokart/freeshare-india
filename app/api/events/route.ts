@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabaseClient";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { deleteFileFromR2 } from "@/lib/r2";
 
 // GET events with city/area filters
 export async function GET(request: Request) {
@@ -198,7 +199,7 @@ export async function DELETE(request: Request) {
     // Verify the caller is the organizer or an admin
     const { data: event, error: fetchErr } = await supabaseAdmin
       .from("events")
-      .select("organizer_id")
+      .select("organizer_id, image_url")
       .eq("id", eventId)
       .single();
 
@@ -218,6 +219,29 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
+    // Clean up event banner image from R2 storage
+    if (event.image_url) {
+      const publicDomain = process.env.NEXT_PUBLIC_CLOUDFLARE_R2_PUBLIC_URL || "";
+      const domain = publicDomain ? (publicDomain.endsWith("/") ? publicDomain : `${publicDomain}/`) : null;
+      const placeholderDomain = "https://pub-placeholder-domain.r2.dev/";
+      const imageUrl = event.image_url;
+
+      let fileKey: string | null = null;
+      if (domain && imageUrl.startsWith(domain)) {
+        fileKey = imageUrl.substring(domain.length);
+      } else if (imageUrl.startsWith(placeholderDomain)) {
+        fileKey = imageUrl.substring(placeholderDomain.length);
+      }
+
+      if (fileKey) {
+        try {
+          await deleteFileFromR2(fileKey);
+        } catch (storageErr) {
+          console.error(`Failed to delete storage file ${fileKey}:`, storageErr);
+        }
+      }
+    }
+
     const { error: deleteError } = await supabaseAdmin
       .from("events")
       .delete()
@@ -234,3 +258,4 @@ export async function DELETE(request: Request) {
     );
   }
 }
+
