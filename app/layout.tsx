@@ -60,6 +60,7 @@ import CookieConsent from "@/components/CookieConsent";
 import FeedbackModal from "@/components/FeedbackModal";
 import { BrandingProvider } from "@/components/BrandingContext";
 import { getBrandingServer } from "@/lib/brandingServer";
+import AuthSync from "@/components/AuthSync";
 
 export default async function RootLayout({
   children,
@@ -75,6 +76,7 @@ export default async function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         <BrandingProvider initialData={branding}>
+          <AuthSync />
           <main className="flex-1 pb-20 md:pb-0">{children}</main>
           <AnalyticsManager />
           <CookieConsent />
