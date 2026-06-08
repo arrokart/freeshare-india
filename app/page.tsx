@@ -1311,6 +1311,7 @@ export default function HomeFeed() {
 function LandingPageView({ listings, trendingListings, lang }: { listings: any[]; trendingListings: any[]; lang: Language }) {
   const { appName, appShortName, appDescription, supportEmail, appDomain, brandLogoUrl, logoDisplayMode } = useBranding();
   const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [previewTab, setPreviewTab] = useState<"all" | "item" | "skill">("all");
   const t = (key: any) => getTranslation(key, lang);
   const displayAppName = appName === "FreeShare India" ? t("app_title") : appName;
   
@@ -1322,29 +1323,28 @@ function LandingPageView({ listings, trendingListings, lang }: { listings: any[]
     }
   };
 
-  const categories = [
-    { name: "Furniture", icon: (
-      <svg className="w-8 h-8 text-emerald-500" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+  const categories = [{ name: "Furniture", icon: (
+      <svg className="w-6 h-6 text-emerald-450" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" d="M6 18h12M4 10h16M7 10v6m10-6v6M9 6h6m-7 12v2m8-2v2" />
       </svg>
     )},
     { name: "Electronics", icon: (
-      <svg className="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+      <svg className="w-6 h-6 text-blue-450" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" d="M3 18V9a9 9 0 0118 0v9m-18 0a2 2 0 002 2h3a2 2 0 002-2V13a2 2 0 00-2-2H3m18 7a2 2 0 01-2 2h-3a2 2 0 01-2-2V13a2 2 0 012-2h3" />
       </svg>
     )},
     { name: "Books", icon: (
-      <svg className="w-8 h-8 text-teal-600" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+      <svg className="w-6 h-6 text-teal-400" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
       </svg>
     )},
     { name: "Clothing", icon: (
-      <svg className="w-8 h-8 text-amber-500" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+      <svg className="w-6 h-6 text-amber-450" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 5.636l-3.536 3.536m0 0L14.828 12H9.172L9.172 9.172m5.656 0L18.364 5.636M9.172 9.172L5.636 5.636m0 0l3.536 3.536M12 12v9m-4-6h8" />
       </svg>
     )},
     { name: "Toys", icon: (
-      <svg className="w-8 h-8 text-amber-700" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+      <svg className="w-6 h-6 text-violet-400" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
         <circle cx="12" cy="12" r="6" />
         <circle cx="8" cy="8" r="2" />
         <circle cx="16" cy="8" r="2" />
@@ -1352,18 +1352,18 @@ function LandingPageView({ listings, trendingListings, lang }: { listings: any[]
       </svg>
     )},
     { name: "Kitchen", icon: (
-      <svg className="w-8 h-8 text-emerald-600" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+      <svg className="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" d="M12 2v2M4 8h16v8a4 4 0 01-4 4H8a4 4 0 01-4-4V8zm0 4h16" />
       </svg>
     )},
     { name: "Sports", icon: (
-      <svg className="w-8 h-8 text-amber-600" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+      <svg className="w-6 h-6 text-orange-450" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
         <circle cx="12" cy="12" r="9" />
         <path strokeLinecap="round" strokeLinejoin="round" d="M5.6 5.6c3.2 3.2 3.2 9.6 0 12.8M18.4 5.6c-3.2 3.2-3.2 9.6 0 12.8" />
       </svg>
     )},
     { name: "Appliances", icon: (
-      <svg className="w-8 h-8 text-slate-500" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+      <svg className="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
         <rect x="4" y="3" width="16" height="18" rx="2" />
         <circle cx="12" cy="12" r="4" />
         <circle cx="12" cy="6" r="1" />
@@ -1371,13 +1371,25 @@ function LandingPageView({ listings, trendingListings, lang }: { listings: any[]
     )},
   ];
 
+  const filteredListings = listings.filter((item) => {
+    if (previewTab === "all") return true;
+    return item.listing_type === previewTab;
+  });
+
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans pb-16 selection:bg-teal-500 selection:text-black">
+    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans pb-16 selection:bg-teal-500 selection:text-black antialiased relative">
+      {/* Mesh Gradients background */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none -z-10">
+        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-teal-500/10 blur-[120px]" />
+        <div className="absolute top-[20%] right-[-10%] w-[60%] h-[60%] rounded-full bg-violet-500/10 blur-[150px]" />
+        <div className="absolute bottom-[-10%] left-[20%] w-[50%] h-[50%] rounded-full bg-emerald-500/10 blur-[130px]" />
+      </div>
+
       {/* Sticky Navbar */}
-      <nav className="border-b border-slate-900 bg-slate-950/80 backdrop-blur-md sticky top-0 z-50">
+      <nav className="border-b border-slate-900 bg-slate-950/85 backdrop-blur-md sticky top-0 z-50 transition-all duration-300">
         <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <span className="select-none flex items-center gap-1.5">
+          <div className="flex items-center gap-4">
+            <span className="select-none flex items-center gap-1.5 cursor-pointer">
               {logoDisplayMode === "text" ? null : brandLogoUrl ? (
                 <Image
                   src={brandLogoUrl}
@@ -1388,28 +1400,40 @@ function LandingPageView({ listings, trendingListings, lang }: { listings: any[]
                   className={`${logoDisplayMode === "logo" ? "h-10 w-auto" : "h-8 w-8"} object-contain shrink-0`}
                 />
               ) : (
-                <svg className="w-6 h-6 text-teal-400 fill-current" viewBox="0 0 24 24">
-                  <path d="M12 2a10 10 0 00-7.07 17.07L12 22l7.07-2.93A10 10 0 0012 2zm-1 14.5V13H8v-2h3V8.5a2.5 2.5 0 015 0V11h-2V8.5a.5.5 0 00-1 0V13h3v2h-3v1.5a.5.5 0 001 0v.5a1.5 1.5 0 01-3 0z" />
-                </svg>
+                <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-teal-500 to-emerald-400 flex items-center justify-center text-slate-950 shadow-lg">
+                  <Gift className="w-4 h-4 text-slate-950" strokeWidth={2.5} />
+                </div>
               )}
               {logoDisplayMode !== "logo" && (
-                <span className="text-xl font-black bg-gradient-to-r from-teal-400 to-emerald-400 bg-clip-text text-transparent">
+                <span className="text-lg font-black bg-gradient-to-r from-teal-400 via-emerald-400 to-teal-500 bg-clip-text text-transparent tracking-tight">
                   {displayAppName}
                 </span>
               )}
             </span>
-            <div className="hidden sm:flex items-center gap-1 bg-slate-900 border border-slate-800 rounded-full px-3 py-1 text-[10px] font-bold text-slate-400 shadow-inner">
-              <MapPin size={10} className="text-teal-400" />
-              <span>Delhi</span>
-              <span className="text-[7px]">▼</span>
+            <div className="hidden md:flex items-center gap-1.5 bg-slate-900/60 border border-slate-800 rounded-full px-3 py-1 text-[10px] font-bold text-slate-400 shadow-inner">
+              <MapPin size={10} className="text-teal-400 animate-pulse" />
+              <span>Delhi NCR</span>
+              <span className="text-[7px] text-slate-500">▼</span>
             </div>
           </div>
 
-          <div className="hidden lg:flex items-center gap-6 text-xs font-semibold text-slate-400">
-            <button onClick={() => scrollToSection("how-it-works")} className="hover:text-teal-400 transition-colors cursor-pointer">How it Works</button>
-            <button onClick={() => scrollToSection("explore-categories")} className="hover:text-teal-400 transition-colors cursor-pointer">Categories</button>
-            <button onClick={() => scrollToSection("our-impact")} className="hover:text-teal-400 transition-colors cursor-pointer">Impact</button>
-            <button onClick={() => scrollToSection("community-stories")} className="hover:text-teal-400 transition-colors cursor-pointer">Community</button>
+          <div className="hidden lg:flex items-center gap-8 text-xs font-semibold text-slate-400">
+            <button onClick={() => scrollToSection("features")} className="hover:text-teal-400 transition-colors cursor-pointer relative py-1 group">
+              Our Pillars
+              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-teal-400 transition-all group-hover:w-full" />
+            </button>
+            <button onClick={() => scrollToSection("how-it-works")} className="hover:text-teal-400 transition-colors cursor-pointer relative py-1 group">
+              How it Works
+              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-teal-400 transition-all group-hover:w-full" />
+            </button>
+            <button onClick={() => scrollToSection("trending-preview")} className="hover:text-teal-400 transition-colors cursor-pointer relative py-1 group">
+              Browse Live
+              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-teal-400 transition-all group-hover:w-full" />
+            </button>
+            <button onClick={() => scrollToSection("impact")} className="hover:text-teal-400 transition-colors cursor-pointer relative py-1 group">
+              Impact Metrics
+              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-teal-400 transition-all group-hover:w-full" />
+            </button>
           </div>
 
           <div className="hidden sm:flex items-center gap-3">
@@ -1417,42 +1441,36 @@ function LandingPageView({ listings, trendingListings, lang }: { listings: any[]
             <Link href="/login" className="text-xs font-bold text-slate-350 hover:text-teal-400 transition-colors px-3 py-2">
               Log in
             </Link>
-            <Link href="/register" className="text-xs font-bold bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-400 hover:to-emerald-400 text-slate-950 px-4 py-2 rounded-xl transition-all shadow-md">
+            <Link href="/register" className="text-xs font-bold bg-gradient-to-r from-teal-400 to-emerald-450 hover:from-teal-350 hover:to-emerald-400 text-slate-950 px-4 py-2 rounded-xl transition-all shadow-lg shadow-teal-500/10 hover:shadow-teal-500/20 active:scale-95">
               Sign up
             </Link>
           </div>
 
-          {/* Mobile Hamburger — only shown on < sm */}
+          {/* Mobile Hamburger Menu button */}
           <button
             onClick={() => setShowMobileMenu(true)}
-            className="sm:hidden flex flex-col justify-center items-center w-10 h-10 rounded-xl text-slate-300 hover:text-teal-400 hover:bg-slate-900 transition-all gap-1.5 active:scale-95"
+            className="sm:hidden flex flex-col justify-center items-center w-10 h-10 rounded-xl text-slate-350 hover:text-teal-400 hover:bg-slate-900 transition-all gap-1.5 active:scale-95 border border-transparent hover:border-slate-800"
             aria-label="Open menu"
           >
             <span className="w-5 h-0.5 bg-current rounded-full" />
             <span className="w-5 h-0.5 bg-current rounded-full" />
-            <span className="w-3.5 h-0.5 bg-current rounded-full self-start ml-[3px]" />
+            <span className="w-4 h-0.5 bg-current rounded-full self-start ml-[6px]" />
           </button>
         </div>
       </nav>
 
-      {/* Mobile Bottom Sheet Menu Drawer */}
+      {/* Mobile Drawer */}
       {showMobileMenu && (
         <div className="fixed inset-0 z-[60] sm:hidden">
-          {/* Backdrop */}
-          <div
-            className="absolute inset-0 bg-black/70 backdrop-blur-sm"
-            onClick={() => setShowMobileMenu(false)}
-          />
-          {/* Drawer */}
-          <div className="absolute bottom-0 left-0 right-0 bg-slate-950 border-t border-slate-800 rounded-t-3xl px-5 pt-5 pb-10 shadow-2xl animate-in slide-in-from-bottom duration-300" style={{ paddingBottom: 'calc(2.5rem + env(safe-area-inset-bottom, 0px))' }}>
-            {/* Pull handle */}
-            <div className="w-10 h-1 bg-slate-700 rounded-full mx-auto mb-6" />
-            <p className="text-[10px] font-extrabold text-slate-500 uppercase tracking-widest mb-4">{displayAppName}</p>
+          <div className="absolute inset-0 bg-black/75 backdrop-blur-sm" onClick={() => setShowMobileMenu(false)} />
+          <div className="absolute bottom-0 left-0 right-0 bg-slate-950 border-t border-slate-900 rounded-t-3xl px-6 pt-5 pb-10 shadow-2xl animate-in slide-in-from-bottom duration-300">
+            <div className="w-12 h-1 bg-slate-800 rounded-full mx-auto mb-6" />
+            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4">{displayAppName} Navigation</p>
             <div className="space-y-3">
               <Link
                 href="/login"
                 onClick={() => setShowMobileMenu(false)}
-                className="flex items-center justify-between w-full px-4 py-3.5 rounded-2xl bg-slate-900 border border-slate-800 text-sm font-bold text-slate-200 hover:border-teal-500/40 hover:text-teal-400 transition-all active:scale-[0.98]"
+                className="flex items-center justify-between w-full px-4 py-3.5 rounded-2xl bg-slate-900 border border-slate-800 text-sm font-bold text-slate-200 hover:border-teal-500/40 hover:text-teal-450 transition-all active:scale-[0.98]"
               >
                 Log in
                 <ArrowRight size={16} className="text-slate-500" />
@@ -1460,7 +1478,7 @@ function LandingPageView({ listings, trendingListings, lang }: { listings: any[]
               <Link
                 href="/register"
                 onClick={() => setShowMobileMenu(false)}
-                className="flex items-center justify-center gap-2 w-full px-4 py-3.5 rounded-2xl bg-gradient-to-r from-teal-500 to-emerald-500 text-slate-950 text-sm font-black shadow-lg shadow-teal-500/10 active:scale-[0.98] transition-all"
+                className="flex items-center justify-center gap-2 w-full px-4 py-3.5 rounded-2xl bg-gradient-to-r from-teal-400 to-emerald-450 text-slate-950 text-sm font-black shadow-lg shadow-teal-500/10 active:scale-[0.98] transition-all"
               >
                 Create Free Account
                 <ArrowRight size={16} />
@@ -1474,115 +1492,98 @@ function LandingPageView({ listings, trendingListings, lang }: { listings: any[]
       )}
 
       {/* Hero Section */}
-      <section className="relative max-w-7xl mx-auto px-4 pt-16 pb-12 overflow-hidden">
+      <section className="relative max-w-7xl mx-auto px-4 pt-20 pb-16 overflow-hidden">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-          {/* Hero Left Content */}
-          <div className="lg:col-span-6 space-y-6 text-center lg:text-left">
-            <div className="inline-flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/20 px-3.5 py-1.5 rounded-full text-[11px] font-bold text-emerald-400 tracking-wider uppercase">
-              <Sparkles size={11} className="animate-pulse" />
-              India's Free Sharing Network
+          <div className="lg:col-span-7 space-y-6 text-center lg:text-left">
+            <div className="inline-flex items-center gap-2 bg-gradient-to-r from-teal-500/10 to-violet-500/10 border border-teal-500/20 px-4 py-2 rounded-full text-xs font-bold text-teal-350 tracking-wide uppercase shadow-sm">
+              <Sparkles size={12} className="animate-pulse text-teal-400" />
+              <span>India's Premium Sharing & Skill Exchange Network</span>
             </div>
             
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.1] text-slate-100">
-              Give Things a <br className="hidden sm:inline" />
-              <span className="bg-gradient-to-r from-teal-400 via-emerald-400 to-teal-500 bg-clip-text text-transparent">Second Life</span> 🌱
+            <h1 className="text-4xl sm:text-6xl font-black tracking-tight leading-[1.08] text-slate-100">
+              Pass On Unused Items, <br className="hidden sm:inline" />
+              <span className="bg-gradient-to-r from-teal-400 via-emerald-405 to-violet-400 bg-clip-text text-transparent">Share Skills, Host Drives</span>
             </h1>
             
-            <p className="text-base text-slate-400 max-w-lg mx-auto lg:mx-0 leading-relaxed">
-              Share what you don't need. <br className="xs:hidden" /> Find what you need for free. Build a better, greener community.
+            <p className="text-sm sm:text-base text-slate-400 max-w-2xl mx-auto lg:mx-0 leading-relaxed">
+              Why buy when you can share? Get items you need, learn new skills, and volunteer in local drives. All 100% free, powered by community trust and goodwill.
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
-              <Link href="/register" className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-400 hover:to-emerald-400 text-slate-950 font-black text-xs uppercase tracking-wider px-7 py-3.5 rounded-xl transition-all shadow-lg shadow-teal-500/10 active:scale-[0.98]">
-                Start Sharing <ArrowRight size={14} />
+              <Link href="/register" className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-gradient-to-r from-teal-450 to-emerald-450 hover:from-teal-400 hover:to-emerald-400 text-slate-950 font-black text-xs uppercase tracking-wider px-8 py-4 rounded-xl transition-all shadow-xl shadow-teal-500/15 active:scale-95">
+                Join Now (Free) <ArrowRight size={14} strokeWidth={2.5} />
               </Link>
-              <button onClick={() => scrollToSection("available-items")} className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-slate-900 border border-slate-800 text-slate-200 hover:text-teal-400 hover:border-slate-700/80 font-bold text-xs uppercase tracking-wider px-7 py-3.5 rounded-xl transition-all cursor-pointer">
-                <Search size={14} /> Browse Free Items
+              <button onClick={() => scrollToSection("trending-preview")} className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-slate-900 border border-slate-800 text-slate-200 hover:text-teal-400 hover:border-slate-700/85 font-bold text-xs uppercase tracking-wider px-8 py-4 rounded-xl transition-all cursor-pointer">
+                <Search size={14} /> Browse Nearby
               </button>
             </div>
 
-            {/* Avatars */}
-            <div className="flex items-center justify-center lg:justify-start gap-3 pt-4 border-t border-slate-900/60 max-w-sm mx-auto lg:mx-0">
-              <div className="flex -space-x-2">
+            <div className="flex items-center justify-center lg:justify-start gap-3 pt-6 border-t border-slate-900 max-w-md mx-auto lg:mx-0">
+              <div className="flex -space-x-2.5">
                 <img className="w-8 h-8 rounded-full border-2 border-slate-950 object-cover" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=100" alt="User" />
                 <img className="w-8 h-8 rounded-full border-2 border-slate-950 object-cover" src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=100" alt="User" />
                 <img className="w-8 h-8 rounded-full border-2 border-slate-950 object-cover" src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=100" alt="User" />
-                <img className="w-8 h-8 rounded-full border-2 border-slate-950 object-cover" src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=100" alt="User" />
               </div>
-              <p className="text-[10px] text-slate-400 text-left">
-                Join <strong className="text-slate-200 font-extrabold">12,000+</strong> people building a greener India 💚
+              <p className="text-[10px] text-slate-400 text-left leading-normal">
+                Join <strong className="text-slate-200 font-extrabold">local changemakers</strong> building a sustainable & helpful India 💚
               </p>
             </div>
           </div>
 
-          {/* Hero Right Visual Column */}
-          <div className="lg:col-span-6 flex justify-center items-center">
+          {/* Hero Right side interactive visualization */}
+          <div className="lg:col-span-5 flex justify-center items-center relative">
             <div className="relative w-full max-w-[420px] h-[360px] sm:h-[400px] flex items-center justify-center">
-              {/* Circular backdrop glow */}
-              <div className="absolute w-[280px] h-[280px] sm:w-[320px] sm:h-[320px] bg-emerald-500/10 rounded-full blur-3xl -z-10" />
+              <div className="absolute w-[300px] h-[300px] bg-gradient-to-tr from-teal-500/10 to-violet-500/10 rounded-full blur-[70px] -z-10 animate-pulse" />
               
-              {/* Modern Couch Backdrop Drawing */}
-              <div className="absolute bottom-16 w-[310px] sm:w-[350px] h-[130px] sm:h-[150px] bg-teal-600/15 rounded-t-[40px] rounded-b-[20px] shadow-lg border border-teal-500/10 -z-10 flex flex-col justify-end p-4">
-                <div className="w-full h-8 bg-slate-900 border-t border-slate-800 rounded-lg flex justify-around items-center opacity-80">
-                  <div className="w-1.5 h-6 bg-slate-950 rounded-b" />
-                  <div className="w-1.5 h-6 bg-slate-950 rounded-b" />
-                </div>
-              </div>
-              
-              {/* Cardboard Box */}
-              <div className="absolute bottom-4 right-10 w-[110px] sm:w-[130px] h-[80px] sm:h-[90px] bg-amber-500/10 border-2 border-dashed border-amber-500/30 rounded-2xl flex flex-col justify-center items-center shadow-lg transform rotate-3 z-10">
-                <Gift size={24} className="text-amber-500/80 animate-bounce" />
-                <span className="text-[9px] font-black text-amber-500 mt-1 uppercase tracking-widest bg-amber-500/15 px-2 py-0.5 rounded-full">SHARE</span>
-              </div>
-
-              {/* Study Chair Card */}
-              <div className="absolute top-4 right-2 w-[150px] sm:w-[170px] bg-slate-900 border border-slate-850 p-2.5 rounded-2xl shadow-xl transform hover:scale-105 hover:-translate-y-1 transition-all duration-300 -rotate-2">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-xl bg-teal-500/10 flex items-center justify-center text-teal-400">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
+              {/* Stacked Interactive Cards showcasing features */}
+              {/* Card 1: Free Goods */}
+              <div className="absolute top-2 left-4 w-[200px] bg-slate-900/90 border border-slate-800 p-4 rounded-2xl shadow-2xl transform hover:scale-105 transition-all duration-300 -rotate-3 hover:z-20 cursor-pointer">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center text-teal-400 shrink-0">
+                    <Gift size={16} />
                   </div>
                   <div className="min-w-0">
-                    <h4 className="text-[10px] font-bold text-slate-100 truncate">Study Chair</h4>
-                    <p className="text-[8px] text-slate-400 flex items-center gap-0.5"><MapPin size={8} /> 2 km away</p>
+                    <h4 className="text-[11px] font-black text-slate-100 truncate">Sofa Couch Set</h4>
+                    <p className="text-[8px] text-slate-400 flex items-center gap-0.5"><MapPin size={8} /> 2.1 km away</p>
                   </div>
                 </div>
-                <div className="mt-2 flex items-center justify-between border-t border-slate-950 pt-2 text-[8px]">
-                  <span className="font-extrabold uppercase text-emerald-450 bg-emerald-500/10 px-1.5 py-0.5 rounded">● Available</span>
-                  <button className="text-slate-500 hover:text-red-500"><Heart size={9} className="fill-current" /></button>
+                <div className="mt-3 flex items-center justify-between border-t border-slate-950 pt-3 text-[9px]">
+                  <span className="font-black text-teal-400 uppercase bg-teal-950/40 px-2 py-0.5 rounded tracking-wide border border-teal-900/20">● Like New</span>
+                  <span className="text-slate-400">100% Free</span>
                 </div>
               </div>
 
-              {/* Bicycle Card */}
-              <div className="absolute top-28 left-2 w-[150px] sm:w-[170px] bg-slate-900 border border-slate-850 p-2.5 rounded-2xl shadow-xl transform hover:scale-105 hover:-translate-y-1 transition-all duration-300 rotate-3 z-10">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-xl bg-violet-500/10 flex items-center justify-center text-violet-400">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+              {/* Card 2: Skill Share */}
+              <div className="absolute top-[32%] right-2 w-[220px] bg-slate-900/95 border border-slate-800 p-4 rounded-2xl shadow-2xl transform hover:scale-105 transition-all duration-300 rotate-2 hover:z-20 cursor-pointer">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-violet-500/10 border border-violet-500/20 flex items-center justify-center text-violet-400 shrink-0">
+                    <Sparkles size={16} />
                   </div>
                   <div className="min-w-0">
-                    <h4 className="text-[10px] font-bold text-slate-100 truncate">Bicycle</h4>
-                    <p className="text-[8px] text-slate-400 flex items-center gap-0.5"><MapPin size={8} /> 1.5 km away</p>
+                    <h4 className="text-[11px] font-black text-slate-100 truncate">Spoken English Class</h4>
+                    <p className="text-[8px] text-slate-400 flex items-center gap-0.5"><MapPin size={8} /> Online / Live</p>
                   </div>
                 </div>
-                <div className="mt-2 flex items-center justify-between border-t border-slate-950 pt-2 text-[8px]">
-                  <span className="font-extrabold uppercase text-slate-450 bg-slate-800 px-1.5 py-0.5 rounded">✓ Claimed</span>
-                  <button className="text-red-500"><Heart size={9} className="fill-current" /></button>
+                <div className="mt-3 flex items-center justify-between border-t border-slate-950 pt-3 text-[9px]">
+                  <span className="font-black text-violet-400 uppercase bg-violet-950/40 px-2 py-0.5 rounded tracking-wide border border-violet-900/20">⚡ Skill Exchange</span>
+                  <span className="text-slate-400">Free Mentor</span>
                 </div>
               </div>
 
-              {/* Books Card */}
-              <div className="absolute bottom-20 right-2 w-[150px] sm:w-[170px] bg-slate-900 border border-slate-850 p-2.5 rounded-2xl shadow-xl transform hover:scale-105 hover:-translate-y-1 transition-all duration-300 -rotate-1 z-10">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-500">
-                    <BookOpen size={14} />
+              {/* Card 3: Events & Drives */}
+              <div className="absolute bottom-6 left-6 w-[210px] bg-slate-900/90 border border-slate-800 p-4 rounded-2xl shadow-2xl transform hover:scale-105 transition-all duration-300 -rotate-1 hover:z-20 cursor-pointer">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-500 shrink-0">
+                    <Calendar size={16} />
                   </div>
                   <div className="min-w-0">
-                    <h4 className="text-[10px] font-bold text-slate-100 truncate">Books (Set of 8)</h4>
-                    <p className="text-[8px] text-slate-400 flex items-center gap-0.5"><MapPin size={8} /> 3 km away</p>
+                    <h4 className="text-[11px] font-black text-slate-100 truncate">Book Collection Drive</h4>
+                    <p className="text-[8px] text-slate-400 flex items-center gap-0.5"><MapPin size={8} /> Lajpat Nagar</p>
                   </div>
                 </div>
-                <div className="mt-2 flex items-center justify-between border-t border-slate-950 pt-2 text-[8px]">
-                  <span className="font-extrabold uppercase text-emerald-450 bg-emerald-500/10 px-1.5 py-0.5 rounded">● Available</span>
-                  <button className="text-slate-500 hover:text-red-500"><Heart size={9} /></button>
+                <div className="mt-3 flex items-center justify-between border-t border-slate-950 pt-3 text-[9px]">
+                  <span className="font-black text-amber-500 uppercase bg-amber-950/40 px-2 py-0.5 rounded tracking-wide border border-amber-900/20">📅 Drive Campaign</span>
+                  <span className="text-slate-350">12 RSVPed</span>
                 </div>
               </div>
             </div>
@@ -1590,344 +1591,392 @@ function LandingPageView({ listings, trendingListings, lang }: { listings: any[]
         </div>
       </section>
 
-      {/* Metrics Row Section */}
-      <section className="bg-slate-900/40 border-y border-slate-900 py-10 my-8">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+      {/* Trust Highlights metrics banner */}
+      <section id="impact" className="bg-slate-900/40 border-y border-slate-900 py-12 scroll-mt-20">
+        <div className="max-w-7xl mx-auto px-4 text-center space-y-8">
+          <div className="space-y-2">
+            <span className="text-[10px] font-black uppercase text-teal-400 tracking-wider bg-teal-500/10 px-3 py-1 rounded-full">Our Collective Target</span>
+            <h3 className="text-xl sm:text-2xl font-black text-slate-100">Launch Goals we are achieving together</h3>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center pt-2">
             <div className="space-y-1">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Items Shared</span>
-              <span className="text-2xl sm:text-3xl font-black text-teal-400">12,000+</span>
+              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block">Goal: Items Gifted</span>
+              <span className="text-2xl sm:text-4xl font-black text-teal-400">10,000+</span>
             </div>
             <div className="space-y-1">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Happy Members</span>
-              <span className="text-2xl sm:text-3xl font-black text-slate-200">3,200+</span>
+              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block">Goal: Skill Exchange</span>
+              <span className="text-2xl sm:text-4xl font-black text-violet-400">1,000+ Hrs</span>
             </div>
             <div className="space-y-1">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Cities Covered</span>
-              <span className="text-2xl sm:text-3xl font-black text-slate-200">15+</span>
+              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block">Goal: Drive Campaigns</span>
+              <span className="text-2xl sm:text-4xl font-black text-amber-500">200+ Events</span>
             </div>
             <div className="space-y-1">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Waste Prevented</span>
-              <span className="text-2xl sm:text-3xl font-black text-emerald-400">1.8 Tons</span>
+              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block">Goal: Waste Diverted</span>
+              <span className="text-2xl sm:text-4xl font-black text-emerald-450">5 Tons</span>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Three Core Pillars Presentation */}
+      <section id="features" className="max-w-7xl mx-auto px-4 py-20 scroll-mt-20">
+        <div className="text-center max-w-3xl mx-auto space-y-4">
+          <h2 className="text-3xl sm:text-4xl font-black tracking-tight">
+            One Platform. <span className="bg-gradient-to-r from-teal-400 via-emerald-400 to-violet-400 bg-clip-text text-transparent">Three Pillars of Sharing.</span>
+          </h2>
+          <p className="text-sm text-slate-400">
+            FreeShare India unites sustainable action under three distinct sharing models. Build connections, reduce landfill footprint, and exchange value freely.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-16">
+          {/* Pillar 1: Free Items */}
+          <div className="bg-slate-900/50 border border-slate-900 rounded-3xl p-8 space-y-5 hover:border-slate-800 hover:bg-slate-900/80 transition-all duration-300 relative group overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-teal-500/5 rounded-full blur-2xl group-hover:bg-teal-500/10 transition-all" />
+            <div className="w-12 h-12 rounded-2xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center text-teal-400">
+              <Gift size={22} />
+            </div>
+            <div className="space-y-2">
+              <h3 className="text-lg font-bold text-slate-100 flex items-center gap-2 group-hover:text-teal-400 transition-colors">
+                Share Free Items
+                <ArrowRight size={14} className="opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
+              </h3>
+              <p className="text-xs text-slate-400 leading-relaxed">
+                Clean out your wardrobes, shelves, and garages. Gift books, clothes, furniture, or kitchenware directly to neighbors in need. Prevent environmental waste with local reuse.
+              </p>
+            </div>
+            <ul className="text-[11px] text-slate-450 space-y-2.5 pt-2 border-t border-slate-900">
+              <li className="flex items-center gap-2">✓ Dynamic radius-based searching</li>
+              <li className="flex items-center gap-2">✓ Verified trust scores & mutual reviews</li>
+              <li className="flex items-center gap-2">✓ Secure in-app privacy-first chat rooms</li>
+            </ul>
+          </div>
+
+          {/* Pillar 2: Skill Share */}
+          <div className="bg-slate-900/50 border border-slate-900 rounded-3xl p-8 space-y-5 hover:border-slate-800 hover:bg-slate-900/80 transition-all duration-300 relative group overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-violet-500/5 rounded-full blur-2xl group-hover:bg-violet-500/10 transition-all" />
+            <div className="w-12 h-12 rounded-2xl bg-violet-500/10 border border-violet-500/20 flex items-center justify-center text-violet-400">
+              <Sparkles size={22} />
+            </div>
+            <div className="space-y-2">
+              <h3 className="text-lg font-bold text-slate-100 flex items-center gap-2 group-hover:text-violet-400 transition-colors">
+                Empower with Skills
+                <ArrowRight size={14} className="opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
+              </h3>
+              <p className="text-xs text-slate-400 leading-relaxed">
+                Lend your time and expertise. Share professional mentoring, coding classes, guitar tutorials, or kitchen garden advice. Help others grow without charging fees.
+              </p>
+            </div>
+            <ul className="text-[11px] text-slate-450 space-y-2.5 pt-2 border-t border-slate-900">
+              <li className="flex items-center gap-2">✓ Support for online and physically local sessions</li>
+              <li className="flex items-center gap-2">✓ Flexible time slots & duration flags</li>
+              <li className="flex items-center gap-2">✓ Dedicated review forms for learners</li>
+            </ul>
+          </div>
+
+          {/* Pillar 3: Drives & NGO Events */}
+          <div className="bg-slate-900/50 border border-slate-900 rounded-3xl p-8 space-y-5 hover:border-slate-800 hover:bg-slate-900/80 transition-all duration-300 relative group overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/5 rounded-full blur-2xl group-hover:bg-amber-500/10 transition-all" />
+            <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-500">
+              <Calendar size={22} />
+            </div>
+            <div className="space-y-2">
+              <h3 className="text-lg font-bold text-slate-100 flex items-center gap-2 group-hover:text-amber-500 transition-colors">
+                Organize Drives & Drives
+                <ArrowRight size={14} className="opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
+              </h3>
+              <p className="text-xs text-slate-400 leading-relaxed">
+                Connect with verified NGOs or initiate your own neighborhood campaigns. Organize food distributions, clothing collections, tree plantations, or cleanups.
+              </p>
+            </div>
+            <ul className="text-[11px] text-slate-450 space-y-2.5 pt-2 border-t border-slate-900">
+              <li className="flex items-center gap-2">✓ Real-time RSVP systems for drives</li>
+              <li className="flex items-center gap-2">✓ Interactive maps pinning event coordinates</li>
+              <li className="flex items-center gap-2">✓ Verified NGO-verified host badges</li>
+            </ul>
           </div>
         </div>
       </section>
 
       {/* How it Works Section */}
-      <section id="how-it-works" className="max-w-7xl mx-auto px-4 py-16 text-center scroll-mt-20">
-        <h2 className="text-2xl sm:text-3xl font-black tracking-tight">
-          How <span className="bg-gradient-to-r from-teal-400 to-emerald-400 bg-clip-text text-transparent">{appShortName}</span> Works?
-        </h2>
+      <section id="how-it-works" className="max-w-7xl mx-auto px-4 py-20 text-center scroll-mt-20">
+        <div className="space-y-3 max-w-2xl mx-auto mb-16">
+          <span className="text-[10px] font-black uppercase text-teal-400 tracking-wider bg-teal-500/10 px-3 py-1 rounded-full">3 Easy Steps</span>
+          <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-100">
+            How {appShortName} Works
+          </h2>
+          <p className="text-xs text-slate-400">Join, upload, and start sharing with verified community members nearby.</p>
+        </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-12">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {/* Step 1 */}
-          <div className="bg-slate-900 border border-slate-850 p-8 rounded-3xl space-y-4 hover:border-slate-750 transition-all flex flex-col items-center">
-            <div className="w-14 h-14 rounded-2xl bg-teal-500/10 flex items-center justify-center text-teal-400 border border-teal-500/10 animate-pulse">
+          <div className="bg-slate-900 border border-slate-900/60 p-8 rounded-3xl space-y-4 hover:border-slate-800 transition-all flex flex-col items-center shadow-md">
+            <div className="w-14 h-14 rounded-2xl bg-teal-500/10 border border-teal-500/15 flex items-center justify-center text-teal-450">
               <Smartphone size={24} />
             </div>
-            <span className="inline-block text-[10px] font-black uppercase text-teal-400 bg-teal-500/10 px-2 py-0.5 rounded">1. List Item</span>
-            <h3 className="font-bold text-slate-200 text-sm">Upload Pre-Loved Goods</h3>
+            <h3 className="font-bold text-slate-100 text-sm">1. Post in Seconds</h3>
             <p className="text-xs text-slate-400 max-w-[240px] leading-relaxed">
-              Snap a picture, select a category, and post your item. It takes less than 60 seconds!
+              Upload items you want to gift, describe a skill you want to teach, or pin a neighborhood cleanup event.
             </p>
           </div>
 
           {/* Step 2 */}
-          <div className="bg-slate-900 border border-slate-850 p-8 rounded-3xl space-y-4 hover:border-slate-750 transition-all flex flex-col items-center">
-            <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-400 border border-emerald-500/10">
+          <div className="bg-slate-900 border border-slate-900/60 p-8 rounded-3xl space-y-4 hover:border-slate-800 transition-all flex flex-col items-center shadow-md">
+            <div className="w-14 h-14 rounded-2xl bg-violet-500/10 border border-violet-500/15 flex items-center justify-center text-violet-400">
               <MessageSquare size={24} />
             </div>
-            <span className="inline-block text-[10px] font-black uppercase text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded">2. Connect</span>
-            <h3 className="font-bold text-slate-200 text-sm">Coordinate Nearby Pickup</h3>
+            <h3 className="font-bold text-slate-100 text-sm">2. Chat & Coordinate</h3>
             <p className="text-xs text-slate-400 max-w-[240px] leading-relaxed">
-              Chat safely inside the application to verify details and set up a location for handoff.
+              Use our secure in-app messaging system to communicate, verify details, and choose an exchange point safely.
             </p>
           </div>
 
           {/* Step 3 */}
-          <div className="bg-slate-900 border border-slate-850 p-8 rounded-3xl space-y-4 hover:border-slate-750 transition-all flex flex-col items-center">
-            <div className="w-14 h-14 rounded-2xl bg-violet-500/10 flex items-center justify-center text-violet-400 border border-violet-500/10">
-              <Gift size={24} />
+          <div className="bg-slate-900 border border-slate-900/60 p-8 rounded-3xl space-y-4 hover:border-slate-800 transition-all flex flex-col items-center shadow-md">
+            <div className="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/15 flex items-center justify-center text-amber-500">
+              <HeartHandshake size={24} />
             </div>
-            <span className="inline-block text-[10px] font-black uppercase text-violet-400 bg-violet-500/10 px-2 py-0.5 rounded">3. Exchange</span>
-            <h3 className="font-bold text-slate-200 text-sm">Declutter & Help Neighbors</h3>
+            <h3 className="font-bold text-slate-100 text-sm">3. Swap & Earn Karma</h3>
             <p className="text-xs text-slate-400 max-w-[240px] leading-relaxed">
-              Meet up, pass along the item, earn reputation points, and reduce community waste!
+              Complete the collection or session, rate each other, and unlock badges showing your positive green impact!
             </p>
           </div>
         </div>
       </section>
 
       {/* Explore Popular Categories */}
-      <section id="explore-categories" className="max-w-7xl mx-auto px-4 py-16 scroll-mt-20">
-        <div className="flex justify-between items-end border-b border-slate-900 pb-3 mb-8">
-          <h2 className="text-xl sm:text-2xl font-black text-slate-200">Explore Popular Categories</h2>
-          <button onClick={() => scrollToSection("available-items")} className="text-xs font-bold text-teal-400 hover:underline flex items-center gap-1 cursor-pointer">
+      <section className="max-w-7xl mx-auto px-4 py-16 border-t border-slate-900/60">
+        <div className="flex justify-between items-end pb-3 mb-8">
+          <h2 className="text-lg sm:text-xl font-black text-slate-200">Explore Popular Categories</h2>
+          <button onClick={() => scrollToSection("trending-preview")} className="text-xs font-bold text-teal-400 hover:underline flex items-center gap-1 cursor-pointer">
             View all categories <ArrowRight size={13} />
           </button>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-8 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-4">
           {categories.map((cat) => (
-            <Link key={cat.name} href="/register" className="bg-slate-900 border border-slate-850 hover:border-slate-750 p-4 rounded-2xl flex flex-col items-center justify-center gap-3 transition-all hover:scale-[1.02] shadow-inner text-center">
-              <div className="p-2.5 rounded-xl bg-slate-950/40 border border-slate-850 flex items-center justify-center">
+            <Link key={cat.name} href="/register" className="bg-slate-900/40 border border-slate-900 hover:border-slate-800 p-4 rounded-2xl flex flex-col items-center justify-center gap-3 transition-all hover:scale-[1.02] shadow-inner text-center">
+              <div className="p-2.5 rounded-xl bg-slate-950/60 border border-slate-900 flex items-center justify-center">
                 {cat.icon}
               </div>
-              <span className="text-[10px] font-extrabold text-slate-350 uppercase tracking-wider">{cat.name}</span>
+              <span className="text-[10px] font-black text-slate-300 uppercase tracking-wider">{cat.name}</span>
             </Link>
           ))}
         </div>
       </section>
 
-      {/* Our Impact Together */}
-      <section id="our-impact" className="max-w-7xl mx-auto px-4 py-12 scroll-mt-20">
-        <div className="bg-gradient-to-r from-teal-500/10 via-emerald-500/5 to-teal-500/10 border border-teal-500/20 rounded-3xl p-6 sm:p-10 flex flex-col lg:flex-row items-center justify-between gap-10 shadow-xl shadow-teal-500/5 relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-teal-500/5 rounded-full blur-3xl -z-10" />
+      {/* Live Preview Feed Grid with Tabs Switcher */}
+      <section id="trending-preview" className="max-w-7xl mx-auto px-4 py-20 border-t border-slate-900/60 scroll-mt-20">
+        <div className="flex flex-col sm:flex-row items-center justify-between border-b border-slate-900 pb-4 mb-8 gap-4">
+          <div className="space-y-1 text-center sm:text-left">
+            <h2 className="text-xl sm:text-2xl font-black text-slate-200 flex items-center gap-2 justify-center sm:justify-start">
+              <Sparkles size={18} className="text-teal-400" />
+              Live Sharing Preview
+            </h2>
+            <p className="text-xs text-slate-500">Real-time listings from the neighborhood. Sign up to claim or schedule.</p>
+          </div>
           
-          <div className="flex flex-col sm:flex-row items-center gap-6 text-center sm:text-left lg:max-w-md">
-            <div className="w-16 h-16 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-400 border border-emerald-500/20 shrink-0">
-              <HeartHandshake size={32} />
-            </div>
-            <div className="space-y-1">
-              <h3 className="text-lg font-black text-slate-200">Our Impact Together</h3>
-              <p className="text-xs text-slate-400 leading-relaxed">
-                Small actions lead to massive ecological and community changes. Thank you for making a difference.
-              </p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4 w-full lg:max-w-lg">
-            <div className="bg-slate-900/60 border border-slate-850 p-4 rounded-2xl flex items-center gap-3 shadow-inner">
-              <span className="text-xs">🌱</span>
-              <div>
-                <span className="text-xs text-slate-450 font-bold block">Waste Diverted</span>
-                <span className="text-sm font-black text-slate-200">1.8 Tons</span>
-              </div>
-            </div>
-            <div className="bg-slate-900/60 border border-slate-850 p-4 rounded-2xl flex items-center gap-3 shadow-inner">
-              <span className="text-xs">💨</span>
-              <div>
-                <span className="text-xs text-slate-450 font-bold block">CO2 Saved</span>
-                <span className="text-sm font-black text-slate-200">650 kg</span>
-              </div>
-            </div>
-            <div className="bg-slate-900/60 border border-slate-850 p-4 rounded-2xl flex items-center gap-3 shadow-inner">
-              <span className="text-xs">💧</span>
-              <div>
-                <span className="text-xs text-slate-450 font-bold block">Water Saved</span>
-                <span className="text-sm font-black text-slate-200">15,000 Liters</span>
-              </div>
-            </div>
-            <div className="bg-slate-900/60 border border-slate-850 p-4 rounded-2xl flex items-center gap-3 shadow-inner">
-              <span className="text-xs">🤝</span>
-              <div>
-                <span className="text-xs text-slate-450 font-bold block">Successful Shares</span>
-                <span className="text-sm font-black text-slate-200">8,500+</span>
-              </div>
-            </div>
+          {/* Tab buttons */}
+          <div className="flex bg-slate-900 border border-slate-800 p-1.5 rounded-xl shrink-0">
+            <button
+              onClick={() => setPreviewTab("all")}
+              className={`px-4.5 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                previewTab === "all" ? "bg-gradient-to-r from-teal-500 to-emerald-500 text-slate-950" : "text-slate-400 hover:text-slate-200"
+              }`}
+            >
+              All Listings
+            </button>
+            <button
+              onClick={() => setPreviewTab("item")}
+              className={`px-4.5 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                previewTab === "item" ? "bg-gradient-to-r from-teal-500 to-emerald-500 text-slate-950" : "text-slate-400 hover:text-slate-200"
+              }`}
+            >
+              Items
+            </button>
+            <button
+              onClick={() => setPreviewTab("skill")}
+              className={`px-4.5 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                previewTab === "skill" ? "bg-gradient-to-r from-teal-500 to-emerald-500 text-slate-950" : "text-slate-400 hover:text-slate-200"
+              }`}
+            >
+              Skills
+            </button>
           </div>
         </div>
-      </section>
 
-      {/* Badges & Stories Dual Grid */}
-      <section id="community-stories" className="max-w-7xl mx-auto px-4 py-16 scroll-mt-20">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          
-          {/* Reputation Badges Left */}
-          <div className="lg:col-span-5 bg-slate-900 border border-slate-850 p-6 rounded-3xl space-y-4 shadow-xl">
-            <div className="space-y-1 border-b border-slate-950 pb-3">
-              <h3 className="text-sm font-extrabold uppercase text-slate-200 tracking-wider flex items-center gap-1.5">
-                <Award size={15} className="text-teal-400" /> Earn Reputation Badges
-              </h3>
-              <p className="text-[10px] text-slate-400">Share items frequently to gain levels and recognition.</p>
-            </div>
-            <div className="space-y-3.5 pt-1.5">
-              <div className="flex items-center gap-3 bg-slate-950/20 p-2.5 rounded-2xl border border-slate-850">
-                <span className="w-7 h-7 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-xs shrink-0">🌱</span>
-                <div>
-                  <h4 className="text-[11px] font-extrabold text-slate-200">Green Starter</h4>
-                  <p className="text-[9px] text-slate-400 mt-0.5">Awarded upon your first listed item.</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3 bg-slate-950/20 p-2.5 rounded-2xl border border-slate-850">
-                <span className="w-7 h-7 rounded-full bg-teal-500/10 border border-teal-500/20 flex items-center justify-center text-xs shrink-0">♻️</span>
-                <div>
-                  <h4 className="text-[11px] font-extrabold text-slate-200">Waste Warrior</h4>
-                  <p className="text-[9px] text-slate-400 mt-0.5">Keep 5+ items out of local landfills.</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3 bg-slate-950/20 p-2.5 rounded-2xl border border-slate-850">
-                <span className="w-7 h-7 rounded-full bg-violet-500/10 border border-violet-500/20 flex items-center justify-center text-xs shrink-0">🌟</span>
-                <div>
-                  <h4 className="text-[11px] font-extrabold text-slate-200">Eco Hero</h4>
-                  <p className="text-[9px] text-slate-400 mt-0.5">Maintain a solid 4.8+ user feedback rating.</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3 bg-slate-950/20 p-2.5 rounded-2xl border border-slate-850">
-                <span className="w-7 h-7 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-xs shrink-0">🤝</span>
-                <div>
-                  <h4 className="text-[11px] font-extrabold text-slate-200">Community Helper</h4>
-                  <p className="text-[9px] text-slate-400 mt-0.5">Coordinate 10+ successful claims.</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3 bg-slate-950/20 p-2.5 rounded-2xl border border-slate-850">
-                <span className="w-7 h-7 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center text-xs shrink-0">🏆</span>
-                <div>
-                  <h4 className="text-[11px] font-extrabold text-slate-200">Top Contributor</h4>
-                  <p className="text-[9px] text-slate-400 mt-0.5">Reserved for our top 1% community builders.</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Community Stories Right */}
-          <div className="lg:col-span-7 space-y-6">
-            <div className="flex justify-between items-end border-b border-slate-900 pb-3">
-              <h3 className="text-base font-extrabold uppercase text-slate-200 tracking-wider flex items-center gap-1.5">
-                <Quote size={15} className="text-teal-400" /> Stories from Our Community
-              </h3>
-              <Link href="/register" className="text-[10px] font-bold text-slate-400 hover:text-teal-400">View all</Link>
-            </div>
-            
-            <div className="space-y-4">
-              <div className="bg-slate-900 border border-slate-850 p-5 rounded-3xl space-y-3.5 shadow-lg relative">
-                <p className="text-xs text-slate-350 leading-relaxed italic">
-                  "I was moving into a college apartment and was extremely low on budget. A kind neighbor listed a study desk and chair for free. I claimed them and they helped me get through my exams!"
-                </p>
-                <div className="flex items-center gap-3">
-                  <img className="w-8 h-8 rounded-full object-cover border border-slate-800" src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=100" alt="Neha" />
-                  <div>
-                    <h4 className="text-[10px] font-bold text-slate-100">Neha</h4>
-                    <span className="text-[8.5px] text-slate-400 font-medium">Verified User, Delhi</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-slate-900 border border-slate-850 p-5 rounded-3xl space-y-3.5 shadow-lg relative">
-                <p className="text-xs text-slate-350 leading-relaxed italic">
-                  `When moving out, I didn't want my kitchen appliances to end up in the dump. I posted my old rice cooker and blender on ${appShortName}. Within 30 minutes, they were matched to someone who had just moved to town!`
-                </p>
-                <div className="flex items-center gap-3">
-                  <img className="w-8 h-8 rounded-full object-cover border border-slate-800" src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&q=80&w=100" alt="Arjun" />
-                  <div>
-                    <h4 className="text-[10px] font-bold text-slate-100">Arjun</h4>
-                    <span className="text-[8.5px] text-slate-400 font-medium">Verified Donor, Delhi</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-        </div>
-      </section>
-
-      {/* Available Items Preview Section */}
-      <section id="available-items" className="max-w-7xl mx-auto px-4 py-16 border-t border-slate-900/60 scroll-mt-20">
-        <div className="flex justify-between items-end border-b border-slate-900 pb-2 mb-6">
-          <h2 className="text-sm font-black text-slate-200 uppercase tracking-widest flex items-center gap-1.5">
-            <Sparkles size={14} className="text-teal-400" />
-            Trending Free Items Nearby
-          </h2>
-          <span className="text-[9.5px] text-slate-450 font-bold uppercase">Log in to claim</span>
-        </div>
-
-        {listings.length === 0 ? (
-          <div className="text-center py-16 border border-dashed border-slate-900 rounded-3xl">
-            <Gift className="mx-auto text-slate-700 mb-3" size={32} />
-            <p className="text-xs text-slate-400">Scan complete. No active items in this neighborhood.</p>
+        {filteredListings.length === 0 ? (
+          <div className="text-center py-20 border border-dashed border-slate-900 rounded-3xl">
+            <Gift className="mx-auto text-slate-700 mb-3" size={36} />
+            <p className="text-xs text-slate-400">Scan complete. No active {previewTab !== "all" ? previewTab + "s" : "listings"} in this location.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
-            {listings.slice(0, 8).map((item) => {
+          <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+            {filteredListings.slice(0, 8).map((item) => {
               const isSkill = item.listing_type === "skill";
               return (
-              <Link
-                key={item.id}
-                href={`/listing/${item.id}`}
-                className={`group border hover:border-slate-800/80 rounded-2xl overflow-hidden flex flex-col shadow-lg transition-all hover:scale-[1.01] hover:-translate-y-0.5 ${
-                  isSkill ? "bg-violet-950/20 border-violet-900/40" : "bg-slate-900/40 border-slate-900"
-                }`}
-              >
-                <div className="aspect-square relative overflow-hidden bg-slate-950">
-                  <Image
-                    src={item.images?.[0]}
-                    alt={item.title}
-                    fill
-                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                  <span className={`absolute top-1.5 left-1.5 sm:top-2.5 sm:left-2.5 text-[8px] sm:text-[9px] font-extrabold uppercase px-1.5 py-0.5 sm:px-2 sm:py-1 rounded bg-black/60 backdrop-blur-md tracking-wider ${
-                    isSkill ? "text-violet-405" : "text-teal-400"
-                  }`}>
-                    {isSkill ? (item.skill_duration || "Free") : item.condition}
-                  </span>
-                </div>
-                <div className="p-2.5 sm:p-4 flex-1 flex flex-col justify-between">
-                  <div className="space-y-1 sm:space-y-1.5">
-                    <h3 className={`font-bold text-[11px] sm:text-sm transition-colors line-clamp-1 ${
-                      isSkill ? "text-violet-300 group-hover:text-violet-400" : "text-slate-100 group-hover:text-teal-400"
+                <Link
+                  key={item.id}
+                  href={`/listing/${item.id}`}
+                  className={`group border hover:border-slate-800 rounded-2xl overflow-hidden flex flex-col shadow-xl transition-all hover:scale-[1.01] hover:-translate-y-0.5 ${
+                    isSkill ? "bg-violet-950/15 border-violet-900/30" : "bg-slate-900/30 border-slate-900"
+                  }`}
+                >
+                  <div className="aspect-square relative overflow-hidden bg-slate-950">
+                    <Image
+                      src={item.images?.[0]}
+                      alt={item.title}
+                      fill
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                    <span className={`absolute top-2.5 left-2.5 text-[9px] font-black uppercase px-2 py-1 rounded bg-black/75 backdrop-blur-md tracking-wider ${
+                      isSkill ? "text-violet-400 border border-violet-800/40" : "text-teal-400 border border-teal-800/40"
                     }`}>
-                      {item.title}
-                    </h3>
-                    <p className="text-xs text-slate-400 line-clamp-2 hidden sm:block">
-                      {item.description}
-                    </p>
-                  </div>
-                  <div className="pt-2 sm:pt-4 mt-1.5 sm:mt-2 border-t border-slate-900/80 flex items-center justify-between text-[9px] sm:text-[10px] text-slate-500">
-                    <div className="flex items-center gap-0.5 sm:gap-1 min-w-0">
-                      <MapPin size={10} className="shrink-0 text-slate-500" />
-                      <span className="truncate max-w-[50px] sm:max-w-[80px]">{item.area}</span>
-                    </div>
-                    <span className={`font-bold ${isSkill ? "text-violet-400" : "text-teal-450"} group-hover:underline`}>
-                      {isSkill ? "Session Details" : "View Details"}
+                      {isSkill ? (item.skill_duration || "Free Skill") : item.condition}
                     </span>
                   </div>
-                </div>
-              </Link>
+                  <div className="p-4 flex-1 flex flex-col justify-between">
+                    <div className="space-y-1.5">
+                      <h3 className={`font-black text-xs sm:text-sm transition-colors line-clamp-1 ${
+                        isSkill ? "text-violet-300 group-hover:text-violet-400" : "text-slate-100 group-hover:text-teal-400"
+                      }`}>
+                        {item.title}
+                      </h3>
+                      <p className="text-xs text-slate-450 line-clamp-2 leading-relaxed">
+                        {item.description}
+                      </p>
+                    </div>
+                    <div className="pt-4 mt-3 border-t border-slate-900 flex items-center justify-between text-[10px] text-slate-500">
+                      <div className="flex items-center gap-1 min-w-0">
+                        <MapPin size={11} className="shrink-0 text-slate-600" />
+                        <span className="truncate max-w-[80px]">{item.area}</span>
+                      </div>
+                      <span className={`font-bold ${isSkill ? "text-violet-400" : "text-teal-450"} group-hover:underline`}>
+                        {isSkill ? "Book Slot" : "Claim Item"}
+                      </span>
+                    </div>
+                  </div>
+                </Link>
               );
             })}
           </div>
         )}
       </section>
 
+      {/* Badges and gamification */}
+      <section className="max-w-7xl mx-auto px-4 py-16 scroll-mt-20 border-t border-slate-900/60">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+          <div className="lg:col-span-5 bg-slate-900/50 border border-slate-900 p-8 rounded-3xl space-y-6 shadow-2xl relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-teal-500/5 rounded-full blur-2xl" />
+            <div className="space-y-2 border-b border-slate-950 pb-4">
+              <h3 className="text-sm font-black uppercase text-slate-200 tracking-wider flex items-center gap-2">
+                <Award size={16} className="text-teal-450" /> reputation levels & badges
+              </h3>
+              <p className="text-xs text-slate-450">Unlock exclusive status tiers by giving and participating in neighborhood campaigns.</p>
+            </div>
+            <div className="space-y-4 pt-2">
+              <div className="flex items-center gap-3.5 bg-slate-950/40 p-3 rounded-2xl border border-slate-900">
+                <span className="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-sm shrink-0">🌱</span>
+                <div>
+                  <h4 className="text-[11px] font-black text-slate-200 uppercase tracking-wide">Green Starter</h4>
+                  <p className="text-[10px] text-slate-450 mt-0.5">Unlocked on your first successful upload.</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3.5 bg-slate-950/40 p-3 rounded-2xl border border-slate-900">
+                <span className="w-8 h-8 rounded-xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center text-sm shrink-0">♻️</span>
+                <div>
+                  <h4 className="text-[11px] font-black text-slate-200 uppercase tracking-wide">Waste Warrior</h4>
+                  <p className="text-[10px] text-slate-450 mt-0.5">Awarded after gifting 5+ items near you.</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3.5 bg-slate-950/40 p-3 rounded-2xl border border-slate-900">
+                <span className="w-8 h-8 rounded-xl bg-violet-500/10 border border-violet-500/20 flex items-center justify-center text-sm shrink-0">⚡</span>
+                <div>
+                  <h4 className="text-[11px] font-black text-slate-200 uppercase tracking-wide">Skill Mentor</h4>
+                  <p className="text-[10px] text-slate-450 mt-0.5">Given to users teaching 10+ hours of workshops.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="lg:col-span-7 space-y-8">
+            <div className="space-y-2">
+              <span className="text-[10px] font-black uppercase text-violet-405 tracking-wider bg-violet-500/10 px-3 py-1 rounded-full">Community First</span>
+              <h3 className="text-2xl sm:text-3xl font-black text-slate-100 tracking-tight">
+                Stories from Certified Members
+              </h3>
+              <p className="text-xs text-slate-400">See how circular sharing makes an impact every day in people's lives.</p>
+            </div>
+            
+            <div className="space-y-4">
+              <div className="bg-slate-900/40 border border-slate-900 p-6 rounded-3xl space-y-4 shadow-lg relative">
+                <p className="text-xs text-slate-300 leading-relaxed italic">
+                  "I was setting up my room near college and had almost zero savings. Through {appShortName}, a kind donor gifted me a study desk, lamp, and books. It saved me a lot of money and built my faith in the community."
+                </p>
+                <div className="flex items-center gap-3">
+                  <img className="w-8 h-8 rounded-full object-cover border border-slate-800" src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=100" alt="Neha" />
+                  <div>
+                    <h4 className="text-[10px] font-bold text-slate-100">Neha</h4>
+                    <span className="text-[9px] text-slate-500">College Student, Dwarka Delhi</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-slate-900/40 border border-slate-900 p-6 rounded-3xl space-y-4 shadow-lg relative">
+                <p className="text-xs text-slate-300 leading-relaxed italic">
+                  `Instead of throwing away my old desktop and monitor, I listed it under items. A local NGO reached out to claim it for their evening study center. Seeing children use it to learn was the best reward.`
+                </p>
+                <div className="flex items-center gap-3">
+                  <img className="w-8 h-8 rounded-full object-cover border border-slate-800" src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&q=80&w=100" alt="Arjun" />
+                  <div>
+                    <h4 className="text-[10px] font-bold text-slate-100">Arjun</h4>
+                    <span className="text-[9px] text-slate-500">Verified Donor, Noida</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Bottom CTA Banner Card */}
-      <section className="max-w-7xl mx-auto px-4 py-8">
-        <div className="bg-gradient-to-r from-teal-900/60 to-emerald-950/60 border border-teal-500/20 rounded-3xl p-8 sm:p-12 text-center space-y-6 relative overflow-hidden shadow-2xl">
-          <div className="absolute top-0 left-0 w-48 h-48 bg-teal-500/5 rounded-full blur-3xl -z-10" />
-          <h2 className="text-2xl sm:text-3xl font-black text-slate-100 tracking-tight leading-[1.2]">
-            Ready to Make a Difference?
+      <section className="max-w-7xl mx-auto px-4 py-12">
+        <div className="bg-gradient-to-r from-teal-900/50 via-emerald-950/30 to-violet-950/50 border border-teal-500/20 rounded-3xl p-8 sm:p-16 text-center space-y-6 relative overflow-hidden shadow-2xl">
+          <div className="absolute top-0 left-0 w-64 h-64 bg-teal-500/5 rounded-full blur-3xl -z-10" />
+          <h2 className="text-3xl sm:text-4xl font-black text-slate-100 tracking-tight leading-[1.2]">
+            Ready to Start Sharing?
           </h2>
-          <p className="text-xs sm:text-sm text-slate-350 max-w-md mx-auto">
-            Join thousands of Indians sharing pre-loved goods, decluttering their homes, and preventing waste from filling up our landfills.
+          <p className="text-xs sm:text-sm text-slate-400 max-w-xl mx-auto leading-relaxed">
+            Join thousands of active users giving away goods, training others, and building cleaner neighborhoods.
           </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 max-w-xs sm:max-w-none mx-auto pt-2">
-            <Link href="/register" className="w-full sm:w-auto inline-flex items-center justify-center bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-400 hover:to-emerald-400 text-slate-950 font-black text-xs uppercase tracking-wider px-6 py-3 rounded-xl transition-all shadow-md active:scale-[0.98]">
-              Create Free Account
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
+            <Link href="/register" className="w-full sm:w-auto inline-flex items-center justify-center bg-gradient-to-r from-teal-400 to-emerald-450 hover:from-teal-350 hover:to-emerald-400 text-slate-950 font-black text-xs uppercase tracking-wider px-8 py-4 rounded-xl transition-all shadow-lg active:scale-95">
+              Create Your Account
             </Link>
-            <button onClick={() => scrollToSection("available-items")} className="w-full sm:w-auto inline-flex items-center justify-center bg-slate-900 border border-slate-800 text-slate-200 hover:text-teal-450 hover:border-slate-700/80 font-bold text-xs uppercase tracking-wider px-6 py-3 rounded-xl transition-all cursor-pointer">
-              Browse Items Near You
+            <button onClick={() => scrollToSection("trending-preview")} className="w-full sm:w-auto inline-flex items-center justify-center bg-slate-900 border border-slate-800 text-slate-200 hover:text-teal-400 hover:border-slate-705 font-bold text-xs uppercase tracking-wider px-8 py-4 rounded-xl transition-all cursor-pointer">
+              Explore Active Feed
             </button>
           </div>
           
-          {/* Footer Highlights */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 border-t border-slate-900/50 pt-8 mt-8 text-[9px] sm:text-[10px] text-slate-400 uppercase tracking-widest font-extrabold">
-            <div className="flex items-center justify-center gap-1.5"><ShieldCheck size={13} className="text-teal-400" /> Verified Users</div>
-            <div className="flex items-center justify-center gap-1.5"><Gift size={13} className="text-teal-400" /> 100% Free / No Hidden Costs</div>
-            <div className="flex items-center justify-center gap-1.5"><MapPin size={13} className="text-teal-400" /> Proximity Sharing</div>
-            <div className="flex items-center justify-center gap-1.5"><ShieldCheck size={13} className="text-teal-400" /> Secure & Trusted</div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 border-t border-slate-900/80 pt-8 mt-8 text-[9px] text-slate-500 uppercase tracking-widest font-black">
+            <div className="flex items-center justify-center gap-1.5"><ShieldCheck size={14} className="text-teal-400" /> Verified Accounts</div>
+            <div className="flex items-center justify-center gap-1.5"><Gift size={14} className="text-teal-400" /> 100% Free Sharing</div>
+            <div className="flex items-center justify-center gap-1.5"><MapPin size={14} className="text-teal-400" /> Proximity Maps</div>
+            <div className="flex items-center justify-center gap-1.5"><ShieldCheck size={14} className="text-teal-400" /> Secure Messages</div>
           </div>
         </div>
       </section>
 
       {/* Footer Section */}
-      <footer className="border-t border-slate-900/60 bg-slate-950/20 py-8 px-4 text-center mt-12">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-[10px] sm:text-xs text-slate-500 font-medium">
+      <footer className="border-t border-slate-900 bg-slate-950 py-10 px-4 text-center mt-12">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6 text-[10px] sm:text-xs text-slate-500">
           <p>© {new Date().getFullYear()} {displayAppName}. All rights reserved.</p>
-          <div className="flex flex-wrap justify-center gap-6 font-semibold uppercase tracking-wider text-[9px] sm:text-[10px]">
+          <div className="flex flex-wrap justify-center gap-6 font-bold uppercase tracking-wider text-[9px] sm:text-[10px]">
             <Link href="/terms" className="hover:text-teal-400 transition-colors">Terms of Service</Link>
             <Link href="/privacy" className="hover:text-teal-400 transition-colors">Privacy Policy</Link>
-            <a href={`mailto:${supportEmail}`} className="hover:text-teal-400 transition-colors">Grievance Desk</a>
+            <a href={`mailto:${supportEmail}`} className="hover:text-teal-400 transition-colors">Support Grievances</a>
           </div>
         </div>
       </footer>
