@@ -1,58 +1,77 @@
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Quicksand:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 
+/* ===== CSS Custom Properties ===== */
 :root {
-  --background: #f1f5f9;
-  --foreground: #0f172a;
+  --background: #FBF1E2;
+  --foreground: #4A3A2E;
+
+  --cream: #FBF1E2;
+  --cream-deep: #F6E6D2;
+  --paper: #FFFCF6;
+  --terracotta: #E8744F;
+  --terracotta-dark: #CF5C39;
+  --terracotta-soft: #FBD9C9;
+  --teal: #4E9C97;
+  --teal-soft: #D9EDE9;
+  --sage: #8FAA68;
+  --sage-soft: #E5EFD6;
+  --golden: #F2B84B;
+  --golden-soft: #FCEAC3;
+  --ink: #4A3A2E;
+  --ink-soft: #8A7A6C;
+  --line: #ECDFCB;
+  --radius-lg: 28px;
+  --radius-md: 18px;
+  --radius-sm: 12px;
+  --shadow: 0 12px 30px -12px rgba(95, 64, 32, 0.18);
+  --shadow-sm: 0 6px 16px -8px rgba(95, 64, 32, 0.16);
 }
 
+/* ===== Tailwind Theme Registration ===== */
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: 'Quicksand', sans-serif;
+  --font-display: 'Fredoka', sans-serif;
 
-  /* Light Theme overrides for slate palette to invert colors site-wide */
-  --color-slate-50: #0f172a;
-  --color-slate-100: #0f172a;
-  --color-slate-200: #1e293b;
-  --color-slate-300: #334155;
-  --color-slate-350: #475569;
-  --color-slate-400: #475569;
-  --color-slate-450: #64748b;
-  --color-slate-500: #64748b;
-  --color-slate-600: #94a3b8;
-  --color-slate-650: #cbd5e1;
-  --color-slate-700: #cbd5e1;
-  --color-slate-800: #cbd5e1;
-  --color-slate-850: #cbd5e1;
-  --color-slate-900: #ffffff;
-  --color-slate-950: #f1f5f9;
+  --color-cream: var(--cream);
+  --color-cream-deep: var(--cream-deep);
+  --color-paper: var(--paper);
+  --color-terracotta: var(--terracotta);
+  --color-terracotta-dark: var(--terracotta-dark);
+  --color-terracotta-soft: var(--terracotta-soft);
+  --color-teal: var(--teal);
+  --color-teal-soft: var(--teal-soft);
+  --color-sage: var(--sage);
+  --color-sage-soft: var(--sage-soft);
+  --color-golden: var(--golden);
+  --color-golden-soft: var(--golden-soft);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-line: var(--line);
+}
 
-  /* Map old teal-emerald gradients to the new #A6D96A accent green */
-  --color-teal-400: #A6D96A;
-  --color-teal-500: #A6D96A;
-  --color-teal-600: #93C757;  /* Hover state */
-  --color-teal-700: #7EB143;
-
-  --color-emerald-400: #A6D96A;
-  --color-emerald-500: #A6D96A;
-  --color-emerald-600: #93C757;
-  --color-emerald-700: #7EB143;
+/* ===== Base Styles ===== */
+*, *::before, *::after {
+  box-sizing: border-box;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--cream);
+  color: var(--ink);
+  font-family: 'Quicksand', sans-serif;
   padding-bottom: env(safe-area-inset-bottom);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 html, body {
-  /* Allow native browser pull-to-refresh on mobile viewports */
   overscroll-behavior-y: auto;
 }
 
-/* Touch Targets Optimization & Hide Scrollbars */
+/* ===== Utility: Hide Scrollbars ===== */
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
@@ -61,54 +80,226 @@ html, body {
   scrollbar-width: none;
 }
 
-/* Premium Light Theme Component Overrides */
-
-/* Make all card/container borders visible in light mode */
-.border-slate-900,
-.border-slate-850,
-.border-slate-800,
-.border-slate-800\/80,
-.border-slate-900\/80,
-.border-slate-900\/60 {
-  border-color: #e2e8f0 !important;
+/* ===== Font Utility ===== */
+.font-display {
+  font-family: 'Fredoka', sans-serif;
 }
 
-/* Give cards solid white backgrounds so they pop off the light-gray page background */
-.bg-slate-900\/40,
-.bg-slate-900\/30,
-.bg-slate-950\/20,
-.bg-slate-950\/10,
-.bg-slate-900\/80 {
-  background-color: #ffffff !important;
+/* ===== ArcShare Color Utilities ===== */
+.text-terracotta       { color: var(--terracotta); }
+.text-terracotta-dark  { color: var(--terracotta-dark); }
+.text-terracotta-soft  { color: var(--terracotta-soft); }
+.text-teal             { color: var(--teal); }
+.text-teal-soft        { color: var(--teal-soft); }
+.text-sage             { color: var(--sage); }
+.text-sage-soft        { color: var(--sage-soft); }
+.text-golden           { color: var(--golden); }
+.text-golden-soft      { color: var(--golden-soft); }
+.text-ink              { color: var(--ink); }
+.text-ink-soft         { color: var(--ink-soft); }
+.text-paper            { color: var(--paper); }
+.text-cream            { color: var(--cream); }
+.text-line             { color: var(--line); }
+
+.bg-cream              { background-color: var(--cream); }
+.bg-cream-deep         { background-color: var(--cream-deep); }
+.bg-paper              { background-color: var(--paper); }
+.bg-terracotta         { background-color: var(--terracotta); }
+.bg-terracotta-dark    { background-color: var(--terracotta-dark); }
+.bg-terracotta-soft    { background-color: var(--terracotta-soft); }
+.bg-teal               { background-color: var(--teal); }
+.bg-teal-soft          { background-color: var(--teal-soft); }
+.bg-sage               { background-color: var(--sage); }
+.bg-sage-soft          { background-color: var(--sage-soft); }
+.bg-golden             { background-color: var(--golden); }
+.bg-golden-soft        { background-color: var(--golden-soft); }
+.bg-ink                { background-color: var(--ink); }
+.bg-line               { background-color: var(--line); }
+
+.border-line           { border-color: var(--line); }
+.border-terracotta     { border-color: var(--terracotta); }
+.border-terracotta-dark { border-color: var(--terracotta-dark); }
+.border-terracotta-soft { border-color: var(--terracotta-soft); }
+.border-teal           { border-color: var(--teal); }
+.border-teal-soft      { border-color: var(--teal-soft); }
+.border-sage           { border-color: var(--sage); }
+.border-golden         { border-color: var(--golden); }
+.border-golden-soft    { border-color: var(--golden-soft); }
+.border-ink            { border-color: var(--ink); }
+.border-paper          { border-color: var(--paper); }
+
+.hover\:text-terracotta:hover      { color: var(--terracotta); }
+.hover\:text-terracotta-dark:hover { color: var(--terracotta-dark); }
+.hover\:text-teal:hover            { color: var(--teal); }
+.hover\:text-ink:hover             { color: var(--ink); }
+
+.hover\:bg-cream:hover             { background-color: var(--cream); }
+.hover\:bg-terracotta:hover        { background-color: var(--terracotta); }
+.hover\:bg-terracotta-dark:hover   { background-color: var(--terracotta-dark); }
+.hover\:bg-terracotta-soft:hover   { background-color: var(--terracotta-soft); }
+.hover\:bg-teal-soft:hover         { background-color: var(--teal-soft); }
+.hover\:bg-paper:hover             { background-color: var(--paper); }
+
+.hover\:border-terracotta:hover    { border-color: var(--terracotta); }
+.hover\:border-line:hover          { border-color: var(--line); }
+
+/* ===== Card Components ===== */
+.card {
+  background: var(--paper);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--line);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  display: flex;
+  flex-direction: column;
+  text-decoration: none;
+  color: inherit;
+}
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow);
+  border-color: var(--terracotta);
 }
 
-/* Ensure text-slate-950 and text-slate-900 are dark gray/black for button readability */
-.text-slate-950,
-.text-slate-900 {
-  color: #020617 !important;
+.card-media {
+  position: relative;
+  height: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.card-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+.card:hover .card-media img {
+  transform: scale(1.05);
 }
 
-/* Fix warning alert card color styling */
-.bg-amber-500\/10 {
-  background-color: #fffbeb !important;
-  border-color: #fde047 !important;
-  color: #a16207 !important;
-}
-.bg-amber-500\/10 p,
-.bg-amber-500\/10 span {
-  color: #713f12 !important;
+/* Gradient placeholder backgrounds */
+.media-1 { background: linear-gradient(135deg, var(--teal-soft), #BFE2DC); }
+.media-2 { background: linear-gradient(135deg, var(--golden-soft), #F7D8A6); }
+.media-3 { background: linear-gradient(135deg, var(--sage-soft), #CFE0B2); }
+.media-4 { background: linear-gradient(135deg, var(--terracotta-soft), #F6C2AB); }
+
+.card-media svg {
+  width: 64px;
+  height: 64px;
+  opacity: 0.6;
 }
 
-/* Map listing item states */
-.bg-slate-950\/20 {
-  background-color: #f8fafc !important;
-  border-color: #f1f5f9 !important;
+.badge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: 'Fredoka', sans-serif;
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 5px 12px;
+  border-radius: 999px;
+  box-shadow: var(--shadow-sm);
+  z-index: 5;
 }
-.bg-slate-950\/20:hover {
-  background-color: #e2e8f0 !important;
+.badge.good      { color: #5C7240; }
+.badge.like-new  { color: var(--teal); }
+.badge.fair      { color: #B5841E; }
+
+.card-body {
+  padding: 16px 18px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
 }
 
-/* Card Flip Utility Classes */
+.card-body h3 {
+  font-family: 'Fredoka', sans-serif;
+  font-weight: 600;
+  font-size: 16px;
+  color: var(--ink);
+  line-height: 1.25;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  transition: color 0.2s ease;
+}
+.card:hover .card-body h3 {
+  color: var(--terracotta-dark);
+}
+
+.card-body p {
+  font-size: 12.5px;
+  color: var(--ink-soft);
+  flex: 1;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 6px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--line);
+  font-size: 12px;
+  color: var(--ink-soft);
+  font-weight: 600;
+}
+
+.card-footer .loc {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  overflow: hidden;
+}
+.card-footer .loc span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 80px;
+}
+
+.card-footer .heat {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--terracotta-dark);
+  flex-shrink: 0;
+}
+.card-footer svg {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+}
+
+/* ===== Logo Mark ===== */
+.logo-mark {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+}
+
+/* ===== Footer ===== */
+.footer {
+  border-top: 1px solid var(--line);
+  background: var(--paper);
+}
+
+/* ===== Card Flip Utility Classes ===== */
 .perspective-1000 {
   perspective: 1000px;
 }
@@ -123,13 +314,10 @@ html, body {
   transform: rotateY(180deg);
 }
 
+/* ===== Animations ===== */
 @keyframes scanner {
-  0%, 100% {
-    top: 10%;
-  }
-  50% {
-    top: 90%;
-  }
+  0%, 100% { top: 10%; }
+  50%       { top: 90%; }
 }
 .animate-scanner {
   animation: scanner 2.5s ease-in-out infinite;
@@ -138,3 +326,215 @@ html, body {
 .animate-spin-slow {
   animation: spin 8s linear infinite;
 }
+
+/* ===== Responsive card grid aspect ratio fix ===== */
+@media (max-width: 640px) {
+  .card-media {
+    height: 150px;
+  }
+}
+
+/* ===== Dark Theme Slate Class Overrides to achieve the Warm Cream theme globally ===== */
+
+/* Page Backgrounds & Gradients */
+.bg-slate-950,
+.min-h-screen.bg-slate-950,
+.min-h-screen.bg-gradient-to-b {
+  background-color: var(--cream) !important;
+  background-image: none !important;
+  color: var(--ink) !important;
+}
+
+/* Base gradients overrides */
+.from-slate-950,
+.via-slate-900,
+.to-slate-950,
+.from-slate-900,
+.to-slate-950 {
+  --tw-gradient-from: var(--cream) !important;
+  --tw-gradient-stops: var(--cream) !important;
+  background-color: var(--cream) !important;
+  background-image: none !important;
+}
+
+/* Card & Container backgrounds */
+.bg-slate-900,
+.bg-slate-900\/10,
+.bg-slate-900\/20,
+.bg-slate-900\/30,
+.bg-slate-900\/40,
+.bg-slate-900\/50,
+.bg-slate-900\/60,
+.bg-slate-900\/80,
+.bg-slate-850,
+.bg-slate-800,
+.bg-slate-800\/80,
+.bg-slate-800\/50,
+.bg-slate-800\/40,
+.bg-slate-800\/30,
+.bg-slate-800\/20,
+.bg-slate-950\/10,
+.bg-slate-950\/20,
+.bg-slate-950\/30,
+.bg-slate-950\/40,
+.bg-slate-950\/50,
+.bg-slate-950\/80 {
+  background-color: var(--paper) !important;
+}
+
+/* Borders */
+.border-slate-950,
+.border-slate-900,
+.border-slate-850,
+.border-slate-800,
+.border-slate-750,
+.border-slate-700,
+.border-slate-800\/80,
+.border-slate-900\/80,
+.border-slate-900\/60,
+.border-slate-850\/80 {
+  border-color: var(--line) !important;
+}
+
+/* Primary text colors */
+.text-slate-50,
+.text-slate-100,
+.text-slate-200,
+.text-slate-300,
+.text-slate-350,
+.text-white,
+.text-slate-900,
+.text-slate-950 {
+  color: var(--ink) !important;
+}
+
+/* Secondary text colors */
+.text-slate-400,
+.text-slate-500,
+.text-slate-550,
+.text-slate-600 {
+  color: var(--ink-soft) !important;
+}
+
+/* Input elements styling */
+input:not(.bg-transparent):not(.border-none),
+textarea:not(.bg-transparent):not(.border-none),
+select:not(.bg-transparent):not(.border-none),
+.CityAutocomplete input {
+  background-color: var(--paper) !important;
+  border: 1px solid var(--line) !important;
+  color: var(--ink) !important;
+  border-radius: var(--radius-sm) !important;
+}
+
+input.bg-transparent,
+select.bg-transparent {
+  background-color: transparent !important;
+  background-image: none !important;
+}
+
+input.border-none,
+select.border-none {
+  border: none !important;
+}
+input:focus,
+textarea:focus,
+select:focus,
+.CityAutocomplete input:focus {
+  border-color: var(--terracotta) !important;
+  outline: none !important;
+}
+
+/* Form selection inputs and styling adjustments */
+.accent-teal-500,
+.accent-violet-500 {
+  accent-color: var(--teal) !important;
+}
+
+/* Teal colors mapping to brand teal */
+.text-teal-400,
+.text-teal-500,
+.text-emerald-400,
+.text-emerald-500 {
+  color: var(--teal) !important;
+}
+.bg-teal-500\/10,
+.bg-emerald-500\/10,
+.bg-teal-500\/20 {
+  background-color: var(--teal-soft) !important;
+}
+.bg-teal-500,
+.bg-emerald-500,
+.hover\:bg-teal-400:hover,
+.hover\:bg-emerald-400:hover {
+  background-color: var(--teal) !important;
+  color: var(--paper) !important;
+  background-image: none !important;
+}
+.border-teal-500,
+.border-emerald-500 {
+  border-color: var(--teal) !important;
+}
+
+/* Violet/purple mapping to brand terracotta or violet */
+.text-violet-400,
+.text-violet-500,
+.text-purple-400,
+.text-purple-500 {
+  color: var(--terracotta) !important;
+}
+.bg-violet-500\/10,
+.bg-purple-500\/10,
+.bg-violet-500\/20 {
+  background-color: var(--terracotta-soft) !important;
+}
+.bg-violet-500,
+.bg-purple-500,
+.hover\:bg-violet-400:hover,
+.hover\:bg-purple-400:hover {
+  background-color: var(--terracotta) !important;
+  color: var(--paper) !important;
+  background-image: none !important;
+}
+.border-violet-500,
+.border-purple-500 {
+  border-color: var(--terracotta) !important;
+}
+
+/* Amber/orange mapping to golden or terracotta */
+.text-amber-400,
+.text-amber-500,
+.text-orange-400,
+.text-orange-500,
+.bg-gradient-to-r.from-amber-400.to-orange-500 {
+  color: var(--terracotta-dark) !important;
+}
+.bg-amber-500\/10,
+.bg-orange-500\/10,
+.bg-amber-500\/20 {
+  background-color: var(--golden-soft) !important;
+}
+.bg-amber-500,
+.bg-orange-500,
+.bg-gradient-to-r.from-amber-500.to-orange-500,
+.hover\:from-amber-450:hover,
+.hover\:to-orange-450:hover {
+  background-color: var(--terracotta) !important;
+  color: var(--paper) !important;
+  background-image: none !important;
+}
+.border-amber-500,
+.border-orange-500,
+.border-amber-500\/20,
+.border-orange-500\/20,
+.border-amber-500\/10 {
+  border-color: var(--line) !important;
+}
+
+/* Accent overlays */
+.from-amber-500\/5,
+.to-transparent {
+  background: var(--paper) !important;
+  border-color: var(--line) !important;
+}
+

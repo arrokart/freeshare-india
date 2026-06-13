@@ -135,25 +135,28 @@ export default function PWARegister() {
   // Render a subtle floating prompt for users who haven't enabled notifications yet
   if (permission === "default") {
     return (
-      <div className="fixed bottom-4 left-4 right-4 md:right-auto md:left-4 z-[9999] p-4 bg-slate-900/90 border border-slate-800 backdrop-blur-md rounded-2xl shadow-2xl flex flex-col gap-2.5 max-w-xs animate-in slide-in-from-bottom-5 duration-300">
+      <div className="fixed bottom-4 left-4 right-4 md:right-auto md:left-4 z-[9999] p-4 backdrop-blur-md rounded-2xl shadow-2xl flex flex-col gap-2.5 max-w-xs animate-in slide-in-from-bottom-5 duration-300"
+        style={{ background: "var(--paper)", border: "1.5px solid var(--line)" }}>
         <div className="space-y-0.5">
-          <p className="text-xs font-black text-slate-100 flex items-center gap-1.5">
+          <p className="text-xs font-display font-bold flex items-center gap-1.5" style={{ color: "var(--ink)" }}>
             🔔 Enable Notifications
           </p>
-          <p className="text-[10px] text-slate-400 leading-relaxed">
+          <p className="text-[10px] leading-relaxed" style={{ color: "var(--ink-soft)" }}>
             Get instant updates on your claims, item requests, and direct chat messages from your neighbors.
           </p>
         </div>
         <div className="flex gap-2 justify-end">
           <button
             onClick={() => setPermission("denied")}
-            className="px-2.5 py-1 text-[9px] font-bold text-slate-500 hover:text-slate-400 transition-all uppercase"
+            className="px-2.5 py-1 text-[9px] font-bold transition-all uppercase"
+            style={{ color: "var(--ink-soft)" }}
           >
             Later
           </button>
           <button
             onClick={handleRequestPermission}
-            className="px-3 py-1 text-[9px] font-extrabold bg-gradient-to-r from-teal-500 to-emerald-500 text-slate-950 rounded-lg hover:from-teal-400 hover:to-emerald-400 transition-all uppercase cursor-pointer"
+            className="px-3 py-1 text-[9px] font-display font-semibold rounded-lg transition-all uppercase cursor-pointer"
+            style={{ background: "var(--terracotta)", color: "var(--paper)" }}
           >
             Enable
           </button>
@@ -173,25 +176,28 @@ export default function PWARegister() {
   // Render a floating prompt for app installation if available
   if (deferredPrompt && showInstallPrompt) {
     return (
-      <div className="fixed bottom-4 left-4 right-4 md:right-auto md:left-4 z-[9999] p-4 bg-slate-900/90 border border-slate-800 backdrop-blur-md rounded-2xl shadow-2xl flex flex-col gap-2.5 max-w-xs animate-in slide-in-from-bottom-5 duration-300">
+      <div className="fixed bottom-4 left-4 right-4 md:right-auto md:left-4 z-[9999] p-4 backdrop-blur-md rounded-2xl shadow-2xl flex flex-col gap-2.5 max-w-xs animate-in slide-in-from-bottom-5 duration-300"
+        style={{ background: "var(--paper)", border: "1.5px solid var(--line)" }}>
         <div className="space-y-0.5">
-          <p className="text-xs font-black text-slate-100 flex items-center gap-1.5">
+          <p className="text-xs font-display font-bold flex items-center gap-1.5" style={{ color: "var(--ink)" }}>
             📲 Install FreeShare App
           </p>
-          <p className="text-[10px] text-slate-400 leading-relaxed">
+          <p className="text-[10px] leading-relaxed" style={{ color: "var(--ink-soft)" }}>
             Add FreeShare India to your home screen for instant access and a faster, native app experience.
           </p>
         </div>
         <div className="flex gap-2 justify-end">
           <button
             onClick={() => setShowInstallPrompt(false)}
-            className="px-2.5 py-1 text-[9px] font-bold text-slate-500 hover:text-slate-400 transition-all uppercase"
+            className="px-2.5 py-1 text-[9px] font-bold transition-all uppercase"
+            style={{ color: "var(--ink-soft)" }}
           >
             Later
           </button>
           <button
             onClick={handleInstallClick}
-            className="px-3 py-1 text-[9px] font-extrabold bg-gradient-to-r from-teal-500 to-emerald-500 text-slate-950 rounded-lg hover:from-teal-400 hover:to-emerald-400 transition-all uppercase cursor-pointer"
+            className="px-3 py-1 text-[9px] font-display font-semibold rounded-lg transition-all uppercase cursor-pointer"
+            style={{ background: "var(--terracotta)", color: "var(--paper)" }}
           >
             Install
           </button>
