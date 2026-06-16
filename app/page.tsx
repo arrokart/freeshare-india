@@ -261,9 +261,6 @@ export default function HomeFeed() {
   useEffect(() => {
     const init = async () => {
       setAuthLoading(true);
-      if (typeof window !== "undefined" && window.location.hash?.includes("access_token=")) {
-        try { window.history.replaceState(null, "", window.location.pathname + window.location.search); } catch {}
-      }
       let fetchedSettings: any = null;
       try {
         const res = await fetch("/api/admin/settings").catch(() => null);
@@ -274,7 +271,13 @@ export default function HomeFeed() {
         }
       } catch {}
       try { await getUserData(fetchedSettings); } catch {}
-      finally { setAuthLoading(false); }
+      
+      // Clear hash from URL only after the session has been processed by Supabase
+      if (typeof window !== "undefined" && window.location.hash?.includes("access_token=")) {
+        try { window.history.replaceState(null, "", window.location.pathname + window.location.search); } catch {}
+      }
+      
+      setAuthLoading(false);
     };
     init();
   }, []);

@@ -61,6 +61,8 @@ export default function EventDetailPage() {
     fetchUser();
     
     if (id) {
+      setEvent(null);
+      setLoading(true);
       fetchEventDetails();
       fetchComments();
     }

@@ -65,5 +65,5 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
     .eq("id", id)
     .maybeSingle();
 
-  return <ListingDetailClient initialListing={listing} />;
+  return <ListingDetailClient key={id} initialListing={listing} />;
 }

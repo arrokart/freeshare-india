@@ -20,6 +20,7 @@ export default function ListingDetailClient({ initialListing }: { initialListing
   const id = params?.id as string;
 
   const [userId, setUserId] = useState<string | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
   const [listing, setListing] = useState<any>(initialListing);
   const [loading, setLoading] = useState(!initialListing);
 
@@ -511,6 +512,7 @@ export default function ListingDetailClient({ initialListing }: { initialListing
           setIsLimitReached(true);
         }
       }
+      setAuthLoading(false);
     };
     checkUser();
   }, []);
@@ -519,7 +521,9 @@ export default function ListingDetailClient({ initialListing }: { initialListing
     if (!id) return;
 
     const fetchListingDetail = async () => {
-      setLoading(true);
+      if (!listing) {
+        setLoading(true);
+      }
       try {
         const { data, error } = await supabase
           .from("listings")
@@ -1139,7 +1143,12 @@ export default function ListingDetailClient({ initialListing }: { initialListing
 
             {/* Claim/Contact Block Form */}
             <div className="pt-4">
-              {!userId ? (
+              {authLoading ? (
+                <div className="w-full bg-slate-905 border border-slate-900 rounded-xl py-6 flex flex-col items-center justify-center gap-2">
+                  <Loader2 size={18} className="animate-spin text-teal-400" />
+                  <span className="text-[10px] text-slate-500">Verifying session...</span>
+                </div>
+              ) : !userId ? (
                 <Link
                   href={`/login?next=/listing/${listing.id}`}
                   className="w-full bg-slate-900 border border-slate-800 text-slate-200 font-bold py-3.5 px-4 rounded-xl flex items-center justify-center gap-2 hover:bg-slate-800 transition-colors"
