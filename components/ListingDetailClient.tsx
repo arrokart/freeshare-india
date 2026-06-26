@@ -624,25 +624,33 @@ export default function ListingDetailClient({ initialListing }: { initialListing
     setClaimSuccess("");
 
     try {
-      // 1. Submit claim to DB claims table
-      const { data: newClaim, error: claimError } = await supabase
-        .from("claims")
-        .insert({
+      // 1. Get session token to authenticate server-side request
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error("You must be logged in to submit a request.");
+      }
+
+      // 1. Submit claim via server-side API route (bypasses RLS, validates user server-side)
+      const claimRes = await fetch("/api/claims", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
           listing_id: listing.id,
           receiver_id: userId,
           donor_id: listing.donor_id || listing.donor?.id,
           message: claimMessage,
-          status: "pending",
-        })
-        .select()
-        .single();
+        }),
+      });
 
-      if (claimError) {
-        if (claimError.message.includes("Claim limit reached")) {
-          throw new Error("You cannot have more than 5 active pending claims simultaneously. Please cancel one of your other pending claims first.");
-        }
-        throw claimError;
+      const newClaim = await claimRes.json();
+
+      if (!claimRes.ok) {
+        throw new Error(newClaim.error || "Failed to submit request.");
       }
+
 
       // 1.5 Fetch receiver name and notify the donor via server-side API (bypasses RLS)
       const { data: receiverProfile } = await supabase
