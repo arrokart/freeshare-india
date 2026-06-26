@@ -259,27 +259,52 @@ export default function HomeFeed() {
   };
 
   useEffect(() => {
+    let settingsCache: any = null;
+
     const init = async () => {
       setAuthLoading(true);
-      let fetchedSettings: any = null;
       try {
         const res = await fetch("/api/admin/settings").catch(() => null);
         if (res?.ok) {
-          fetchedSettings = await res.json();
-          setSystemSettings(fetchedSettings);
-          if (fetchedSettings.campaign_type && fetchedSettings.campaign_type !== "none") setActiveCampaign(fetchedSettings);
+          settingsCache = await res.json();
+          setSystemSettings(settingsCache);
+          if (settingsCache.campaign_type && settingsCache.campaign_type !== "none") setActiveCampaign(settingsCache);
         }
       } catch {}
-      try { await getUserData(fetchedSettings); } catch {}
-      
-      // Clear hash from URL only after the session has been processed by Supabase
+      try { await getUserData(settingsCache); } catch {}
+
+      // Clear OAuth hash fragment from URL after Supabase has had a chance to process it
       if (typeof window !== "undefined" && window.location.hash?.includes("access_token=")) {
         try { window.history.replaceState(null, "", window.location.pathname + window.location.search); } catch {}
       }
-      
+
       setAuthLoading(false);
     };
+
+    // Also subscribe to auth state changes so we catch the Google OAuth SIGNED_IN
+    // event that fires AFTER the hash is processed — which happens asynchronously
+    // and may arrive after getSession() already returned null on initial load.
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if ((event === "SIGNED_IN" || event === "TOKEN_REFRESHED") && session) {
+        // Set cookie for SSR
+        document.cookie = `sb-access-token=${session.access_token}; path=/; max-age=${session.expires_in || 3600}; SameSite=Lax; Secure`;
+        // Re-fetch user profile whenever auth state confirms a signed-in user
+        try { await getUserData(settingsCache); } catch {}
+        // Clear the hash fragment if present
+        if (typeof window !== "undefined" && window.location.hash?.includes("access_token=")) {
+          try { window.history.replaceState(null, "", window.location.pathname + window.location.search); } catch {}
+        }
+        setAuthLoading(false);
+      } else if (event === "SIGNED_OUT") {
+        setUser(null);
+        document.cookie = `sb-access-token=; path=/; max-age=0; SameSite=Lax; Secure`;
+        setAuthLoading(false);
+      }
+    });
+
     init();
+
+    return () => { subscription.unsubscribe(); };
   }, []);
 
   useEffect(() => {
