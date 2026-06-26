@@ -330,7 +330,7 @@ CREATE POLICY "Allow authenticated user insert claims"
 ON public.claims 
 FOR INSERT 
 TO authenticated
-WITH CHECK (auth.uid() = receiver_id);
+WITH CHECK (receiver_id = (select auth.uid()));
 
 CREATE POLICY "Allow update relevant claims" 
 ON public.claims 
