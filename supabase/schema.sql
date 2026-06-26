@@ -106,6 +106,7 @@ CREATE TABLE IF NOT EXISTS public.claims (
 );
 
 -- Complete the circular reference once the tables exist
+ALTER TABLE public.listings DROP CONSTRAINT IF EXISTS fk_active_claim_id;
 ALTER TABLE public.listings 
 ADD CONSTRAINT fk_active_claim_id 
 FOREIGN KEY (active_claim_id) REFERENCES public.claims(id) ON DELETE SET NULL;
