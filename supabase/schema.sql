@@ -328,6 +328,7 @@ USING (auth.uid() = receiver_id OR EXISTS (
 CREATE POLICY "Allow authenticated user insert claims" 
 ON public.claims 
 FOR INSERT 
+TO authenticated
 WITH CHECK (auth.uid() = receiver_id);
 
 CREATE POLICY "Allow update relevant claims" 
