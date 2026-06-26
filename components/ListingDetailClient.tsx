@@ -597,7 +597,7 @@ export default function ListingDetailClient({ initialListing }: { initialListing
   }, [id, userId]);
 
   useEffect(() => {
-    if (!loading && listing && userId && listing.donor_id === userId) {
+    if (!loading && listing && userId && (listing.donor_id || listing.donor?.id) === userId) {
       const searchParams = new URLSearchParams(window.location.search);
       if (searchParams.get("edit") === "true") {
         handleStartEdit();
@@ -630,7 +630,7 @@ export default function ListingDetailClient({ initialListing }: { initialListing
         .insert({
           listing_id: listing.id,
           receiver_id: userId,
-          donor_id: listing.donor_id,
+          donor_id: listing.donor_id || listing.donor?.id,
           message: claimMessage,
           status: "pending",
         })
@@ -1209,9 +1209,9 @@ export default function ListingDetailClient({ initialListing }: { initialListing
                     </div>
                   )}
                 </div>
-              ) : listing.donor_id === userId ? (
+              ) : (listing.donor_id || listing.donor?.id) === userId ? (
                 <div className="space-y-4">
-                  <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 text-slate-500 text-xs text-center font-medium">
+                  <div className="p-4 rounded-xl bg-slate-905 border border-slate-900 text-slate-500 text-xs text-center font-medium">
                     This is your listing. You cannot claim your own item.
                   </div>
                   <button
@@ -1335,7 +1335,7 @@ export default function ListingDetailClient({ initialListing }: { initialListing
         onClose={() => setShowReportModal(false)}
         reporterId={userId}
         reportedListingId={listing.id}
-        reportedUserId={listing.donor_id}
+        reportedUserId={listing.donor_id || listing.donor?.id}
         targetName={`listing "${listing.title}"`}
       />
     </div>
