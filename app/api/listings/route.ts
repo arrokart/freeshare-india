@@ -145,7 +145,13 @@ export async function GET(request: Request) {
       listings = listings.slice(startIndex, endIndex);
     }
 
-    return NextResponse.json({ listings, hasMore });
+    return new Response(JSON.stringify({ listings, hasMore }), {
+      status: 200,
+      headers: {
+        "Content-Type": "application/json",
+        "Cache-Control": "public, s-maxage=10, stale-while-revalidate=59",
+      },
+    });
   } catch (error: any) {
     console.error("Fetch listings error:", error);
     return NextResponse.json(

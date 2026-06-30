@@ -39,7 +39,13 @@ export async function GET(request: Request) {
 
     if (error) throw error;
 
-    return NextResponse.json(data || []);
+    return new Response(JSON.stringify(data || []), {
+      status: 200,
+      headers: {
+        "Content-Type": "application/json",
+        "Cache-Control": "public, s-maxage=10, stale-while-revalidate=59",
+      },
+    });
   } catch (error: any) {
     console.error("GET events error:", error);
     return NextResponse.json(
