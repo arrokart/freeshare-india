@@ -652,30 +652,36 @@ export default function ListingDetailClient({ initialListing }: { initialListing
       }
 
 
-      // 1.5 Fetch receiver name and notify the donor via server-side API (bypasses RLS)
-      const { data: receiverProfile } = await supabase
-        .from("users")
-        .select("name")
-        .eq("id", userId)
-        .single();
-      const receiverName = receiverProfile?.name || "A neighbor";
+      // 1.5 Fetch receiver name and notify the donor in the background
+      const getReceiverNameAndNotify = async () => {
+        try {
+          const { data: receiverProfile } = await supabase
+            .from("users")
+            .select("name")
+            .eq("id", userId)
+            .single();
+          const receiverName = receiverProfile?.name || "A neighbor";
+          const isSkill = listing.listing_type === "skill";
 
-      const isSkill = listing.listing_type === "skill";
+          await fetch("/api/notifications", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              user_id: listing.donor_id,
+              type: "new_claim",
+              title: isSkill ? "New Session Request" : "New Claim Request",
+              body: isSkill
+                ? `${receiverName} requested your skill: "${listing.title}"`
+                : `${receiverName} requested to claim your item: "${listing.title}"`,
+              link: newClaim ? `/chat/${newClaim.id}` : "/dashboard",
+            }),
+          });
+        } catch (e) {
+          console.error("Failed to process background notification:", e);
+        }
+      };
 
-      await fetch("/api/notifications", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          user_id: listing.donor_id,
-          type: "new_claim",
-          title: isSkill ? "New Session Request" : "New Claim Request",
-          body: isSkill
-            ? `${receiverName} requested your skill: "${listing.title}"`
-            : `${receiverName} requested to claim your item: "${listing.title}"`,
-          link: newClaim ? `/chat/${newClaim.id}` : "/dashboard",
-        }),
-      });
-
+      // 2. Insert initial chat message synchronously to guarantee it exists before redirection
       if (newClaim) {
         try {
           await fetch("/api/messages", {
@@ -692,20 +698,27 @@ export default function ListingDetailClient({ initialListing }: { initialListing
         }
       }
 
+      const isSkill = listing.listing_type === "skill";
       if (!isSkill) {
-        // 2. Increment monthly claim count in user metadata for items
         const newClaimCount = userClaimCount + 1;
-        const { error: authError } = await supabase.auth.updateUser({
-          data: { monthly_claim_count: newClaimCount }
-        });
 
-        if (authError) throw authError;
-
-        // 3. Increment monthly claim count in database users table
-        await supabase
-          .from("users")
-          .update({ monthly_claim_count: newClaimCount })
-          .eq("id", userId);
+        // 3. Process limit counter increments in parallel background promises to avoid waiting
+        Promise.all([
+          supabase.auth.updateUser({
+            data: { monthly_claim_count: newClaimCount }
+          }).catch(err => console.error("Auth metadata sync error:", err)),
+          
+          (async () => {
+            try {
+              await supabase
+                .from("users")
+                .update({ monthly_claim_count: newClaimCount })
+                .eq("id", userId);
+            } catch (err) {
+              console.error("Database user profile sync error:", err);
+            }
+          })()
+        ]);
 
         setUserClaimed(true);
         if (newClaim) {
@@ -713,12 +726,15 @@ export default function ListingDetailClient({ initialListing }: { initialListing
         }
       }
 
+      // Trigger background notification processing asynchronously
+      getReceiverNameAndNotify();
+
       setClaimSuccess("Request submitted successfully! Redirecting to chat...");
       setTimeout(() => {
         if (newClaim) {
           router.push(`/chat/${newClaim.id}`);
         }
-      }, 1500);
+      }, 800);
     } catch (err: any) {
       setClaimError(err.message || "Failed to submit request.");
     } finally {
