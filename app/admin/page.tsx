@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
+import { getR2PublicUrl } from "@/lib/r2";
 import { 
   Loader2, ArrowLeft, ShieldAlert, Flag, UserMinus, FileMinus, 
   CheckCircle2, ShieldCheck, Search, SlidersHorizontal, Users, 
@@ -1988,7 +1989,7 @@ export default function AdminPage() {
                                       });
                                       if (!uploadRes.ok) throw new Error("Upload failed");
 
-                                      const finalUrl = `https://pub-36f72b3e2769432e86d9d8f0b3abed58.r2.dev/${fileKey}`;
+                                      const finalUrl = getR2PublicUrl(fileKey) || `https://pub-placeholder-domain.r2.dev/${fileKey}`;
                                       setBrandLogoUrl(finalUrl);
                                     } catch (err: any) {
                                       setErrorMsg(err.message || "Failed to upload website brand logo.");
@@ -2103,7 +2104,7 @@ export default function AdminPage() {
                                     });
                                     if (!uploadRes.ok) throw new Error("Upload failed");
 
-                                    const finalUrl = `https://pub-36f72b3e2769432e86d9d8f0b3abed58.r2.dev/${fileKey}`;
+                                    const finalUrl = getR2PublicUrl(fileKey) || `https://pub-placeholder-domain.r2.dev/${fileKey}`;
                                     setAppLogoUrl(finalUrl);
                                   } catch (err: any) {
                                     setErrorMsg(err.message || "Failed to upload branding image.");

@@ -63,7 +63,8 @@ export async function proxy(request: NextRequest) {
 
     // Server-side block for /admin routes
     if (pathname.startsWith("/admin")) {
-      if (user.email !== "admin@freeshare.in") {
+      const adminEmail = process.env.ADMIN_EMAIL || process.env.NEXT_PUBLIC_ADMIN_EMAIL;
+      if (!adminEmail || user.email !== adminEmail) {
         // Block access if not the verified admin -> redirect to home page
         return NextResponse.redirect(new URL("/", request.url));
       }

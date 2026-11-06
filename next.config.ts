@@ -1,11 +1,19 @@
 import type { NextConfig } from "next";
 
+const r2Domain = process.env.NEXT_PUBLIC_CLOUDFLARE_R2_PUBLIC_URL
+  ? new URL(process.env.NEXT_PUBLIC_CLOUDFLARE_R2_PUBLIC_URL).hostname
+  : "*.r2.dev";
+
 const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
       {
         protocol: "https",
-        hostname: "pub-36f72b3e2769432e86d9d8f0b3abed58.r2.dev",
+        hostname: r2Domain,
+      },
+      {
+        protocol: "https",
+        hostname: "*.r2.dev",
       },
       {
         protocol: "https",

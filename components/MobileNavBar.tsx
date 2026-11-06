@@ -12,11 +12,13 @@ export default function MobileNavBar() {
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
+    const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
+
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
         setUserId(session.user.id);
-        setIsAdmin(session.user.email === "admin@freeshare.in"); // Simple check matching admin console
+        setIsAdmin(Boolean(adminEmail && session.user.email === adminEmail));
         document.cookie = `sb-access-token=${session.access_token}; path=/; max-age=${session.expires_in || 3600}; SameSite=Lax; Secure`;
       }
     };
@@ -25,7 +27,7 @@ export default function MobileNavBar() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {
         setUserId(session.user.id);
-        setIsAdmin(session.user.email === "admin@freeshare.in");
+        setIsAdmin(Boolean(adminEmail && session.user.email === adminEmail));
         document.cookie = `sb-access-token=${session.access_token}; path=/; max-age=${session.expires_in || 3600}; SameSite=Lax; Secure`;
       } else {
         setUserId(null);
